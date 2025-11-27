@@ -1,0 +1,785 @@
+// Prisma schema for PMO Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  PMO_MANAGER
+  PROJECT_MANAGER
+  RESOURCE_MANAGER
+  TEAM_MEMBER
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR
+}
+
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  role              UserRole            @default(TEAM_MEMBER)
+  status            UserStatus          @default(ACTIVE)
+  avatarUrl         String?
+  department        String?
+  jobTitle          String?
+  phone             String?
+  managerId         String?
+  manager           User?               @relation("ManagerToEmployee", fields: [managerId], references: [id])
+  employees         User[]              @relation("ManagerToEmployee")
+
+  // Geographic and employment info
+  country           String?             // ISO country code (US, IN, UK, etc.)
+  region            String?             // State/province for sub-regional rules
+  employmentType    EmploymentType      @default(FULL_TIME)
+
+  // Capacity and availability
+  defaultWeeklyHours Float              @default(40)
+  maxWeeklyHours    Float               @default(40) // Regional max (40 US, 44-48 India)
+  timezone          String              @default("UTC")
+
+  // Skills and rates
+  skills            String[]            @default([])
+  hourlyRate        Float?              // Internal cost rate
+  billableRate      Float?              // Client billing rate
+
+  // User preferences (theme, notifications, etc.)
+  preferences       Json                @default("{}")
+
+  // Time tracking
+  timeEntries       TimeEntry[]
+  activeTimeEntry   ActiveTimeEntry?
+
+  // Assignments
+  projectAssignments ProjectAssignment[]
+  taskAssignments   TaskAssignment[]
+
+  // Availability
+  availability      UserAvailability[]
+  timeOff           TimeOffRequest[]
+
+  // Notifications
+  notifications     Notification[]
+
+  // Team memberships
+  teamMemberships   TeamMember[]
+
+  // Admin & Security
+  sessions          UserSession[]
+  auditLogs         AuditLog[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  lastLoginAt       DateTime?
+
+  @@index([email])
+  @@index([status])
+  @@index([role])
+}
+
+// ============================================
+// TEAM MANAGEMENT
+// ============================================
+
+enum TeamMemberRole {
+  LEAD
+  SENIOR
+  MEMBER
+}
+
+model Team {
+  id                String              @id @default(uuid())
+  name              String
+  description       String?
+  skills            String[]            @default([])
+  isActive          Boolean             @default(true)
+
+  // Team lead (optional - can also be set via TeamMember role)
+  leadId            String?
+
+  // Relationships
+  members           TeamMember[]
+  projectAssignments TeamProjectAssignment[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([isActive])
+}
+
+model TeamMember {
+  id                String          @id @default(uuid())
+  teamId            String
+  team              Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role              TeamMemberRole  @default(MEMBER)
+  joinedAt          DateTime        @default(now())
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+model TeamProjectAssignment {
+  id                String            @id @default(uuid())
+  teamId            String
+  team              Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  projectId         String
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  allocatedHours    Float             // Weekly hours for the team
+  startDate         DateTime
+  endDate           DateTime?
+  status            AssignmentStatus  @default(PLANNED)
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([teamId, projectId])
+  @@index([teamId])
+  @@index([projectId])
+  @@index([status])
+}
+
+// ============================================
+// CLIENT MANAGEMENT
+// ============================================
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  PROSPECT
+  ON_HOLD
+}
+
+model Client {
+  id                    String        @id @default(uuid())
+  name                  String
+  status                ClientStatus  @default(ACTIVE)
+  industry              String?
+  website               String?
+
+  // Salesforce Integration Placeholders
+  salesforceAccountId   String?       @unique
+  salesforceAccountName String?
+  salesforceOwnerId     String?
+
+  // Contact information
+  primaryContactName    String?
+  primaryContactEmail   String?
+  primaryContactPhone   String?
+
+  // Address
+  addressLine1          String?
+  addressLine2          String?
+  city                  String?
+  stateProvince         String?
+  postalCode            String?
+  country               String?
+
+  // Business details
+  description           String?
+  notes                 String?
+
+  // Relationships
+  projects              Project[]
+  contacts              ClientContact[]
+  opportunities         ClientOpportunity[]
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([salesforceAccountId])
+  @@index([status])
+}
+
+model ClientContact {
+  id                        String    @id @default(uuid())
+  clientId                  String
+  client                    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  firstName                 String
+  lastName                  String
+  email                     String?
+  phone                     String?
+  jobTitle                  String?
+  isPrimary                 Boolean   @default(false)
+
+  // Salesforce Integration Placeholder
+  salesforceContactId       String?   @unique
+
+  notes                     String?
+
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([salesforceContactId])
+}
+
+model ClientOpportunity {
+  id                        String    @id @default(uuid())
+  clientId                  String
+  client                    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  name                      String
+  value                     Float?
+  stage                     String?
+  probability               Int?
+  expectedCloseDate         DateTime?
+
+  // Salesforce Integration Placeholder
+  salesforceOpportunityId   String?   @unique
+
+  description               String?
+
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([salesforceOpportunityId])
+}
+
+// ============================================
+// PROJECT MANAGEMENT
+// ============================================
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Project {
+  id                String              @id @default(uuid())
+  name              String
+  code              String              @unique
+  description       String?
+  type              String?             // Project type from dropdowns (Internal, Client Project, R&D, etc.)
+  status            ProjectStatus       @default(PLANNING)
+  priority          ProjectPriority     @default(MEDIUM)
+
+  // Client relationship
+  clientId          String
+  client            Client              @relation(fields: [clientId], references: [id])
+
+  // Dates
+  startDate         DateTime
+  endDate           DateTime
+  actualStartDate   DateTime?
+  actualEndDate     DateTime?
+
+  // Budget and tracking
+  budgetHours       Float?
+  budgetCost        Float?
+
+  // Project Manager
+  managerId         String?
+
+  // Methodology
+  methodology       String?             // Agile, Waterfall, Hybrid
+
+  // Relationships
+  phases            ProjectPhase[]
+  milestones        Milestone[]
+  tasks             Task[]
+  assignments       ProjectAssignment[]
+  teamAssignments   TeamProjectAssignment[]
+
+  // Tags and categories
+  tags              String[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([code])
+}
+
+model ProjectPhase {
+  id                String        @id @default(uuid())
+  projectId         String
+  project           Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name              String
+  description       String?
+  order             Int
+
+  startDate         DateTime
+  endDate           DateTime
+
+  status            ProjectStatus @default(PLANNING)
+
+  tasks             Task[]
+  milestones        Milestone[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([order])
+}
+
+model Milestone {
+  id                String        @id @default(uuid())
+  projectId         String
+  project           Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  phaseId           String?
+  phase             ProjectPhase? @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+
+  name              String
+  description       String?
+  dueDate           DateTime
+  completedDate     DateTime?
+
+  isCompleted       Boolean       @default(false)
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([projectId])
+  @@index([phaseId])
+  @@index([dueDate])
+}
+
+// ============================================
+// TASK MANAGEMENT
+// ============================================
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id                String            @id @default(uuid())
+  projectId         String
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  phaseId           String?
+  phase             ProjectPhase?     @relation(fields: [phaseId], references: [id], onDelete: SetNull)
+
+  title             String
+  description       String?
+  status            TaskStatus        @default(TODO)
+  priority          TaskPriority      @default(MEDIUM)
+
+  // Hierarchy
+  parentTaskId      String?
+  parentTask        Task?             @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks          Task[]            @relation("TaskSubtasks")
+
+  // Estimation
+  estimatedHours    Float?
+  actualHours       Float?
+
+  // Dates
+  startDate         DateTime?
+  dueDate           DateTime?
+  completedDate     DateTime?
+
+  // Dependencies
+  blockedBy         TaskDependency[]  @relation("BlockedTask")
+  blocking          TaskDependency[]  @relation("BlockingTask")
+
+  // Assignments
+  assignments       TaskAssignment[]
+
+  // Time tracking
+  timeEntries       TimeEntry[]
+
+  // Tags
+  tags              String[]
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([projectId])
+  @@index([phaseId])
+  @@index([status])
+  @@index([parentTaskId])
+}
+
+model TaskDependency {
+  id                String    @id @default(uuid())
+
+  blockingTaskId    String
+  blockingTask      Task      @relation("BlockingTask", fields: [blockingTaskId], references: [id], onDelete: Cascade)
+
+  blockedTaskId     String
+  blockedTask       Task      @relation("BlockedTask", fields: [blockedTaskId], references: [id], onDelete: Cascade)
+
+  dependencyType    String    @default("finish-to-start") // finish-to-start, start-to-start, etc.
+
+  createdAt         DateTime  @default(now())
+
+  @@unique([blockingTaskId, blockedTaskId])
+  @@index([blockingTaskId])
+  @@index([blockedTaskId])
+}
+
+// ============================================
+// RESOURCE MANAGEMENT & ASSIGNMENTS
+// ============================================
+
+enum AssignmentStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model ProjectAssignment {
+  id                String            @id @default(uuid())
+
+  projectId         String
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role              String            // Project Manager, Developer, Designer, etc.
+  allocatedHours    Float             // Weekly allocated hours
+
+  startDate         DateTime
+  endDate           DateTime?
+
+  status            AssignmentStatus  @default(PLANNED)
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+}
+
+model TaskAssignment {
+  id                String            @id @default(uuid())
+
+  taskId            String
+  task              Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  isPrimary         Boolean           @default(false)
+  allocatedHours    Float?
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+}
+
+// ============================================
+// CAPACITY PLANNING & AVAILABILITY
+// ============================================
+
+enum AvailabilityType {
+  AVAILABLE
+  PARTIAL
+  UNAVAILABLE
+}
+
+model UserAvailability {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date              DateTime          @db.Date
+  availableHours    Float
+  type              AvailabilityType  @default(AVAILABLE)
+
+  notes             String?
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum TimeOffType {
+  VACATION
+  SICK
+  PERSONAL
+  HOLIDAY
+  OTHER
+}
+
+model TimeOffRequest {
+  id                String          @id @default(uuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type              TimeOffType
+  startDate         DateTime        @db.Date
+  endDate           DateTime        @db.Date
+  hours             Float
+
+  status            TimeOffStatus   @default(PENDING)
+  reason            String?
+
+  approvedBy        String?
+  approvedAt        DateTime?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+// ============================================
+// TIME TRACKING
+// ============================================
+
+model TimeEntry {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId            String?
+  task              Task?               @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  date              DateTime            @db.Date
+  hours             Float               @default(0) // Total hours (sum of all sessions)
+  billableHours     Float               @default(0) // Billable hours (sum of billable sessions)
+
+  isTimerBased      Boolean             @default(false) // True if created from timer, false if manual
+
+  sessions          TimeEntrySession[]  // Individual timer intervals
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([userId, taskId, date]) // One entry per user/task/date
+  @@index([userId])
+  @@index([taskId])
+  @@index([date])
+}
+
+// Individual timer intervals/sessions within a time entry
+model TimeEntrySession {
+  id                String    @id @default(uuid())
+  timeEntryId       String
+  timeEntry         TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  startTime         DateTime
+  endTime           DateTime
+  duration          Float     // Duration in hours
+
+  isBillable        Boolean   @default(true) // Whether this session is billable
+  description       String?   // What was done during this interval
+
+  createdAt         DateTime  @default(now())
+
+  @@index([timeEntryId])
+  @@index([startTime])
+}
+
+// Active/ongoing time entries (for timer functionality)
+model ActiveTimeEntry {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  taskId            String?
+
+  startTime         DateTime  @default(now())
+  description       String?
+
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  ASSIGNMENT
+  DEADLINE
+  STATUS_CHANGE
+  APPROVAL_REQUEST
+  MENTION
+  SYSTEM
+}
+
+model Notification {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type              NotificationType
+  title             String
+  message           String
+
+  isRead            Boolean           @default(false)
+
+  // Link to related entity
+  relatedEntityType String?           // Project, Task, TimeEntry, etc.
+  relatedEntityId   String?
+
+  createdAt         DateTime          @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ============================================
+// SYSTEM & AUDIT
+// ============================================
+
+// System configuration settings
+model SystemSetting {
+  id          String   @id @default(uuid())
+  category    String   // 'security', 'notifications', 'platform', 'integrations'
+  key         String
+  value       Json     // Flexible value storage
+  description String?
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([category, key])
+  @@index([category])
+}
+
+// Enhanced audit log for comprehensive tracking
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  // Nullable for failed login attempts
+  action      String   // 'USER_LOGIN', 'USER_LOGOUT', 'USER_CREATED', etc.
+  entityType  String?  // 'User', 'Project', 'Client', etc.
+  entityId    String?
+  severity    String   @default("INFO") // INFO, WARNING, ERROR, CRITICAL
+  status      String   @default("SUCCESS") // SUCCESS, FAILURE
+  changes     Json?    // Before/after values
+  metadata    Json?    // Additional context
+  ipAddress   String?
+  userAgent   String?
+  sessionId   String?
+  errorDetail String?  // For failed operations
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([severity])
+  @@index([status])
+}
+
+// Login attempt tracking for security
+model LoginAttempt {
+  id         String   @id @default(uuid())
+  email      String
+  success    Boolean
+  ipAddress  String?
+  userAgent  String?
+  failReason String?  // 'INVALID_PASSWORD', 'USER_NOT_FOUND', 'ACCOUNT_LOCKED'
+  createdAt  DateTime @default(now())
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@index([success])
+}
+
+// Active user sessions for session management
+model UserSession {
+  id          String   @id @default(uuid())
+  userId      String
+  token       String   @unique
+  ipAddress   String?
+  userAgent   String?
+  lastActive  DateTime @default(now())
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([token])
+}
+
+// ============================================
+// CONFIGURATION
+// ============================================
+
+// Single-row table for dropdown lists and other config
+// Each column stores a JSON string (array or object)
+model DropdownLists {
+  id              String   @id @default("default")
+  industries      String   @default("[]")  // JSON array of industry names
+  projectTypes    String   @default("[]")  // JSON array of project types
+  skillCategories String   @default("[]")  // JSON array of skill categories
+  departments     String   @default("[]")  // JSON array of department names
+  regions         String   @default("[]")  // JSON array of regions
+  updatedAt       DateTime @updatedAt
+  updatedBy       String?
+}

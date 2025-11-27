@@ -1,0 +1,19 @@
+{
+  "name": "pmo-time-tracker",
+  "version": "1.0.0",
+  "description": "Chrome extension for quick time tracking in PMO Platform",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "date-fns": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.262",
+    "@types/node": "^20.11.25",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.5"
+  }
+}

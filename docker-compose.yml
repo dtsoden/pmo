@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: pmo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pmouser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pmopass}
+      POSTGRES_DB: ${POSTGRES_DB:-pmodb}
+    ports:
+      - '${POSTGRES_PORT:-7640}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-pmouser}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and real-time features
+  redis:
+    image: redis:7-alpine
+    container_name: pmo-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-7660}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pmo-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-7600}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pmouser}:${POSTGRES_PASSWORD:-pmopass}@postgres:5432/${POSTGRES_DB:-pmodb}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:7620}
+    ports:
+      - '${BACKEND_PORT:-7600}:7600'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    command: npm run dev
+
+  # Frontend (SvelteKit)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pmo-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:7600}
+      PUBLIC_WS_URL: ${PUBLIC_WS_URL:-ws://localhost:7600}
+    ports:
+      - '${FRONTEND_PORT:-7620}:7620'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.svelte-kit
+    command: npm run dev -- --host 0.0.0.0 --port 7620
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: pmo-network

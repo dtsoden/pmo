@@ -1,0 +1,1 @@
+SELECT te.id, te.\"isTimerBased\", te.hours, COUNT(tes.id) as session_count FROM \"TimeEntry\" te LEFT JOIN \"TimeEntrySession\" tes ON te.id = tes.\"timeEntryId\" WHERE te.date  - INTERVAL '7 days' GROUP BY te.id, te.\"isTimerBased\", te.hours, te.date ORDER BY te.date DESC LIMIT 10; 

@@ -1,0 +1,42 @@
+{
+  "name": "cnx-pmo-platform",
+  "version": "1.0.0",
+  "description": "Custom streamlined PMO tracking platform with capacity planning and time tracking",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "chrome-extension",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "build:backend": "npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:extension": "npm run build --workspace=chrome-extension",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "prisma:migrate": "npm run migrate --workspace=backend",
+    "prisma:studio": "npm run studio --workspace=backend",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "format": "prettier --write \"**/*.{ts,tsx,svelte,json,md}\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.5",
+    "prettier-plugin-svelte": "^3.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^2.0.54",
+    "esbuild": "^0.27.0"
+  }
+}
