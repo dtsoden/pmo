@@ -758,6 +758,44 @@ class ApiClient {
     capacity: (teamId: string) =>
       this.request<TeamCapacity>(`/teams/${teamId}/capacity`),
   };
+
+  // Extension endpoints
+  extension = {
+    install: () =>
+      this.request<{ user: { id: string; email: string; role: string } }>('/extension/install', {
+        method: 'POST',
+      }),
+
+    getShortcuts: async () => {
+      const res = await this.request<{ shortcuts: TimerShortcut[] }>('/extension/shortcuts');
+      return res.shortcuts;
+    },
+
+    createShortcut: async (data: CreateTimerShortcutData) => {
+      const res = await this.request<{ shortcut: TimerShortcut }>('/extension/shortcuts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return res.shortcut;
+    },
+
+    updateShortcut: async (id: string, data: UpdateTimerShortcutData) => {
+      const res = await this.request<{ shortcut: TimerShortcut }>(`/extension/shortcuts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return res.shortcut;
+    },
+
+    deleteShortcut: (id: string) =>
+      this.request<void>(`/extension/shortcuts/${id}`, { method: 'DELETE' }),
+
+    reorderShortcuts: (shortcuts: { id: string; sortOrder: number }[]) =>
+      this.request<{ success: boolean }>('/extension/shortcuts/reorder', {
+        method: 'POST',
+        body: JSON.stringify({ shortcuts }),
+      }),
+  };
 }
 
 // Helper to build query strings
@@ -1808,4 +1846,56 @@ export interface TeamCapacity {
     project: Pick<Project, 'id' | 'name'>;
     allocatedHours: number;
   }[];
+}
+
+// ============================================
+// EXTENSION TYPES
+// ============================================
+
+export interface TimerShortcut {
+  id: string;
+  userId: string;
+  taskId?: string;
+  task?: {
+    id: string;
+    title: string;
+    projectId: string;
+    project: {
+      id: string;
+      name: string;
+      code: string;
+    };
+  };
+  label: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  groupName?: string;
+  sortOrder: number;
+  isPinned: boolean;
+  lastUsedAt?: string;
+  useCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTimerShortcutData {
+  taskId?: string;
+  label: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  groupName?: string;
+  isPinned?: boolean;
+}
+
+export interface UpdateTimerShortcutData {
+  taskId?: string;
+  label?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  groupName?: string;
+  sortOrder?: number;
+  isPinned?: boolean;
 }

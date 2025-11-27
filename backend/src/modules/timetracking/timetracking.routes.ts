@@ -20,6 +20,7 @@ import {
   type CreateTimeEntryData,
   type AddSessionData,
 } from './timetracking.service.js';
+import { trackShortcutUse } from '../extension/extension.service.js';
 
 // Validation schemas
 const listEntriesQuerySchema = z.object({
@@ -55,6 +56,7 @@ const addSessionSchema = z.object({
 const startTimerSchema = z.object({
   taskId: z.string().uuid().optional(),
   description: z.string().optional(),
+  shortcutId: z.string().uuid().optional(), // Track which shortcut was used
 });
 
 const updateTimerSchema = z.object({
@@ -241,6 +243,11 @@ export async function timeTrackingRoutes(app: FastifyInstance) {
     try {
       const data = startTimerSchema.parse(request.body);
       const activeEntry = await startTimer(request.user.userId, data.taskId, data.description);
+
+      // Track shortcut usage if shortcutId provided
+      if (data.shortcutId) {
+        await trackShortcutUse(data.shortcutId, request.user.userId);
+      }
 
       // Emit WebSocket event for real-time sync
       const io = (app as any).io;

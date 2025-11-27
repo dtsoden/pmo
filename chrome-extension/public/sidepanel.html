@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PMO Timer - Side Panel</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        font-size: 14px;
+        color: #1f2937;
+        background: #f8fafc;
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 20px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .logo {
+        font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .timer-status {
+        font-size: 24px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .timer-status.inactive {
+        opacity: 0.6;
+        font-size: 14px;
+      }
+
+      .timer-task {
+        font-size: 13px;
+        opacity: 0.9;
+        margin-top: 4px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      .section-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 20px;
+      }
+
+      .shortcuts-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .shortcut-card {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+      }
+
+      .shortcut-card:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        transform: translateX(4px);
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+      }
+
+      .shortcut-color {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .shortcut-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .shortcut-label {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 6px;
+        color: #1f2937;
+      }
+
+      .shortcut-details {
+        font-size: 12px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .shortcut-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .group-section {
+        margin-bottom: 32px;
+      }
+
+      .group-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+      }
+
+      .empty-state p {
+        font-size: 15px;
+        margin-bottom: 20px;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #1f2937;
+        color: white;
+        padding: 14px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        transform: translateX(400px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+      }
+
+      .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast.error {
+        background: #ef4444;
+      }
+
+      .toast.success {
+        background: #10b981;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span>⏱️</span>
+          <span>PMO Timer</span>
+        </div>
+        <button class="btn btn-primary" id="manageBtn" style="padding: 8px 16px; font-size: 13px;">
+          ⚙️ Settings
+        </button>
+      </div>
+      <div class="timer-status" id="timerStatus">
+        <div id="timerTime">00:00:00</div>
+        <div class="timer-task" id="timerTask"></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="section">
+        <div class="section-title">All Timer Shortcuts</div>
+        <div id="shortcutsList" class="shortcuts-list"></div>
+        <div id="emptyState" class="empty-state hidden">
+          <p>📌 No shortcuts yet</p>
+          <button class="btn btn-primary" id="manageBtn2">Create Your First Shortcut</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="sidepanel.js" type="module"></script>
+  </body>
+</html>

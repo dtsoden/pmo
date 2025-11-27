@@ -24,6 +24,9 @@
     "@fastify/jwt": "^8.0.0",
     "@fastify/rate-limit": "^9.1.0",
     "@prisma/client": "^5.10.2",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "@types/archiver": "^7.0.0",
+    "archiver": "^7.0.1",
     "bcrypt": "^5.1.1",
     "date-fns": "^3.6.0",
     "date-fns-tz": "^3.2.0",
@@ -31,6 +34,7 @@
     "fastify": "^4.26.2",
     "pino": "^8.19.0",
     "pino-pretty": "^11.0.0",
+    "redis": "^5.10.0",
     "socket.io": "^4.7.5",
     "zod": "^3.22.4"
   },

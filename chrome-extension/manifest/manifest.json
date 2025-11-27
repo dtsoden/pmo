@@ -3,33 +3,48 @@
   "name": "PMO Time Tracker",
   "version": "1.0.0",
   "description": "Quick time tracking for PMO Platform",
-  "permissions": [
-    "storage",
-    "notifications",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "http://localhost:3000/*",
-    "https://*.azurecontainerapps.io/*"
-  ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
-  },
-  "background": {
-    "service_worker": "background.js"
-  },
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "permissions": [
+    "storage",
+    "notifications",
+    "activeTab",
+    "sidePanel",
+    "contextMenus",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:7600/*",
+    "http://localhost:7620/*",
+    "https://pmo.cnxlab.us/*",
+    "https://pmoservices.cnxlab.us/*",
+    "https://*.azurecontainerapps.io/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:7620/*",
+        "https://pmo.cnxlab.us/*",
+        "https://pmoservices.cnxlab.us/*",
+        "https://*.azurecontainerapps.io/*"
+      ],
+      "js": ["content/auth-listener.js"],
+      "run_at": "document_start"
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }

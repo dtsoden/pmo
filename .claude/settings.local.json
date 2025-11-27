@@ -47,7 +47,16 @@
       "Bash(npm run seed:test:*)",
       "Bash(del \"C:\\Users\\DavidSoden\\CNX-PMO\\backend\\CURRENT_DATE\")",
       "Bash(npm run build:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(cmd /c \"for /r . %f in (*.*) do @echo %f\")",
+      "Bash(find:*)",
+      "Bash(del .env .env.production)",
+      "Bash(start create-icons.html)",
+      "Bash(del \"C:\\Users\\DavidSoden\\CNX-PMO\\chrome-extension\\public\\icons\\icon.svg\")",
+      "Bash(start chrome-extension/create-icons.html)"
     ],
     "deny": [],
     "ask": []

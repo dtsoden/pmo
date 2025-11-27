@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
-  import { User, Bell, Shield, Palette } from 'lucide-svelte';
+  import { User, Bell, Shield, Palette, Timer, Puzzle } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
   // See: https://github.com/sveltejs/kit/issues/5980
@@ -11,14 +11,12 @@
 
   const navItems = [
     { href: '/settings/profile', label: 'Profile', icon: User },
+    { href: '/settings/extension', label: 'Browser Extension', icon: Puzzle },
+    { href: '/settings/timer-shortcuts', label: 'Timer Shortcuts', icon: Timer },
     { href: '/settings/notifications', label: 'Notifications', icon: Bell },
     { href: '/settings/security', label: 'Security', icon: Shield },
     { href: '/settings/appearance', label: 'Appearance', icon: Palette },
   ];
-
-  function isActive(href: string): boolean {
-    return ($page?.url?.pathname ?? '') === href;
-  }
 </script>
 
 <div class="space-y-6">
@@ -36,7 +34,7 @@
             href={item.href}
             class={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              isActive(item.href)
+              $page.url.pathname === item.href
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}

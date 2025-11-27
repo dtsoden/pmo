@@ -1,4 +1,6 @@
 import { Server, Socket } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 import { logger } from '../utils/logger.js';
 import { verifyToken } from '../../modules/auth/auth.service.js';
 
@@ -6,7 +8,25 @@ interface AuthenticatedSocket extends Socket {
   userId?: string;
 }
 
-export function setupWebSocket(io: Server) {
+export async function setupWebSocket(io: Server) {
+  // Setup Redis adapter for multi-instance support
+  if (process.env.REDIS_URL) {
+    try {
+      const pubClient = createClient({ url: process.env.REDIS_URL });
+      const subClient = pubClient.duplicate();
+
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+
+      io.adapter(createAdapter(pubClient, subClient));
+      logger.info('Socket.IO Redis adapter initialized');
+    } catch (error) {
+      logger.error('Failed to initialize Redis adapter:', error);
+      logger.warn('Continuing without Redis adapter (single-instance mode)');
+    }
+  } else {
+    logger.info('REDIS_URL not configured, running in single-instance mode');
+  }
+
   // Authentication middleware
   io.use(async (socket: AuthenticatedSocket, next) => {
     try {
