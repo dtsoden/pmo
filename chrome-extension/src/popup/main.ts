@@ -268,6 +268,14 @@ async function handleOpenSidePanel() {
   }
 }
 
+function handleOpenWebApp() {
+  // Determine web app URL based on environment
+  const webUrl = window.location.hostname === 'localhost' || window.location.hostname.includes('chrome-extension')
+    ? 'http://localhost:7620/settings/extension'  // Development
+    : 'https://pmo.cnxlab.us/settings/extension';  // Production
+  chrome.tabs.create({ url: webUrl });
+}
+
 function handleManageClick() {
   if (auth?.apiUrl) {
     // Determine web app URL based on environment

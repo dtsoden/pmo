@@ -1,7 +1,14 @@
 // Content script that listens for authentication messages from the web app
 // and forwards them to the background service worker
 
-console.log('PMO Timer Extension: Content script loaded');
+// Check if extension context is valid before doing anything
+const isExtensionValid = () => {
+  try {
+    return !!chrome?.runtime?.id;
+  } catch {
+    return false;
+  }
+};
 
 // Listen for messages from the web page
 window.addEventListener('message', (event) => {
@@ -10,21 +17,16 @@ window.addEventListener('message', (event) => {
     return;
   }
 
+  // Check if extension is still valid
+  if (!isExtensionValid()) {
+    return;
+  }
+
   // Handle ping requests
   if (event.data?.type === 'PMO_EXTENSION_PING') {
-    // Check if chrome.runtime is available (extension might be invalidated)
-    if (!chrome?.runtime?.id) {
-      // Silently ignore - this is an old/dead content script
-      return;
-    }
-
-    console.log('PMO Timer Extension: Received ping, checking auth status');
-
-    // Check if we're authenticated
     try {
       chrome.runtime.sendMessage({ type: 'GET_AUTH' }, (response) => {
         if (chrome.runtime.lastError) {
-          // Silently ignore runtime errors
           return;
         }
 
@@ -39,71 +41,70 @@ window.addEventListener('message', (event) => {
         );
       });
     } catch (error) {
-      // Silently ignore errors from dead contexts
+      // Silently ignore
     }
     return;
   }
 
   // Check if this is a PMO extension auth message
   if (event.data?.type === 'PMO_EXTENSION_AUTH') {
-    console.log('PMO Timer Extension: Received auth message from web app');
-
     const { token, apiUrl } = event.data;
 
-    // Forward to background service worker
-    chrome.runtime.sendMessage(
-      {
-        type: 'INIT',
-        data: { token, apiUrl },
-      },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Failed to send auth to background:', chrome.runtime.lastError);
-
-          // Notify web app of failure
-          window.postMessage(
-            {
-              type: 'PMO_EXTENSION_AUTH_RESPONSE',
-              success: false,
-              error: chrome.runtime.lastError.message,
-            },
-            window.location.origin
-          );
-        } else if (response?.success) {
-          console.log('PMO Timer Extension: Successfully initialized');
-
-          // Notify web app of success
-          window.postMessage(
-            {
-              type: 'PMO_EXTENSION_AUTH_RESPONSE',
-              success: true,
-            },
-            window.location.origin
-          );
-        } else {
-          console.error('Failed to initialize extension:', response?.error);
-
-          // Notify web app of failure
-          window.postMessage(
-            {
-              type: 'PMO_EXTENSION_AUTH_RESPONSE',
-              success: false,
-              error: response?.error || 'Unknown error',
-            },
-            window.location.origin
-          );
+    try {
+      // Forward to background service worker
+      chrome.runtime.sendMessage(
+        {
+          type: 'INIT',
+          data: { token, apiUrl },
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            window.postMessage(
+              {
+                type: 'PMO_EXTENSION_AUTH_RESPONSE',
+                success: false,
+                error: chrome.runtime.lastError.message,
+              },
+              window.location.origin
+            );
+          } else if (response?.success) {
+            window.postMessage(
+              {
+                type: 'PMO_EXTENSION_AUTH_RESPONSE',
+                success: true,
+              },
+              window.location.origin
+            );
+          } else {
+            window.postMessage(
+              {
+                type: 'PMO_EXTENSION_AUTH_RESPONSE',
+                success: false,
+                error: response?.error || 'Unknown error',
+              },
+              window.location.origin
+            );
+          }
         }
-      }
-    );
+      );
+    } catch (error) {
+      // Silently ignore
+    }
   }
 });
 
-// Notify web app that extension is ready
-window.postMessage(
-  {
-    type: 'PMO_EXTENSION_READY',
-  },
-  window.location.origin
-);
+// Only notify web app if extension is valid
+if (isExtensionValid()) {
+  try {
+    window.postMessage(
+      {
+        type: 'PMO_EXTENSION_READY',
+      },
+      window.location.origin
+    );
+  } catch (error) {
+    // Silently ignore
+  }
+}
 
 export {};
