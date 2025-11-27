@@ -82,8 +82,7 @@
 
   async function loadProjectTasks(projectId: string) {
     try {
-      const project = await api.projects.get(projectId);
-      projectTasks = project.tasks || [];
+      projectTasks = await api.projects.tasks.list(projectId);
     } catch (err) {
       console.error('Failed to load tasks:', err);
       projectTasks = [];

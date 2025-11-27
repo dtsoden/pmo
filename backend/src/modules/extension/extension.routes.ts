@@ -134,6 +134,13 @@ export async function extensionRoutes(app: FastifyInstance) {
     try {
       const data = createShortcutSchema.parse(request.body) as CreateShortcutData;
       const shortcut = await createShortcut(request.user.userId, data);
+
+      // Emit WebSocket event for real-time sync
+      const io = (app as any).io;
+      if (io) {
+        io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { shortcut });
+      }
+
       return reply.code(201).send({ shortcut });
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -154,6 +161,13 @@ export async function extensionRoutes(app: FastifyInstance) {
       const { id } = idParamSchema.parse(request.params);
       const data = updateShortcutSchema.parse(request.body) as UpdateShortcutData;
       const shortcut = await updateShortcut(id, request.user.userId, data);
+
+      // Emit WebSocket event for real-time sync
+      const io = (app as any).io;
+      if (io) {
+        io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { shortcut });
+      }
+
       return { shortcut };
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -179,6 +193,13 @@ export async function extensionRoutes(app: FastifyInstance) {
     try {
       const { id } = idParamSchema.parse(request.params);
       await deleteShortcut(id, request.user.userId);
+
+      // Emit WebSocket event for real-time sync
+      const io = (app as any).io;
+      if (io) {
+        io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { deletedId: id });
+      }
+
       return reply.code(204).send();
     } catch (error: any) {
       if (error.message === 'Shortcut not found') {
@@ -198,6 +219,13 @@ export async function extensionRoutes(app: FastifyInstance) {
     try {
       const { shortcuts } = reorderShortcutsSchema.parse(request.body);
       await reorderShortcuts(request.user.userId, shortcuts as ReorderShortcutData[]);
+
+      // Emit WebSocket event for real-time sync
+      const io = (app as any).io;
+      if (io) {
+        io.to(`user:${request.user.userId}`).emit('shortcuts:updated', {});
+      }
+
       return { success: true };
     } catch (error: any) {
       if (error.name === 'ZodError') {

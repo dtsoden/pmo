@@ -1,5 +1,5 @@
 import { api } from '@shared/api';
-import { websocket, onTimerStarted, onTimerStopped, onTimerDiscarded } from '@shared/websocket';
+import { websocket, onTimerStarted, onTimerStopped, onTimerDiscarded, onShortcutsUpdated } from '@shared/websocket';
 import {
   getAuth,
   setAuth,
@@ -132,6 +132,14 @@ onTimerDiscarded(async () => {
   console.log('Timer discarded event');
   await clearTimer();
   broadcastToAllTabs({ type: 'TIMER_UPDATED' });
+});
+
+onShortcutsUpdated(async (event) => {
+  console.log('Shortcuts updated event:', event);
+  // Refetch all shortcuts
+  const shortcuts = await api.getShortcuts();
+  await setShortcuts(shortcuts);
+  broadcastToAllTabs({ type: 'SHORTCUTS_UPDATED' });
 });
 
 // ============================================

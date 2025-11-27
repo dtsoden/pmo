@@ -177,3 +177,7 @@ export function onTimerStopped(handler: (event: TimerStoppedEvent) => void): voi
 export function onTimerDiscarded(handler: (event: TimerDiscardedEvent) => void): void {
   websocket.on('time:discarded', handler);
 }
+
+export function onShortcutsUpdated(handler: (event: any) => void): void {
+  websocket.on('shortcuts:updated', handler);
+}
