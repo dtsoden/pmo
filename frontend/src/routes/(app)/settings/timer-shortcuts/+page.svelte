@@ -216,10 +216,12 @@
         Manage quick-access shortcuts for the Chrome extension timer
       </p>
     </div>
-    <Button on:click={openCreateModal}>
-      <Plus class="mr-2 h-4 w-4" />
-      Create Shortcut
-    </Button>
+    {#if !loading && shortcuts.length > 0}
+      <Button on:click={openCreateModal}>
+        <Plus class="mr-2 h-4 w-4" />
+        Create Shortcut
+      </Button>
+    {/if}
   </div>
 
   {#if loading}
