@@ -123,12 +123,12 @@ function renderShortcuts() {
 
   emptyState.classList.add('hidden');
   grid.innerHTML = pinnedShortcuts
-    .slice(0, 6) // Show max 6 shortcuts in popup
+    .slice(0, 9) // Show max 9 shortcuts in popup (3x3 grid)
     .map((shortcut) => createShortcutButton(shortcut))
     .join('');
 
   // Attach event listeners
-  pinnedShortcuts.slice(0, 6).forEach((shortcut) => {
+  pinnedShortcuts.slice(0, 9).forEach((shortcut) => {
     const btn = document.querySelector(`[data-shortcut-id="${shortcut.id}"]`);
     if (btn) {
       btn.addEventListener('click', () => handleShortcutClick(shortcut));
@@ -169,7 +169,6 @@ function updateStatusIndicator(connected: boolean) {
 
 function setupEventListeners() {
   // Timer controls
-  getElement('startGenericBtn')?.addEventListener('click', handleStartGeneric);
   getElement('stopBtn')?.addEventListener('click', handleStop);
 
   // Not authenticated state
@@ -185,24 +184,15 @@ function setupEventListeners() {
       refreshTimer();
     } else if (message.type === 'SHORTCUTS_UPDATED') {
       refreshShortcuts();
+    } else if (message.type === 'AUTH_EXPIRED') {
+      // Session expired, show not authenticated state
+      console.log('Auth expired, updating UI');
+      auth = null;
+      activeTimer = null;
+      shortcuts = [];
+      showNotAuthenticated();
     }
   });
-}
-
-async function handleStartGeneric() {
-  try {
-    const response = await sendMessage({
-      type: 'START_TIMER',
-      data: {},
-    });
-
-    activeTimer = response.data;
-    renderTimer();
-    showToast('Timer started', 'success');
-  } catch (error: any) {
-    console.error('Failed to start timer:', error);
-    showToast(error.message || 'Failed to start timer', 'error');
-  }
 }
 
 async function handleShortcutClick(shortcut: TimerShortcut) {
@@ -256,11 +246,15 @@ async function handleOpenSidePanel() {
 }
 
 function handleOpenWebApp() {
-  // Determine web app URL based on environment
+  // Determine web app URL based on environment - link directly to extension settings for reconnection
   const webUrl = window.location.hostname === 'localhost' || window.location.hostname.includes('chrome-extension')
     ? 'http://localhost:7620/settings/extension'  // Development
     : 'https://pmo.cnxlab.us/settings/extension';  // Production
-  chrome.tabs.create({ url: webUrl });
+
+  chrome.tabs.create({ url: webUrl }, (tab) => {
+    // Close popup after opening tab for better UX
+    window.close();
+  });
 }
 
 function handleManageClick() {

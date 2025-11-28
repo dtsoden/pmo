@@ -197,6 +197,22 @@
     }
   }
 
+  // Refresh only the active timer (for real-time updates from extension)
+  async function refreshActiveTimer() {
+    try {
+      const timerRes = await api.timetracking.timer.active();
+      activeTimer = timerRes;
+
+      if (activeTimer) {
+        startTimerDisplay();
+      } else {
+        stopTimerDisplay();
+      }
+    } catch (err) {
+      console.error('Failed to refresh active timer:', err);
+    }
+  }
+
   function startTimerDisplay() {
     if (!activeTimer) return;
 
@@ -493,7 +509,24 @@
     loadData();
 
     // Listen for real-time updates
-    const unsub = ws.on('time:entry:created', () => loadData());
+    const unsubEntryCreated = ws.on('time:entry:created', () => loadData());
+
+    // Listen for timer events (for real-time sync with extension)
+    const unsubTimerStarted = ws.on('time:started', (data: any) => {
+      console.log('Timer started event received:', data);
+      refreshActiveTimer();
+    });
+
+    const unsubTimerStopped = ws.on('time:stopped', (data: any) => {
+      console.log('Timer stopped event received:', data);
+      refreshActiveTimer();
+      loadData(); // Reload entries to show the newly created entry
+    });
+
+    const unsubTimerUpdated = ws.on('time:updated', (data: any) => {
+      console.log('Timer updated event received:', data);
+      refreshActiveTimer();
+    });
 
     // Check if Chrome extension is installed
     const handleExtensionMessage = (event: MessageEvent) => {
@@ -511,7 +544,10 @@
     }, 100);
 
     return () => {
-      unsub();
+      unsubEntryCreated();
+      unsubTimerStarted();
+      unsubTimerStopped();
+      unsubTimerUpdated();
       stopTimerDisplay();
       window.removeEventListener('message', handleExtensionMessage);
     };
@@ -567,23 +603,13 @@
             </p>
           </div>
         </div>
-        <div class="flex gap-2">
-          <a
-            href="/api/extension/download"
-            download="pmo-timer-extension.zip"
-          >
-            <Button size="sm" variant="default">
-              Download Extension
-            </Button>
-          </a>
-          <a href="/settings/extension">
-          <Button size="sm" variant="outline">
-            Learn More
+        <a href="/settings/extension">
+          <Button size="sm" variant="default">
+            Learn More & Setup
           </Button>
         </a>
       </div>
-    </div>
-  </Card>
+    </Card>
   {/if}
 
   <!-- Active Timer -->
@@ -955,7 +981,10 @@
           addSessionStart = format(parseISO(editDate), "yyyy-MM-dd'T'08:00");
           addSessionEnd = format(parseISO(editDate), "yyyy-MM-dd'T'09:00");
           addSessionDescription = '';
-          showAddSessionModal = true;
+          // Delay opening add session modal to allow edit modal to close first
+          setTimeout(() => {
+            showAddSessionModal = true;
+          }, 50);
         }}
       >
         <Plus class="h-4 w-4 mr-2" />

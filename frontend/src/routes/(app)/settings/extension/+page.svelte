@@ -22,9 +22,18 @@
   // Check if extension is already authenticated on mount
   async function checkInitialStatus() {
     const status = await checkExtensionStatus();
+
     if (status.authenticated) {
+      // Extension is fully connected
       currentStep = 'complete';
+    } else if (status.detected) {
+      // Extension is installed but not authenticated (session expired)
+      // Skip directly to connect step for easy reconnection
+      currentStep = 'connect';
+      extensionDetected = true;
+      console.log('Extension detected but not authenticated - ready to reconnect');
     }
+    // else: Extension not installed, stay on download step
   }
 
   // Check extension status (no polling, just one check)
@@ -311,20 +320,30 @@
     <Card class="p-6">
       <div class="space-y-6">
         <div>
-          <h2 class="text-xl font-semibold mb-2">Step 3: Connect Extension</h2>
+          <h2 class="text-xl font-semibold mb-2">
+            {extensionDetected ? 'Reconnect Extension' : 'Step 3: Connect Extension'}
+          </h2>
           <p class="text-sm text-muted-foreground">
-            Authenticate the extension with your PMO account
+            {extensionDetected
+              ? 'Your session expired. Click below to reconnect the extension.'
+              : 'Authenticate the extension with your PMO account'}
           </p>
         </div>
 
         <div class="rounded-lg border-2 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900 p-6 text-center">
           <Link class="h-12 w-12 mx-auto mb-4 text-blue-600" />
-          <p class="mb-6 text-sm text-muted-foreground">
-            Click the button below to detect and connect the extension to your account
-          </p>
+          {#if extensionDetected}
+            <p class="mb-6 text-sm text-muted-foreground">
+              Extension detected! Click the button below to restore the connection.
+            </p>
+          {:else}
+            <p class="mb-6 text-sm text-muted-foreground">
+              Click the button below to detect and connect the extension to your account
+            </p>
+          {/if}
           <Button size="lg" on:click={connectExtension} loading={connecting}>
             <Link class="mr-2 h-5 w-5" />
-            {connecting ? 'Connecting...' : 'Connect Extension'}
+            {connecting ? 'Connecting...' : extensionDetected ? 'Reconnect Now' : 'Connect Extension'}
           </Button>
         </div>
 

@@ -74,6 +74,19 @@ chrome.runtime.onStartup.addListener(async () => {
 
 async function initializeExtension() {
   try {
+    // Set up automatic auth clearing on 401 errors
+    api.onAuthExpired(async () => {
+      console.log('Auth expired, automatically clearing extension state');
+      await clearAuth();
+      websocket.disconnect();
+      api.setToken(null);
+      await clearTimer();
+      await setShortcuts([]);
+
+      // Notify all extension UI components that auth is cleared
+      broadcastToAllTabs({ type: 'AUTH_EXPIRED' });
+    });
+
     const auth = await getAuth();
     if (auth?.token) {
       const apiUrl = await getApiUrl();

@@ -12,6 +12,7 @@ import type {
 export class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
+  private onAuthExpiredCallback: (() => void) | null = null;
 
   constructor(baseUrl: string = 'http://localhost:7600') {
     this.baseUrl = baseUrl;
@@ -23,6 +24,10 @@ export class ApiClient {
 
   setBaseUrl(url: string) {
     this.baseUrl = url;
+  }
+
+  onAuthExpired(callback: () => void) {
+    this.onAuthExpiredCallback = callback;
   }
 
   private async request<T>(
@@ -48,6 +53,12 @@ export class ApiClient {
     });
 
     if (!response.ok) {
+      // If 401 Unauthorized, trigger auth expired callback
+      if (response.status === 401 && this.onAuthExpiredCallback) {
+        console.log('Auth expired (401), clearing auth state');
+        this.onAuthExpiredCallback();
+      }
+
       const error = await response.json().catch(() => ({ error: 'Request failed' }));
       throw new Error(error.error || `HTTP ${response.status}`);
     }

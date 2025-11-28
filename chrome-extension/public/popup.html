@@ -206,18 +206,18 @@
 
       .shortcuts-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
       }
 
       .shortcut-btn {
-        padding: 14px;
+        padding: 10px;
         border: 2px solid #e2e8f0;
         border-radius: 8px;
         background: white;
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        text-align: left;
+        text-align: center;
       }
 
       .shortcut-btn:hover {
@@ -228,20 +228,23 @@
       }
 
       .shortcut-icon {
-        font-size: 20px;
-        margin-bottom: 8px;
+        font-size: 24px;
+        margin-bottom: 6px;
         display: block;
       }
 
       .shortcut-label {
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 600;
         color: #1f2937;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .shortcut-task {
-        font-size: 11px;
+        font-size: 9px;
         color: #64748b;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -345,8 +348,9 @@
       <!-- Not Authenticated State -->
       <div id="notAuthState" class="not-authenticated hidden">
         <h2>🔐 Not Connected</h2>
-        <p>Visit your PMO web app and click "Connect Extension" to get started.</p>
-        <button class="btn btn-primary" id="openWebAppBtn">Open PMO Web App</button>
+        <p>Your session expired or the extension needs to be connected.</p>
+        <p style="margin-top: 8px; font-size: 13px;">Click below to reconnect - it only takes one click!</p>
+        <button class="btn btn-primary" id="openWebAppBtn">Reconnect Extension</button>
       </div>
 
       <!-- Authenticated State -->
@@ -354,9 +358,11 @@
         <!-- Timer Section -->
         <div class="timer-section">
           <div id="noTimerState" class="hidden">
-            <div class="empty-state" style="padding: 24px 0;">No active timer</div>
-            <div class="timer-controls single">
-              <button class="btn btn-primary" id="startGenericBtn">▶ Start Timer</button>
+            <div class="empty-state" style="padding: 20px 0; font-size: 13px;">
+              No active timer<br>
+              <span style="font-size: 11px; color: #94a3b8; margin-top: 4px; display: block;">
+                Click a shortcut below to start
+              </span>
             </div>
           </div>
 

@@ -156,6 +156,12 @@ function setupEventListeners() {
       refreshTimer();
     } else if (message.type === 'SHORTCUTS_UPDATED') {
       refreshShortcuts();
+    } else if (message.type === 'AUTH_EXPIRED') {
+      // Session expired, clear state and show empty state
+      console.log('Auth expired, clearing sidepanel state');
+      shortcuts = [];
+      activeTimer = null;
+      renderUI();
     }
   });
 }
