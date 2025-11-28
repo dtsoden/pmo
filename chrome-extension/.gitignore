@@ -1,5 +1,6 @@
 # Build output
-dist/
+# NOTE: dist/ is now committed to git (not ignored) because it's served by backend
+# /api/extension/download endpoint and contains build-time environment variables
 
 # Dependencies
 node_modules/

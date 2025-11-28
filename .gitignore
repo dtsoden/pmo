@@ -46,7 +46,8 @@ frontend/build/
 frontend/node_modules/
 
 # Chrome Extension
-chrome-extension/dist/
+# NOTE: dist/ is committed to git because it's served by backend /api/extension/download
+# and contains build-time environment variables (VITE_EXTENSION_BACKEND_URL)
 chrome-extension/node_modules/
 
 # Database
