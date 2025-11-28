@@ -56,8 +56,8 @@
 
       const response = await api.capacity.timeOff.list(params);
       requests = response.data;
-      totalPages = response.meta.totalPages;
-      totalCount = response.meta.total;
+      totalPages = response.totalPages;
+      totalCount = response.total;
     } catch (err) {
       toast.error((err as { message?: string })?.message || 'Failed to load leave requests');
     } finally {
