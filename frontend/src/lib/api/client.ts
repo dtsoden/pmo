@@ -1341,10 +1341,18 @@ export interface UpdateTimeEntryData {
 export interface ActiveTimer {
   id: string;
   userId: string;
-  taskId: string;
-  task: Pick<Task, 'id' | 'name'> & { project: Pick<Project, 'id' | 'name'> };
+  taskId: string | null;
+  task: {
+    id: string;
+    title: string;
+    project: {
+      id: string;
+      code: string;
+      name: string;
+    };
+  } | null;
   startTime: string;
-  description?: string;
+  description: string | null;
   elapsedSeconds?: number;
 }
 
@@ -1388,6 +1396,15 @@ export interface DashboardData {
       startTime: string;
       taskId: string | null;
       description: string | null;
+      task: {
+        id: string;
+        title: string;
+        project: {
+          id: string;
+          code: string;
+          name: string;
+        };
+      } | null;
       elapsedSeconds: number;
     } | null;
     hoursLoggedToday: number;

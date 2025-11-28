@@ -3,7 +3,7 @@
   import { page } from '$app/stores';
   import { api, type TimeEntry, type ActiveTimer, type Task, type Project } from '$lib/api/client';
   import { ws } from '$lib/stores/websocket';
-  import { Card, Button, Badge, Spinner, EmptyState, Modal, Select } from '$components/shared';
+  import { Card, Button, Badge, Spinner, EmptyState, Modal, Select, ActiveTimerBanner } from '$components/shared';
   import { cn, formatDate, formatHours, debounce } from '$lib/utils';
   import { Play, Square, Plus, Clock, Calendar, Trash2, Pencil, ChevronDown, ChevronRight, Timer } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
@@ -614,30 +614,7 @@
 
   <!-- Active Timer -->
   {#if activeTimer}
-    <Card class="border-primary bg-primary/5 p-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Clock class="h-6 w-6 animate-pulse" />
-          </div>
-          <div>
-            <p class="font-medium">{activeTimer.task?.title || activeTimer.description || 'Timer Running'}</p>
-            <p class="text-sm text-muted-foreground">
-              {activeTimer.task?.project?.name || 'No project'}
-              {#if activeTimer.description && activeTimer.task?.title}
-                - {activeTimer.description}
-              {/if}
-            </p>
-          </div>
-        </div>
-        <div class="text-right">
-          <p class="font-mono text-3xl font-bold text-primary">{formatElapsed(elapsedSeconds)}</p>
-          <p class="text-sm text-muted-foreground">
-            Started at {activeTimer.startTime ? format(new Date(activeTimer.startTime), 'h:mm a') : 'Unknown'}
-          </p>
-        </div>
-      </div>
-    </Card>
+    <ActiveTimerBanner {activeTimer} {elapsedSeconds} />
   {/if}
 
   <!-- Week Navigation -->

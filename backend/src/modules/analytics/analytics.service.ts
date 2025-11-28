@@ -15,6 +15,15 @@ export async function getDashboard(userId: string, userRole: string) {
       user: {
         select: { firstName: true, lastName: true },
       },
+      task: {
+        select: {
+          id: true,
+          title: true,
+          project: {
+            select: { id: true, code: true, name: true },
+          },
+        },
+      },
     },
   });
 
@@ -130,6 +139,7 @@ export async function getDashboard(userId: string, userRole: string) {
         startTime: activeTimer.startTime,
         taskId: activeTimer.taskId,
         description: activeTimer.description,
+        task: activeTimer.task,
         elapsedSeconds: Math.floor((Date.now() - activeTimer.startTime.getTime()) / 1000),
       } : null,
       hoursLoggedToday: todayEntries._sum.hours || 0,

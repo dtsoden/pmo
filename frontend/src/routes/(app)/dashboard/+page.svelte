@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { api, type DashboardData } from '$lib/api/client';
   import { user } from '$lib/stores/auth';
-  import { Card, Badge, Spinner, EmptyState } from '$components/shared';
+  import { Card, Badge, Spinner, EmptyState, ActiveTimerBanner } from '$components/shared';
   import {
     formatDate,
     getProjectStatusVariant,
@@ -95,25 +95,12 @@
   {:else if dashboardData}
     <!-- Active Timer Banner -->
     {#if dashboardData.user?.activeTimer}
-      <Card class="border-primary bg-primary/5 p-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground animate-pulse">
-              <Play class="h-5 w-5" />
-            </div>
-            <div>
-              <p class="font-medium">Timer Running</p>
-              <p class="text-sm text-muted-foreground">
-                {dashboardData.user.activeTimer?.description || 'No description'}
-              </p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="text-2xl font-mono font-bold text-primary">{formatElapsedTime(elapsedSeconds)}</p>
-            <a href="/time" class="text-sm text-primary hover:underline">View Timer →</a>
-          </div>
-        </div>
-      </Card>
+      <ActiveTimerBanner
+        activeTimer={dashboardData.user.activeTimer}
+        {elapsedSeconds}
+        linkTo="/time"
+        compact
+      />
     {/if}
 
     <!-- Stats Grid -->
