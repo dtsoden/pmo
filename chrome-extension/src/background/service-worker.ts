@@ -72,20 +72,30 @@ chrome.runtime.onStartup.addListener(async () => {
   await initializeExtension();
 });
 
+/**
+ * Setup auth expiration handler
+ * This must be called both during initialization and reconnection
+ * to ensure 401 errors are properly handled at all times
+ */
+function setupAuthExpirationHandler() {
+  api.onAuthExpired(async () => {
+    console.log('🔓 Auth expired (401), automatically clearing extension state');
+    await clearAuth();
+    websocket.disconnect();
+    api.setToken(null);
+    await clearTimer();
+    await setShortcuts([]);
+
+    // Notify all extension UI components that auth is cleared
+    broadcastToAllTabs({ type: 'AUTH_EXPIRED' });
+    console.log('   - Auth cleared, UI notified');
+  });
+}
+
 async function initializeExtension() {
   try {
     // Set up automatic auth clearing on 401 errors
-    api.onAuthExpired(async () => {
-      console.log('Auth expired, automatically clearing extension state');
-      await clearAuth();
-      websocket.disconnect();
-      api.setToken(null);
-      await clearTimer();
-      await setShortcuts([]);
-
-      // Notify all extension UI components that auth is cleared
-      broadcastToAllTabs({ type: 'AUTH_EXPIRED' });
-    });
+    setupAuthExpirationHandler();
 
     const auth = await getAuth();
     if (auth?.token) {
@@ -247,40 +257,57 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // ============================================
 
 async function handleInit(data: { token: string; apiUrl: string }): Promise<MessageResponse> {
+  console.log('🔄 Handling INIT/reconnection request');
   const { token, apiUrl } = data;
 
-  api.setBaseUrl(apiUrl);
-  api.setToken(token);
+  try {
+    // Re-establish auth expiration handler (critical for reconnection)
+    setupAuthExpirationHandler();
+    console.log('   - Auth expiration handler re-established');
 
-  await setApiUrl(apiUrl);
+    api.setBaseUrl(apiUrl);
+    api.setToken(token);
 
-  // Validate token by calling install endpoint
-  const response = await api.install();
+    await setApiUrl(apiUrl);
 
-  // Store auth state
-  const auth: AuthState = {
-    token,
-    user: {
-      id: response.user.id,
-      email: response.user.email,
-      firstName: '',
-      lastName: '',
-      role: response.user.role,
-    },
-    apiUrl,
-    isAuthenticated: true,
-  };
+    // Validate token by calling install endpoint
+    console.log('   - Validating token with backend...');
+    const response = await api.install();
+    console.log('   - ✅ Token validated');
 
-  await setAuth(auth);
+    // Store auth state
+    const auth: AuthState = {
+      token,
+      user: {
+        id: response.user.id,
+        email: response.user.email,
+        firstName: '',
+        lastName: '',
+        role: response.user.role,
+      },
+      apiUrl,
+      isAuthenticated: true,
+    };
 
-  // Connect WebSocket
-  websocket.setUrl(apiUrl);
-  websocket.connect(token);
+    await setAuth(auth);
+    console.log('   - Auth state saved');
 
-  // Fetch initial data
-  await syncData();
+    // Connect WebSocket
+    websocket.setUrl(apiUrl);
+    websocket.connect(token);
+    console.log('   - WebSocket connected');
 
-  return { success: true, data: auth };
+    // Fetch initial data
+    await syncData();
+    console.log('   - Initial data synced');
+
+    console.log('🎉 Reconnection successful!');
+    return { success: true, data: auth };
+  } catch (error: any) {
+    console.error('❌ Reconnection failed:', error);
+    // Make sure to return the error properly
+    throw new Error(error.message || 'Failed to reconnect extension');
+  }
 }
 
 async function handleGetAuth(): Promise<MessageResponse> {

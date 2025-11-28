@@ -14,7 +14,7 @@ export class ApiClient {
   private token: string | null = null;
   private onAuthExpiredCallback: (() => void) | null = null;
 
-  constructor(baseUrl: string = 'http://localhost:7600') {
+  constructor(baseUrl: string = import.meta.env.VITE_EXTENSION_BACKEND_URL || 'http://localhost:7600') {
     this.baseUrl = baseUrl;
   }
 
@@ -45,6 +45,16 @@ export class ApiClient {
 
     if (this.token) {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    // Add Extension API Key for security (matches backend EXTENSION_API_KEY)
+    // This provides an additional security layer to prevent malicious extensions from calling our API
+    // Key is injected at build time from chrome-extension/.env
+    const extensionApiKey = import.meta.env.VITE_EXTENSION_API_KEY;
+    if (extensionApiKey) {
+      (headers as Record<string, string>)['X-Extension-Api-Key'] = extensionApiKey;
+    } else {
+      console.warn('VITE_EXTENSION_API_KEY not configured - extension security layer disabled');
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {

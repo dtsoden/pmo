@@ -11,17 +11,23 @@ echo.
 echo Restarting PMO Platform...
 echo.
 
+REM Rebuild Chrome extension (ensures config is fresh)
+echo [1/3] Rebuilding Chrome extension...
+cd /d "%PROJECT_ROOT%\chrome-extension"
+call npm run build > nul 2>&1
+cd /d "%PROJECT_ROOT%"
+
 REM Restart NSSM services (fastest way)
-echo [1/2] Restarting NSSM services...
+echo [2/3] Restarting NSSM services...
 nssm restart pmo-backend
 nssm restart pmo-frontend
 
 REM Optionally restart Docker if needed
 if "%1"=="--docker" (
-    echo [2/2] Restarting Docker containers...
+    echo [3/3] Restarting Docker containers...
     docker-compose -f "%PROJECT_ROOT%\docker-compose.yml" restart postgres redis
 ) else (
-    echo [2/2] Docker containers unchanged (use --docker to restart)
+    echo [3/3] Docker containers unchanged (use --docker to restart)
 )
 
 echo.

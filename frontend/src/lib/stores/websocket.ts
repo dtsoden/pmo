@@ -47,8 +47,10 @@ function createWebSocketStore() {
 
       update(state => ({ ...state, isConnecting: true, error: null }));
 
-      // Connect via same origin - Vite proxy handles /socket.io routing
-      socket = io({
+      // Connect to WebSocket - URL from environment variable, defaults to same-origin
+      // Vite proxy handles /socket.io routing in development
+      const wsBase = import.meta.env.VITE_WS_BASE || '/';
+      socket = io(wsBase, {
         auth: { token },
         transports: ['websocket', 'polling'],
         reconnection: true,

@@ -1,8 +1,10 @@
 // API Client for PMO Platform
 // Handles all HTTP requests to the backend with JWT authentication
 
-// Use relative path - Vite proxy handles routing to backend
-const API_BASE = '/api';
+// API base path from environment (defaults to /api for proxy mode)
+// Development: /api (proxied by Vite)
+// Production: /api (proxied by nginx/cloudflare) OR https://pmoservices.cnxlab.us/api (direct)
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 interface ApiError {
   message: string;

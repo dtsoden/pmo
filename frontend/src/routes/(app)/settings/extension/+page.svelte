@@ -108,9 +108,7 @@
       await api.extension.install();
 
       // Send auth message to extension
-      const apiUrl = window.location.hostname === 'localhost'
-        ? 'http://localhost:7600'
-        : 'https://pmoservices.cnxlab.us';
+      const apiUrl = import.meta.env.VITE_EXTENSION_BACKEND_URL || 'http://localhost:7600';
 
       window.postMessage(
         {

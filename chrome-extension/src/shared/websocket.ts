@@ -9,7 +9,7 @@ export class WebSocketClient {
   private url: string;
   private handlers: Map<string, EventHandler[]> = new Map();
 
-  constructor(url: string = 'http://localhost:7600') {
+  constructor(url: string = import.meta.env.VITE_EXTENSION_BACKEND_URL || 'http://localhost:7600') {
     this.url = url;
   }
 

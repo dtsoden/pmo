@@ -36,7 +36,7 @@ export async function getToken(): Promise<string | null> {
 
 export async function getApiUrl(): Promise<string> {
   const result = await chrome.storage.local.get(KEYS.API_URL);
-  return result[KEYS.API_URL] || 'http://localhost:7600';
+  return result[KEYS.API_URL] || import.meta.env.VITE_EXTENSION_BACKEND_URL || 'http://localhost:7600';
 }
 
 export async function setApiUrl(url: string): Promise<void> {

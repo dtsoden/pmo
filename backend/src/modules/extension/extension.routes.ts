@@ -4,6 +4,7 @@ import archiver from 'archiver';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { extensionAuthMiddleware } from '../../core/middleware/extension-auth.middleware.js';
 import {
   getShortcuts,
   createShortcut,
@@ -95,8 +96,9 @@ export async function extensionRoutes(app: FastifyInstance) {
   // ========== EXTENSION INSTALLATION ==========
 
   // Validate authentication and return user info for extension installation
+  // NOTE: Called by WEB APP (not extension), so no extensionAuthMiddleware required
   app.post('/install', {
-    preHandler: app.authenticate
+    preHandler: [app.authenticate]
   }, async (request, reply) => {
     try {
       // User is already authenticated via middleware
@@ -117,7 +119,7 @@ export async function extensionRoutes(app: FastifyInstance) {
 
   // Get all shortcuts for current user
   app.get('/shortcuts', {
-    preHandler: app.authenticate
+    preHandler: [app.authenticate, extensionAuthMiddleware]
   }, async (request, reply) => {
     try {
       const shortcuts = await getShortcuts(request.user.userId);
@@ -129,7 +131,7 @@ export async function extensionRoutes(app: FastifyInstance) {
 
   // Create new shortcut
   app.post('/shortcuts', {
-    preHandler: app.authenticate
+    preHandler: [app.authenticate, extensionAuthMiddleware]
   }, async (request, reply) => {
     try {
       const data = createShortcutSchema.parse(request.body) as CreateShortcutData;
@@ -158,7 +160,7 @@ export async function extensionRoutes(app: FastifyInstance) {
 
   // Update shortcut
   app.put('/shortcuts/:id', {
-    preHandler: app.authenticate
+    preHandler: [app.authenticate, extensionAuthMiddleware]
   }, async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
@@ -194,7 +196,7 @@ export async function extensionRoutes(app: FastifyInstance) {
 
   // Delete shortcut
   app.delete('/shortcuts/:id', {
-    preHandler: app.authenticate
+    preHandler: [app.authenticate, extensionAuthMiddleware]
   }, async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
@@ -229,7 +231,7 @@ export async function extensionRoutes(app: FastifyInstance) {
 
   // Bulk reorder shortcuts
   app.post('/shortcuts/reorder', {
-    preHandler: app.authenticate
+    preHandler: [app.authenticate, extensionAuthMiddleware]
   }, async (request, reply) => {
     try {
       const { shortcuts } = reorderShortcutsSchema.parse(request.body);

@@ -246,10 +246,9 @@ async function handleOpenSidePanel() {
 }
 
 function handleOpenWebApp() {
-  // Determine web app URL based on environment - link directly to extension settings for reconnection
-  const webUrl = window.location.hostname === 'localhost' || window.location.hostname.includes('chrome-extension')
-    ? 'http://localhost:7620/settings/extension'  // Development
-    : 'https://pmo.cnxlab.us/settings/extension';  // Production
+  // Link directly to extension settings for reconnection
+  const frontendUrl = import.meta.env.VITE_EXTENSION_FRONTEND_URL || 'http://localhost:7620';
+  const webUrl = `${frontendUrl}/settings/extension`;
 
   chrome.tabs.create({ url: webUrl }, (tab) => {
     // Close popup after opening tab for better UX
@@ -258,13 +257,8 @@ function handleOpenWebApp() {
 }
 
 function handleManageClick() {
-  if (auth?.apiUrl) {
-    // Determine web app URL based on environment
-    const webUrl = auth.apiUrl.includes('localhost')
-      ? 'http://localhost:7620'  // Development
-      : 'https://pmo.cnxlab.us';  // Production
-    chrome.tabs.create({ url: `${webUrl}/settings/timer-shortcuts` });
-  }
+  const frontendUrl = import.meta.env.VITE_EXTENSION_FRONTEND_URL || 'http://localhost:7620';
+  chrome.tabs.create({ url: `${frontendUrl}/settings/timer-shortcuts` });
 }
 
 // ============================================

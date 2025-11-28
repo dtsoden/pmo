@@ -202,17 +202,8 @@ async function handleShortcutClick(shortcut: TimerShortcut) {
 
 async function handleManageClick() {
   try {
-    // Get auth state to determine URL
-    const authResponse = await sendMessage({ type: 'GET_AUTH' });
-    const auth = authResponse.data;
-
-    if (auth?.apiUrl) {
-      // Determine web app URL based on environment
-      const webUrl = auth.apiUrl.includes('localhost')
-        ? 'http://localhost:7620'  // Development
-        : 'https://pmo.cnxlab.us';  // Production
-      chrome.tabs.create({ url: `${webUrl}/settings/timer-shortcuts` });
-    }
+    const frontendUrl = import.meta.env.VITE_EXTENSION_FRONTEND_URL || 'http://localhost:7620';
+    chrome.tabs.create({ url: `${frontendUrl}/settings/timer-shortcuts` });
   } catch (error) {
     console.error('Failed to open manage page:', error);
   }
