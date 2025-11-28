@@ -19,6 +19,12 @@
   let editingId: string | null = null;
   let saving = false;
 
+  // Group rename state
+  let showGroupRenameModal = false;
+  let editingGroupName: string | null = null;
+  let newGroupName = '';
+  let savingGroupRename = false;
+
   // Form fields
   let selectedTaskId = '';
   let label = '';
@@ -39,6 +45,16 @@
     .map(s => s.groupName)
     .filter(name => name && name.trim() !== '')
   )].sort();
+
+  // Group shortcuts by groupName for display
+  $: groupedShortcuts = shortcuts.reduce((groups, shortcut, index) => {
+    const group = shortcut.groupName || 'Ungrouped';
+    if (!groups.has(group)) {
+      groups.set(group, []);
+    }
+    groups.get(group)!.push({ ...shortcut, originalIndex: index });
+    return groups;
+  }, new Map<string, Array<TimerShortcut & { originalIndex: number }>>());
 
   // Predefined colors
   const colors = [
@@ -229,6 +245,98 @@
     }
   }
 
+  function openGroupRenameModal(currentGroupName: string) {
+    editingGroupName = currentGroupName;
+    newGroupName = currentGroupName === 'Ungrouped' ? '' : currentGroupName;
+    showGroupRenameModal = true;
+  }
+
+  async function saveGroupRename() {
+    if (!editingGroupName) return;
+
+    const trimmedNewName = newGroupName.trim();
+
+    // Get all shortcuts in this group
+    const shortcutsInGroup = shortcuts.filter(
+      s => (s.groupName || 'Ungrouped') === editingGroupName
+    );
+
+    if (shortcutsInGroup.length === 0) return;
+
+    savingGroupRename = true;
+
+    try {
+      // Update each shortcut in the group
+      await Promise.all(
+        shortcutsInGroup.map(shortcut =>
+          api.extension.updateShortcut(shortcut.id, {
+            ...shortcut,
+            groupName: trimmedNewName || undefined,
+          })
+        )
+      );
+
+      toast.success(`Group renamed successfully`);
+      showGroupRenameModal = false;
+      await loadShortcuts();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to rename group');
+    } finally {
+      savingGroupRename = false;
+    }
+  }
+
+  async function moveGroup(groupIndex: number, direction: 'up' | 'down') {
+    const newGroupIndex = direction === 'up' ? groupIndex - 1 : groupIndex + 1;
+    const groupsArray = Array.from(groupedShortcuts.entries());
+
+    if (newGroupIndex < 0 || newGroupIndex >= groupsArray.length) return;
+
+    // Get shortcuts from both groups
+    const [currentGroupName, currentGroupShortcuts] = groupsArray[groupIndex];
+    const [adjacentGroupName, adjacentGroupShortcuts] = groupsArray[newGroupIndex];
+
+    // Create new shortcuts array with swapped groups
+    const updated = [...shortcuts];
+
+    // Find indices of all shortcuts in both groups
+    const currentIndices = currentGroupShortcuts.map(s => s.originalIndex).sort((a, b) => a - b);
+    const adjacentIndices = adjacentGroupShortcuts.map(s => s.originalIndex).sort((a, b) => a - b);
+
+    // Extract the shortcuts
+    const currentShortcuts = currentIndices.map(i => updated[i]);
+    const adjacentShortcuts = adjacentIndices.map(i => updated[i]);
+
+    // Determine which group comes first
+    const firstGroupIndices = direction === 'up' ? adjacentIndices : currentIndices;
+    const firstGroupShortcuts = direction === 'up' ? adjacentShortcuts : currentShortcuts;
+    const secondGroupShortcuts = direction === 'up' ? currentShortcuts : adjacentShortcuts;
+
+    // Get the range of indices we're working with
+    const allIndices = [...currentIndices, ...adjacentIndices].sort((a, b) => a - b);
+    const startIndex = allIndices[0];
+
+    // Replace the shortcuts in the correct order
+    const reorderedShortcuts = [...firstGroupShortcuts, ...secondGroupShortcuts];
+    reorderedShortcuts.forEach((shortcut, i) => {
+      updated[startIndex + i] = shortcut;
+    });
+
+    // Update sortOrder for all shortcuts
+    const reordered = updated.map((s, i) => ({
+      id: s.id,
+      sortOrder: i,
+    }));
+
+    try {
+      await api.extension.reorderShortcuts(reordered);
+      shortcuts = updated;
+      toast.success('Group moved');
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to move group');
+    }
+  }
+
   // Filtered tasks for search
   $: filteredTasks = projectTasks.filter(t =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -275,80 +383,119 @@
       </svelte:fragment>
     </EmptyState>
   {:else}
-    <div class="grid gap-4">
-      {#each shortcuts as shortcut, index}
-        <Card class="p-4">
-          <div class="flex items-center gap-4">
-            <!-- Icon and Color -->
-            <div
-              class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg text-2xl"
-              style="background-color: {shortcut.color}"
-            >
-              {shortcut.icon || '⏱️'}
-            </div>
-
-            <!-- Info -->
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <h3 class="font-medium truncate">{shortcut.label}</h3>
-                {#if shortcut.isPinned}
-                  <Badge variant="secondary" class="flex items-center gap-1">
-                    <Pin class="h-3 w-3" />
-                    Pinned
-                  </Badge>
-                {/if}
-                {#if shortcut.groupName}
-                  <Badge variant="outline">{shortcut.groupName}</Badge>
-                {/if}
-              </div>
-              {#if shortcut.description}
-                <p class="text-sm text-muted-foreground truncate">{shortcut.description}</p>
-              {/if}
-              {#if shortcut.task}
-                <p class="text-xs text-muted-foreground mt-1">
-                  {shortcut.task.project.code} - {shortcut.task.title}
-                </p>
-              {/if}
-              <p class="text-xs text-muted-foreground mt-1">
-                Used {shortcut.useCount} time{shortcut.useCount !== 1 ? 's' : ''}
-              </p>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-2">
+    <div class="space-y-8">
+      {#each Array.from(groupedShortcuts.entries()) as [groupName, groupShortcuts], groupIndex}
+        <div>
+          <!-- Group Header -->
+          <div class="flex items-center justify-between mb-4 px-1">
+            <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              {groupName}
+            </h3>
+            <div class="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                on:click={() => moveShortcut(index, 'up')}
-                disabled={index === 0}
+                on:click={() => moveGroup(groupIndex, 'up')}
+                disabled={groupIndex === 0}
+                title="Move group up"
               >
                 <ChevronUp class="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                on:click={() => moveShortcut(index, 'down')}
-                disabled={index === shortcuts.length - 1}
+                on:click={() => moveGroup(groupIndex, 'down')}
+                disabled={groupIndex === groupedShortcuts.size - 1}
+                title="Move group down"
               >
                 <ChevronDown class="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                on:click={() => openEditModal(shortcut)}
+                on:click={() => openGroupRenameModal(groupName)}
+                title="Rename group"
               >
                 <Pencil class="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                on:click={() => deleteShortcut(shortcut.id)}
-              >
-                <Trash2 class="h-4 w-4" />
-              </Button>
             </div>
           </div>
-        </Card>
+
+          <!-- Shortcuts in this group -->
+          <div class="grid gap-4">
+            {#each groupShortcuts as shortcut}
+              <Card class="p-4">
+                <div class="flex items-center gap-4">
+                  <!-- Icon and Color -->
+                  <div
+                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg text-2xl"
+                    style="background-color: {shortcut.color}"
+                  >
+                    {shortcut.icon || '⏱️'}
+                  </div>
+
+                  <!-- Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <h3 class="font-medium truncate">{shortcut.label}</h3>
+                      {#if shortcut.isPinned}
+                        <Badge variant="secondary" class="flex items-center gap-1">
+                          <Pin class="h-3 w-3" />
+                          Pinned
+                        </Badge>
+                      {/if}
+                    </div>
+                    {#if shortcut.description}
+                      <p class="text-sm text-muted-foreground truncate">{shortcut.description}</p>
+                    {/if}
+                    {#if shortcut.task}
+                      <p class="text-xs text-muted-foreground mt-1">
+                        {shortcut.task.project.code} - {shortcut.task.title}
+                      </p>
+                    {/if}
+                    <p class="text-xs text-muted-foreground mt-1">
+                      Used {shortcut.useCount} time{shortcut.useCount !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      on:click={() => moveShortcut(shortcut.originalIndex, 'up')}
+                      disabled={shortcut.originalIndex === 0}
+                    >
+                      <ChevronUp class="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      on:click={() => moveShortcut(shortcut.originalIndex, 'down')}
+                      disabled={shortcut.originalIndex === shortcuts.length - 1}
+                    >
+                      <ChevronDown class="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      on:click={() => openEditModal(shortcut)}
+                    >
+                      <Pencil class="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      on:click={() => deleteShortcut(shortcut.id)}
+                    >
+                      <Trash2 class="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            {/each}
+          </div>
+        </div>
       {/each}
     </div>
   {/if}
@@ -488,6 +635,36 @@
     </Button>
     <Button on:click={saveShortcut} loading={saving}>
       {editingId ? 'Update' : 'Create'} Shortcut
+    </Button>
+  </div>
+</Modal>
+
+<!-- Group Rename Modal -->
+<Modal bind:open={showGroupRenameModal} title="Rename Group" size="sm">
+  <form on:submit|preventDefault={saveGroupRename} class="space-y-4">
+    <Input
+      id="newGroupName"
+      label="Group Name"
+      placeholder={editingGroupName === 'Ungrouped' ? 'Enter group name' : 'Enter new group name'}
+      bind:value={newGroupName}
+      required={editingGroupName !== 'Ungrouped'}
+    />
+    {#if editingGroupName === 'Ungrouped'}
+      <p class="text-xs text-muted-foreground">
+        Leave empty to keep shortcuts ungrouped
+      </p>
+    {/if}
+    <p class="text-sm text-muted-foreground">
+      This will rename the group for all {shortcuts.filter(s => (s.groupName || 'Ungrouped') === editingGroupName).length} shortcut{shortcuts.filter(s => (s.groupName || 'Ungrouped') === editingGroupName).length !== 1 ? 's' : ''} in this group.
+    </p>
+  </form>
+
+  <div slot="footer" class="flex justify-end gap-2">
+    <Button variant="outline" on:click={() => showGroupRenameModal = false}>
+      Cancel
+    </Button>
+    <Button on:click={saveGroupRename} loading={savingGroupRename}>
+      Rename Group
     </Button>
   </div>
 </Modal>
