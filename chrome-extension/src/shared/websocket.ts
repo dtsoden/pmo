@@ -36,15 +36,23 @@ export class WebSocketClient {
     });
 
     this.socket.on('connect', () => {
-      console.log('WebSocket connected');
+      const transport = this.socket?.io?.engine?.transport?.name;
+      console.log('✅ WebSocket CONNECTED via transport:', transport);
+      console.log('   - Socket ID:', this.socket?.id);
+      console.log('   - URL:', this.url);
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason);
+      console.log('❌ WebSocket DISCONNECTED:', reason);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
+      console.error('❌ WebSocket CONNECTION ERROR:', error.message);
+    });
+
+    // Log when transport upgrades
+    this.socket.io.engine.on('upgrade', (transport) => {
+      console.log('⬆️ Transport upgraded to:', transport.name);
     });
 
     // Register event handlers

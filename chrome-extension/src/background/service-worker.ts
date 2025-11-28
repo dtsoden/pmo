@@ -141,11 +141,18 @@ onTimerUpdated(async (event) => {
 });
 
 onShortcutsUpdated(async (event) => {
-  console.log('Shortcuts updated event:', event);
+  console.log('📢 SHORTCUTS UPDATED EVENT RECEIVED:', event);
   // Refetch all shortcuts
-  const shortcuts = await api.getShortcuts();
-  await setShortcuts(shortcuts);
-  broadcastToAllTabs({ type: 'SHORTCUTS_UPDATED' });
+  try {
+    const shortcuts = await api.getShortcuts();
+    console.log('   - Fetched shortcuts count:', shortcuts.length);
+    await setShortcuts(shortcuts);
+    console.log('   - Stored shortcuts in storage');
+    broadcastToAllTabs({ type: 'SHORTCUTS_UPDATED' });
+    console.log('   - Broadcast SHORTCUTS_UPDATED to all tabs/panels');
+  } catch (error) {
+    console.error('❌ Error handling shortcuts update:', error);
+  }
 });
 
 // ============================================

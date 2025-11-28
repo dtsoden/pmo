@@ -138,7 +138,10 @@ export async function extensionRoutes(app: FastifyInstance) {
       // Emit WebSocket event for real-time sync
       const io = (app as any).io;
       if (io) {
+        console.log('📢 EMITTING shortcuts:updated event for user:', request.user.userId);
+        console.log('   - Shortcut:', shortcut.label);
         io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { shortcut });
+        console.log('   - Event emitted to room: user:' + request.user.userId);
       }
 
       return reply.code(201).send({ shortcut });
@@ -165,7 +168,10 @@ export async function extensionRoutes(app: FastifyInstance) {
       // Emit WebSocket event for real-time sync
       const io = (app as any).io;
       if (io) {
+        console.log('📢 EMITTING shortcuts:updated event for user:', request.user.userId);
+        console.log('   - Shortcut:', shortcut.label);
         io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { shortcut });
+        console.log('   - Event emitted to room: user:' + request.user.userId);
       }
 
       return { shortcut };
@@ -197,10 +203,14 @@ export async function extensionRoutes(app: FastifyInstance) {
       // Emit WebSocket event for real-time sync
       const io = (app as any).io;
       if (io) {
+        console.log('📢 EMITTING shortcuts:updated (DELETE) for user:', request.user.userId);
+        console.log('   - Deleted ID:', id);
         io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { deletedId: id });
+        console.log('   - Event emitted to room: user:' + request.user.userId);
 
         // If we stopped a timer, notify about that too
         if (result.stoppedTimer) {
+          console.log('📢 Also emitting time:discarded (timer was stopped)');
           io.to(`user:${request.user.userId}`).emit('time:discarded', {});
         }
       }
