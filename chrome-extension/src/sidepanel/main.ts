@@ -98,15 +98,23 @@ function createShortcutCard(shortcut: TimerShortcut): string {
 
   const usageText = `Used ${shortcut.useCount} time${shortcut.useCount !== 1 ? 's' : ''}`;
 
+  // Check if this shortcut is currently running
+  const isActive = activeTimer && activeTimer.taskId === shortcut.taskId;
+  const activeClass = isActive ? ' active' : '';
+
   return `
-    <div class="shortcut-card" data-shortcut-id="${shortcut.id}">
+    <div class="shortcut-card${activeClass}" data-shortcut-id="${shortcut.id}">
       <div class="shortcut-color" style="background-color: ${shortcut.color}">
         ${shortcut.icon || '⏱️'}
       </div>
       <div class="shortcut-info">
-        <div class="shortcut-label">${escapeHtml(shortcut.label)}</div>
+        <div class="shortcut-label">
+          ${escapeHtml(shortcut.label)}
+          ${isActive ? ' <span style="color: #10b981;">●</span>' : ''}
+        </div>
         <div class="shortcut-details">
           ${shortcut.isPinned ? '<span class="shortcut-badge">Pinned</span>' : ''}
+          ${isActive ? '<span class="shortcut-badge" style="background: #d1fae5; color: #065f46;">Running</span>' : ''}
           ${escapeHtml(taskText)} • ${usageText}
         </div>
       </div>
@@ -154,19 +162,35 @@ function setupEventListeners() {
 
 async function handleShortcutClick(shortcut: TimerShortcut) {
   try {
-    await sendMessage({
-      type: 'START_TIMER',
-      data: {
-        taskId: shortcut.taskId,
-        shortcutId: shortcut.id,
-      },
-    });
+    // Check if this shortcut's task is already running
+    const isRunning = activeTimer && activeTimer.taskId === shortcut.taskId;
 
-    showToast(`Started: ${shortcut.label}`, 'success');
+    if (isRunning) {
+      // Stop the currently running timer
+      await sendMessage({ type: 'STOP_TIMER' });
+      showToast(`Stopped: ${shortcut.label}`, 'success');
+    } else {
+      // If another timer is running, stop it first
+      if (activeTimer) {
+        await sendMessage({ type: 'STOP_TIMER' });
+      }
+
+      // Start the new timer
+      await sendMessage({
+        type: 'START_TIMER',
+        data: {
+          taskId: shortcut.taskId,
+          shortcutId: shortcut.id,
+        },
+      });
+
+      showToast(`Started: ${shortcut.label}`, 'success');
+    }
+
     // Refresh will happen via message listener
   } catch (error: any) {
-    console.error('Failed to start timer:', error);
-    showToast(error.message || 'Failed to start timer', 'error');
+    console.error('Failed to handle timer:', error);
+    showToast(error.message || 'Failed to handle timer', 'error');
   }
 }
 

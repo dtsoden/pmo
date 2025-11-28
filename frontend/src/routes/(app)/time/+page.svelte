@@ -23,6 +23,9 @@
   let timerLoading = false;
   let error = '';
 
+  // Extension detection
+  let isExtensionInstalled = false;
+
   // Timer display
   let elapsedSeconds = 0;
   let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -492,9 +495,20 @@
     // Listen for real-time updates
     const unsub = ws.on('time:entry:created', () => loadData());
 
+    // Check if Chrome extension is installed
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'PMO_EXTENSION_READY') {
+        isExtensionInstalled = true;
+      }
+    };
+
+    window.addEventListener('message', handleExtensionMessage);
+
     return () => {
       unsub();
       stopTimerDisplay();
+      window.removeEventListener('message', handleExtensionMessage);
     };
   });
 
@@ -533,30 +547,31 @@
     </div>
   </div>
 
-  <!-- Extension Promotion Banner -->
-  <Card class="border-primary/50 bg-gradient-to-r from-primary/10 to-primary/5 p-4">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Timer class="h-5 w-5" />
+  <!-- Extension Promotion Banner (hide if extension is installed) -->
+  {#if !isExtensionInstalled}
+    <Card class="border-primary/50 bg-gradient-to-r from-primary/10 to-primary/5 p-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Timer class="h-5 w-5" />
+          </div>
+          <div>
+            <h3 class="font-medium">Get the Chrome Extension</h3>
+            <p class="text-sm text-muted-foreground">
+              Quick-access timer with custom shortcuts for faster time tracking
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 class="font-medium">Get the Chrome Extension</h3>
-          <p class="text-sm text-muted-foreground">
-            Quick-access timer with custom shortcuts for faster time tracking
-          </p>
-        </div>
-      </div>
-      <div class="flex gap-2">
-        <a
-          href="/api/extension/download"
-          download="pmo-timer-extension.zip"
-        >
-          <Button size="sm" variant="default">
-            Download Extension
-          </Button>
-        </a>
-        <a href="/settings/extension">
+        <div class="flex gap-2">
+          <a
+            href="/api/extension/download"
+            download="pmo-timer-extension.zip"
+          >
+            <Button size="sm" variant="default">
+              Download Extension
+            </Button>
+          </a>
+          <a href="/settings/extension">
           <Button size="sm" variant="outline">
             Learn More
           </Button>
@@ -564,6 +579,7 @@
       </div>
     </div>
   </Card>
+  {/if}
 
   <!-- Active Timer -->
   {#if activeTimer}
