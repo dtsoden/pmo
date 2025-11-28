@@ -20,6 +20,7 @@
     MonitorDot,
     UserCog,
     ListOrdered,
+    CalendarCheck,
   } from 'lucide-svelte';
 
   export let collapsed = false;
@@ -45,6 +46,7 @@
   const adminItems: NavItem[] = [
     { href: '/admin', label: 'Admin Dashboard', icon: Shield },
     { href: '/admin/users', label: 'User Management', icon: UserCog },
+    { href: '/capacity/time-off', label: 'Leave Requests', icon: CalendarCheck, minRole: 'RESOURCE_MANAGER' },
     { href: '/admin/dropdowns', label: 'Dropdown Lists', icon: ListOrdered },
     { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
     { href: '/admin/sessions', label: 'Sessions', icon: MonitorDot },
