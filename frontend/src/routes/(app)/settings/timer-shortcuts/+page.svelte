@@ -34,6 +34,12 @@
   let projectTasks: Task[] = [];
   let searchQuery = '';
 
+  // Get unique existing group names for autocomplete
+  $: existingGroups = [...new Set(shortcuts
+    .map(s => s.groupName)
+    .filter(name => name && name.trim() !== '')
+  )].sort();
+
   // Predefined colors
   const colors = [
     '#3B82F6', // Blue
@@ -439,13 +445,30 @@
       </div>
     </div>
 
-    <!-- Group Name -->
-    <Input
-      id="groupName"
-      label="Group Name (optional)"
-      placeholder="e.g., Client Work, Internal"
-      bind:value={groupName}
-    />
+    <!-- Group Name with Autocomplete -->
+    <div class="space-y-2">
+      <label for="groupName" class="text-sm font-medium">
+        Group Name (optional)
+      </label>
+      <input
+        type="text"
+        id="groupName"
+        list="groupNameSuggestions"
+        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder={existingGroups.length > 0 ? "Select existing or type new group" : "e.g., Client Work, Internal"}
+        bind:value={groupName}
+      />
+      {#if existingGroups.length > 0}
+        <datalist id="groupNameSuggestions">
+          {#each existingGroups as group}
+            <option value={group}>{group}</option>
+          {/each}
+        </datalist>
+        <p class="text-xs text-muted-foreground">
+          {existingGroups.length} existing group{existingGroups.length !== 1 ? 's' : ''}: {existingGroups.join(', ')}
+        </p>
+      {/if}
+    </div>
 
     <!-- Pin to Popup -->
     <div class="flex items-center justify-between rounded-lg border p-4">
