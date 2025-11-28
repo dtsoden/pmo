@@ -78,7 +78,7 @@
 
   async function loadActiveTimer() {
     try {
-      activeTimer = await api.timetracking.active();
+      activeTimer = await api.timetracking.timer.active();
     } catch (err) {
       console.error('Failed to load active timer:', err);
     }
