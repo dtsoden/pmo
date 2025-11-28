@@ -45,14 +45,36 @@ async function start() {
       .split(',')
       .map(origin => origin.trim());
 
+    // CORS origin checker - allows configured origins + Chrome extensions
+    const corsOriginChecker = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // No origin (like curl) - allow
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      // Allow configured origins
+      if (corsOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      // Allow Chrome extensions
+      if (origin.startsWith('chrome-extension://')) {
+        callback(null, true);
+        return;
+      }
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    };
+
     // Create HTTP server first
     const httpServer = createServer();
 
     // Create Socket.IO server and attach to HTTP server
     const io = new Server(httpServer, {
       cors: {
-        origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
+        origin: corsOriginChecker,
         credentials: true,
+        methods: ['GET', 'POST'],
       },
       // Allow both WebSocket and polling - polling works through Cloudflare tunnels
       transports: ['websocket', 'polling'],
@@ -88,7 +110,7 @@ async function start() {
     });
 
     await app.register(cors, {
-      origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
+      origin: corsOriginChecker,
       credentials: true,
     });
 
@@ -103,6 +125,9 @@ async function start() {
 
     // Decorate with authenticate middleware
     app.decorate('authenticate', authMiddleware);
+
+    // Attach Socket.IO instance to Fastify app for use in routes
+    (app as any).io = io;
 
     // Health check
     app.get('/health', async () => {

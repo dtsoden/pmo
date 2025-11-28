@@ -29,19 +29,28 @@ export async function setupWebSocket(io: Server) {
 
   // Authentication middleware
   io.use(async (socket: AuthenticatedSocket, next) => {
+    logger.info('🔌 Socket.IO connection attempt received');
+    logger.info(`   - Socket ID: ${socket.id}`);
+    logger.info(`   - Origin: ${socket.handshake.headers.origin}`);
+    logger.info(`   - Transport: ${socket.conn.transport.name}`);
+
     try {
       const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
 
       if (!token) {
+        logger.warn('   - ❌ No token provided');
         return next(new Error('Authentication token required'));
       }
+
+      logger.info(`   - Token received (first 20 chars): ${token.substring(0, 20)}...`);
 
       const decoded = await verifyToken(token);
       socket.userId = decoded.userId;
 
+      logger.info(`   - ✅ Authenticated as user: ${socket.userId}`);
       next();
     } catch (error) {
-      logger.error('WebSocket authentication failed:', error);
+      logger.error('   - ❌ WebSocket authentication failed:', error);
       next(new Error('Authentication failed'));
     }
   });

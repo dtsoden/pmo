@@ -15,7 +15,8 @@
     "activeTab",
     "sidePanel",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "webRequest"
   ],
   "host_permissions": [
     "http://localhost:7600/*",

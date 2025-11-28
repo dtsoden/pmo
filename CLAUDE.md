@@ -307,6 +307,191 @@ import { login } from './auth.service.js';
 
 ---
 
+## Chrome Extension Socket.IO Connectivity (CRITICAL)
+
+### 🚨 TL;DR - READ THIS FIRST 🚨
+
+**If you see `xhr poll error` in the extension console:**
+1. The extension is using `transports: ['polling', 'websocket']` - WRONG!
+2. Change to `transports: ['websocket']` - service workers don't have XHR API
+3. Rebuild extension: `cd chrome-extension && npm run build`
+4. Reload extension in Chrome
+5. It will work
+
+**This cost 3+ hours of debugging. Don't make the same mistake.**
+
+---
+
+### ⚠️ THE MOST IMPORTANT THING TO REMEMBER ⚠️
+
+**Chrome extension service workers DO NOT have XMLHttpRequest (XHR) API!**
+
+Socket.IO's default configuration tries to use HTTP polling (which uses XHR) before upgrading to WebSocket. This will ALWAYS fail in service workers with the error:
+
+```
+❌ WebSocket CONNECTION ERROR: xhr poll error
+```
+
+**THE FIX:** Force Socket.IO to use WebSocket-only transport in the extension:
+
+```typescript
+// chrome-extension/src/shared/websocket.ts
+this.socket = io(this.url, {
+  auth: { token },
+  transports: ['websocket'],  // CRITICAL: WebSocket only, no polling!
+  withCredentials: true,
+});
+```
+
+**DO NOT use `['polling', 'websocket']` in Chrome extensions - it will fail!**
+
+---
+
+### THE SECOND PROBLEM: Socket.IO Not Attached to Fastify App
+
+**If WebSocket connects but events don't sync:**
+
+Routes try to emit events with `app.io.to(...).emit(...)` but `app.io` is undefined!
+
+**THE FIX:** Attach Socket.IO instance to Fastify app in `backend/src/index.ts`:
+
+```typescript
+// After creating Socket.IO server
+const io = new Server(httpServer, { /* config */ });
+await setupWebSocket(io);
+
+// Create Fastify app
+const app = Fastify({ /* config */ });
+
+// CRITICAL: Attach Socket.IO to Fastify app
+(app as any).io = io;
+
+// Now routes can use: app.io.to(...).emit(...)
+```
+
+**Without this:** Extension connects, but shortcuts/timer events never sync because `app.io` is undefined.
+
+---
+
+### THE THIRD PROBLEM: CORS
+
+Chrome extensions CANNOT connect to Socket.IO if CORS is not properly configured to allow `chrome-extension://` origins.
+
+**Symptoms:**
+- Extension console shows connection errors
+- Backend logs show NO Socket.IO connection attempts
+- Regular API calls work fine (e.g., `/api/extension/shortcuts`)
+- Testing with `curl` works, but extension fails
+
+**Root Cause:**
+Chrome extensions make requests with `Origin: chrome-extension://<extension-id>` header. If Socket.IO CORS doesn't explicitly allow this origin, the browser blocks the request BEFORE it reaches the server. This is why backend logs show nothing - the request never arrives.
+
+### THE SOLUTION
+
+Socket.IO CORS configuration in `backend/src/index.ts` MUST use a callback function that allows Chrome extension origins:
+
+```typescript
+// CORS origin checker - allows configured origins + Chrome extensions
+const corsOriginChecker = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  // No origin (like curl) - allow
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+  // Allow configured origins
+  if (corsOrigins.includes(origin)) {
+    callback(null, true);
+    return;
+  }
+  // Allow Chrome extensions
+  if (origin.startsWith('chrome-extension://')) {
+    callback(null, true);
+    return;
+  }
+  logger.warn(`CORS blocked origin: ${origin}`);
+  callback(new Error('Not allowed by CORS'));
+};
+
+// Create Socket.IO server with CORS callback
+const io = new Server(httpServer, {
+  cors: {
+    origin: corsOriginChecker,
+    credentials: true,
+    methods: ['GET', 'POST'],  // REQUIRED for polling
+  },
+  transports: ['websocket', 'polling'],
+  upgradeTimeout: 30000,
+  allowEIO3: true,
+});
+```
+
+**CRITICAL:** The `methods: ['GET', 'POST']` is REQUIRED. Socket.IO polling uses POST requests which need explicit CORS permission.
+
+### HOW TO TEST
+
+1. **Test Socket.IO endpoint is reachable:**
+   ```bash
+   curl -i "https://pmoservices.cnxlab.us/socket.io/?EIO=4&transport=polling"
+   ```
+   Should return: `HTTP/1.1 200 OK` with session ID JSON
+
+2. **Test with Chrome extension:**
+   - Remove and reload extension from `chrome://extensions`
+   - Open extension service worker console
+   - Should see: `✅ WebSocket CONNECTED via transport: polling`
+
+3. **Check backend logs:**
+   ```bash
+   powershell -Command "Get-Content C:\Users\DavidSoden\CNX-PMO\logs\backend.log | Select-String 'Socket.IO connection attempt' -Context 0,5"
+   ```
+   Should show connection attempts with origin `chrome-extension://...`
+
+### DEBUGGING CHECKLIST
+
+If extension shows `xhr poll error`:
+
+1. ✅ **Verify backend is running:** Check `logs/backend.log` has recent entries
+2. ✅ **Test Socket.IO endpoint:** Run curl command above - should get 200 OK
+3. ✅ **Check CORS configuration:** Verify `corsOriginChecker` function exists in `backend/src/index.ts`
+4. ✅ **Check extension is using correct URL:** Extension logs should show `https://pmoservices.cnxlab.us` (NOT `pmo.cnxlab.us`)
+5. ✅ **Restart backend:** After any CORS changes, MUST restart backend
+6. ✅ **Reload extension:** After backend restart, remove and reload extension
+7. ✅ **Check for CORS warnings in backend logs:** Look for "CORS blocked origin" messages
+
+### COMMON MISTAKES
+
+**DON'T:**
+- ❌ **CRITICAL:** Use `transports: ['polling', 'websocket']` in extension - service workers don't have XHR!
+- ❌ Use simple string/array for Socket.IO CORS origin - it doesn't support wildcards properly
+- ❌ Forget to include `methods: ['GET', 'POST']` in backend CORS config
+- ❌ Forget to restart backend after CORS changes
+- ❌ Test with web app - web app uses different origin, test with EXTENSION
+- ❌ Add `chrome-extension://*` to CORS_ORIGIN env var - it won't work, must use callback
+- ❌ Spend 3 hours debugging CORS when the real issue is XHR not existing in service workers
+
+**DO:**
+- ✅ **CRITICAL:** Use `transports: ['websocket']` ONLY in Chrome extensions
+- ✅ Use callback function for dynamic origin checking
+- ✅ Allow both configured origins AND `chrome-extension://` prefix
+- ✅ Add comprehensive logging to see what origins are being blocked
+- ✅ Test with actual extension, not just curl
+- ✅ Check BOTH extension console AND backend logs
+- ✅ Remember: Web app can use polling, extension CANNOT
+
+### CLOUDFLARE TUNNEL NOTE
+
+Cloudflare tunnel (`pmoservices.cnxlab.us`) works perfectly with Socket.IO:
+- ✅ WebSocket connections work (wss://)
+- ✅ HTTP polling works (for web app)
+- ✅ The tunnel correctly routes `/socket.io/` requests
+
+**If connection fails:**
+- From extension → Check if using WebSocket-only transport
+- From web app → Check CORS configuration
+- NOT a tunnel issue - the tunnel works fine
+
+---
+
 ## SvelteKit Props (CRITICAL - DO NOT REMOVE)
 
 All `+layout.svelte` and `+page.svelte` files MUST declare SvelteKit's internal props to avoid console warnings. This is a known SvelteKit issue documented in [GitHub Issue #5980](https://github.com/sveltejs/kit/issues/5980).

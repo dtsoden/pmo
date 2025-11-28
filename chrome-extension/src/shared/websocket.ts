@@ -24,15 +24,24 @@ export class WebSocketClient {
 
     this.token = token;
 
+    console.log('🔌 ATTEMPTING SOCKET.IO CONNECTION:');
+    console.log('   - URL:', this.url);
+    console.log('   - Token (first 20 chars):', token.substring(0, 20) + '...');
+    console.log('   - Transport: websocket ONLY (service workers cannot use XHR polling)');
+
     this.socket = io(this.url, {
       auth: { token },
-      // Try polling first (works through Cloudflare), then upgrade to WebSocket if possible
-      transports: ['polling', 'websocket'],
+      // Service workers don't have XMLHttpRequest - must use WebSocket only
+      transports: ['websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 10,
       // Longer timeout for Cloudflare tunnels
       timeout: 20000,
+      // Service worker compatibility
+      withCredentials: true,
+      autoConnect: true,
+      forceNew: false,
     });
 
     this.socket.on('connect', () => {
