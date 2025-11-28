@@ -118,8 +118,9 @@ export async function extensionRoutes(app: FastifyInstance) {
   // ========== TIMER SHORTCUTS ==========
 
   // Get all shortcuts for current user
+  // NOTE: Called by BOTH web app and extension, so no extensionAuthMiddleware
   app.get('/shortcuts', {
-    preHandler: [app.authenticate, extensionAuthMiddleware]
+    preHandler: [app.authenticate]
   }, async (request, reply) => {
     try {
       const shortcuts = await getShortcuts(request.user.userId);
@@ -130,8 +131,9 @@ export async function extensionRoutes(app: FastifyInstance) {
   });
 
   // Create new shortcut
+  // NOTE: Called by BOTH web app and extension, so no extensionAuthMiddleware
   app.post('/shortcuts', {
-    preHandler: [app.authenticate, extensionAuthMiddleware]
+    preHandler: [app.authenticate]
   }, async (request, reply) => {
     try {
       const data = createShortcutSchema.parse(request.body) as CreateShortcutData;
@@ -159,8 +161,9 @@ export async function extensionRoutes(app: FastifyInstance) {
   });
 
   // Update shortcut
+  // NOTE: Called by BOTH web app and extension, so no extensionAuthMiddleware
   app.put('/shortcuts/:id', {
-    preHandler: [app.authenticate, extensionAuthMiddleware]
+    preHandler: [app.authenticate]
   }, async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
@@ -195,8 +198,9 @@ export async function extensionRoutes(app: FastifyInstance) {
   });
 
   // Delete shortcut
+  // NOTE: Called by BOTH web app and extension, so no extensionAuthMiddleware
   app.delete('/shortcuts/:id', {
-    preHandler: [app.authenticate, extensionAuthMiddleware]
+    preHandler: [app.authenticate]
   }, async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
@@ -230,8 +234,9 @@ export async function extensionRoutes(app: FastifyInstance) {
   });
 
   // Bulk reorder shortcuts
+  // NOTE: Called by BOTH web app and extension, so no extensionAuthMiddleware
   app.post('/shortcuts/reorder', {
-    preHandler: [app.authenticate, extensionAuthMiddleware]
+    preHandler: [app.authenticate]
   }, async (request, reply) => {
     try {
       const { shortcuts } = reorderShortcutsSchema.parse(request.body);
