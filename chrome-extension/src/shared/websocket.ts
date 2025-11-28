@@ -26,10 +26,13 @@ export class WebSocketClient {
 
     this.socket = io(this.url, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      // Try polling first (works through Cloudflare), then upgrade to WebSocket if possible
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      // Longer timeout for Cloudflare tunnels
+      timeout: 20000,
     });
 
     this.socket.on('connect', () => {

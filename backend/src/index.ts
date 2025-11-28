@@ -54,6 +54,12 @@ async function start() {
         origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
         credentials: true,
       },
+      // Allow both WebSocket and polling - polling works through Cloudflare tunnels
+      transports: ['websocket', 'polling'],
+      // Upgrade timeout for slow connections
+      upgradeTimeout: 30000,
+      // Allow HTTP long-polling as fallback
+      allowEIO3: true,
     });
 
     // Setup WebSocket handlers
