@@ -15,15 +15,6 @@ export async function getDashboard(userId: string, userRole: string) {
       user: {
         select: { firstName: true, lastName: true },
       },
-      task: {
-        select: {
-          id: true,
-          title: true,
-          project: {
-            select: { id: true, code: true, name: true },
-          },
-        },
-      },
     },
   });
 
@@ -133,13 +124,28 @@ export async function getDashboard(userId: string, userRole: string) {
     };
   }
 
+  // Get task details if activeTimer has a taskId
+  let task = null;
+  if (activeTimer?.taskId) {
+    task = await db.task.findUnique({
+      where: { id: activeTimer.taskId },
+      select: {
+        id: true,
+        title: true,
+        project: {
+          select: { id: true, code: true, name: true },
+        },
+      },
+    });
+  }
+
   return {
     user: {
       activeTimer: activeTimer ? {
         startTime: activeTimer.startTime,
         taskId: activeTimer.taskId,
         description: activeTimer.description,
-        task: activeTimer.task,
+        task,
         elapsedSeconds: Math.floor((Date.now() - activeTimer.startTime.getTime()) / 1000),
       } : null,
       hoursLoggedToday: todayEntries._sum.hours || 0,
