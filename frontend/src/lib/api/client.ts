@@ -368,8 +368,8 @@ class ApiClient {
       list: (params?: AvailabilityParams) =>
         this.request<UserAvailability[]>(`/capacity/availability${buildQuery(params)}`),
 
-      get: (userId: string) =>
-        this.request<UserAvailability>(`/capacity/availability/${userId}`),
+      get: (userId: string, params?: AvailabilityParams) =>
+        this.request<UserAvailability>(`/capacity/availability/${userId}${buildQuery(params)}`),
 
       update: (userId: string, data: UpdateAvailabilityData) =>
         this.request<UserAvailability>(`/capacity/availability/${userId}`, {
@@ -381,6 +381,9 @@ class ApiClient {
     timeOff: {
       list: (params?: TimeOffParams) =>
         this.request<PaginatedResponse<TimeOffRequest>>(`/capacity/time-off${buildQuery(params)}`),
+
+      listAll: (params?: TimeOffParams) =>
+        this.request<PaginatedResponse<TimeOffRequest>>(`/capacity/time-off/all${buildQuery(params)}`),
 
       create: async (data: CreateTimeOffData) => {
         const res = await this.request<{ timeOff: TimeOffRequest }>('/capacity/time-off', {
@@ -397,9 +400,10 @@ class ApiClient {
         return res.timeOff;
       },
 
-      reject: async (id: string) => {
+      reject: async (id: string, rejectionReason?: string) => {
         const res = await this.request<{ timeOff: TimeOffRequest }>(`/capacity/time-off/${id}/reject`, {
           method: 'POST',
+          body: JSON.stringify({ rejectionReason }),
         });
         return res.timeOff;
       },

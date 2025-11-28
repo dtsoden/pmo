@@ -247,6 +247,7 @@ const timeOffSelect = {
   hours: true,
   status: true,
   reason: true,
+  rejectionReason: true,
   approvedBy: true,
   approvedAt: true,
   createdAt: true,
@@ -272,7 +273,7 @@ export async function listTimeOffRequests(userId: string, params: ListTimeOffPar
     }
   }
 
-  const [timeOff, total] = await Promise.all([
+  const [data, total] = await Promise.all([
     db.timeOffRequest.findMany({
       where,
       select: timeOffSelect,
@@ -284,13 +285,11 @@ export async function listTimeOffRequests(userId: string, params: ListTimeOffPar
   ]);
 
   return {
-    timeOff,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
   };
 }
 
@@ -417,7 +416,7 @@ export async function approveTimeOffRequest(id: string, approverId: string) {
   return timeOff;
 }
 
-export async function rejectTimeOffRequest(id: string, approverId: string) {
+export async function rejectTimeOffRequest(id: string, approverId: string, rejectionReason?: string) {
   const request = await db.timeOffRequest.findUnique({ where: { id } });
   if (!request) {
     throw new Error('Time-off request not found');
@@ -433,6 +432,7 @@ export async function rejectTimeOffRequest(id: string, approverId: string) {
       status: TimeOffStatus.REJECTED,
       approvedBy: approverId,
       approvedAt: new Date(),
+      rejectionReason: rejectionReason || null,
     },
     select: timeOffSelect,
   });
@@ -470,6 +470,46 @@ export async function getPendingTimeOffRequests(params: { page?: number; limit?:
       total,
       totalPages: Math.ceil(total / limit),
     },
+  };
+}
+
+// List ALL time-off requests for all users (admin view)
+export async function listAllTimeOffRequests(params: ListTimeOffParams = {}) {
+  const { page = 1, limit = 20, status, type, startDate, endDate } = params;
+  const skip = (page - 1) * limit;
+
+  const where: Prisma.TimeOffRequestWhereInput = {};
+
+  if (status) where.status = status;
+  if (type) where.type = type;
+
+  if (startDate || endDate) {
+    where.AND = [];
+    if (startDate) {
+      where.AND.push({ endDate: { gte: startDate } });
+    }
+    if (endDate) {
+      where.AND.push({ startDate: { lte: endDate } });
+    }
+  }
+
+  const [data, total] = await Promise.all([
+    db.timeOffRequest.findMany({
+      where,
+      select: timeOffSelect,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.timeOffRequest.count({ where }),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
   };
 }
 

@@ -792,6 +792,7 @@ async function seed() {
   console.log('\nCreating time off requests...');
   let timeOffCount = 0;
 
+  // Create random time-off requests for historical/future dates
   for (const user of activeUsers.slice(0, 20)) {
     const numRequests = randomInt(1, 3);
     for (let r = 0; r < numRequests; r++) {
@@ -821,7 +822,78 @@ async function seed() {
       timeOffCount++;
     }
   }
-  console.log(`  Created ${timeOffCount} time off requests`);
+
+  // Create specific current week time-off requests for demo purposes
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+  const endOfWeek = addDays(startOfWeek, 6); // Saturday
+
+  const currentWeekRequests = [
+    {
+      user: activeUsers[5],
+      type: 'VACATION' as TimeOffType,
+      startDate: addDays(startOfWeek, 1), // Monday
+      endDate: addDays(startOfWeek, 5), // Friday
+      hours: 40,
+      reason: 'Week-long vacation',
+      status: 'PENDING' as TimeOffStatus,
+    },
+    {
+      user: activeUsers[8],
+      type: 'PERSONAL' as TimeOffType,
+      startDate: addDays(startOfWeek, 3), // Wednesday
+      endDate: addDays(startOfWeek, 3),
+      hours: 8,
+      reason: 'Personal appointment',
+      status: 'APPROVED' as TimeOffStatus,
+    },
+    {
+      user: activeUsers[12],
+      type: 'SICK' as TimeOffType,
+      startDate: addDays(startOfWeek, 4), // Thursday
+      endDate: addDays(startOfWeek, 5), // Friday
+      hours: 16,
+      reason: 'Flu recovery',
+      status: 'PENDING' as TimeOffStatus,
+    },
+    {
+      user: activeUsers[15],
+      type: 'VACATION' as TimeOffType,
+      startDate: addDays(startOfWeek, 1), // Monday
+      endDate: addDays(startOfWeek, 2), // Tuesday
+      hours: 16,
+      reason: 'Extended weekend',
+      status: 'APPROVED' as TimeOffStatus,
+    },
+    {
+      user: activeUsers[18],
+      type: 'PERSONAL' as TimeOffType,
+      startDate: addDays(startOfWeek, 5), // Friday
+      endDate: addDays(startOfWeek, 5),
+      hours: 4,
+      reason: 'Half day - family event',
+      status: 'PENDING' as TimeOffStatus,
+    },
+  ];
+
+  for (const req of currentWeekRequests) {
+    await prisma.timeOffRequest.create({
+      data: {
+        userId: req.user.id,
+        type: req.type,
+        startDate: req.startDate,
+        endDate: req.endDate,
+        hours: req.hours,
+        reason: req.reason,
+        status: req.status,
+        approvedBy: req.status === 'APPROVED' ? randomElement(managers).id : null,
+        approvedAt: req.status === 'APPROVED' ? now : null,
+      }
+    });
+    timeOffCount++;
+  }
+
+  console.log(`  Created ${timeOffCount} time off requests (including ${currentWeekRequests.length} for current week)`);
 
   // ============================================
   // SUMMARY

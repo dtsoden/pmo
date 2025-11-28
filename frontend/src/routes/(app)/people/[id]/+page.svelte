@@ -2,9 +2,9 @@
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
-  import { api, type User, type ResourceAllocation, type Task, type TimeEntry } from '$lib/api/client';
+  import { api, type User, type ResourceAllocation, type Task, type TimeEntry, type TimeOffRequest } from '$lib/api/client';
   import { Card, Button, Badge, Avatar, Spinner, Modal } from '$components/shared';
-  import { cn, fullName, formatDate, formatHours, ROLE_LABELS, TASK_STATUS_LABELS, getTaskStatusVariant, getTimezoneAbbreviation } from '$lib/utils';
+  import { cn, fullName, formatDate, formatHours, ROLE_LABELS, TASK_STATUS_LABELS, getTaskStatusVariant, getTimezoneAbbreviation, TIME_OFF_STATUS_LABELS, TIME_OFF_TYPE_LABELS, getTimeOffStatusVariant } from '$lib/utils';
   import {
     ArrowLeft,
     Edit,
@@ -24,6 +24,9 @@
     TrendingUp,
     CalendarDays,
     XCircle,
+    Plane,
+    Check,
+    X,
   } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import UserForm from '../UserForm.svelte';
@@ -51,6 +54,15 @@
   // Availability and time-off
   let availability: any = null;
   let loadingAvailability = false;
+  let timeOffRequests: TimeOffRequest[] = [];
+  let pendingTimeOff: TimeOffRequest[] = [];
+  let upcomingTimeOff: TimeOffRequest[] = [];
+
+  // Rejection modal
+  let showRejectModal = false;
+  let selectedTimeOffId = '';
+  let rejectionReason = '';
+  let processingAction = false;
 
   // Date ranges for time queries
   const now = new Date();
@@ -128,6 +140,70 @@
     }
   }
 
+  async function loadTimeOff() {
+    if (!userId) return;
+
+    try {
+      const response = await api.capacity.timeOff.listAll({ limit: 100 });
+      const allRequests = response.data || [];
+
+      // Filter for this user
+      timeOffRequests = allRequests.filter((r: TimeOffRequest) => r.userId === userId);
+
+      // Get pending requests
+      pendingTimeOff = timeOffRequests.filter((r: TimeOffRequest) => r.status === 'PENDING');
+
+      // Get upcoming approved time-off (within next 60 days)
+      const sixtyDaysFromNow = addDays(now, 60);
+      upcomingTimeOff = timeOffRequests.filter((r: TimeOffRequest) => {
+        const startDate = new Date(r.startDate);
+        return r.status === 'APPROVED' && startDate >= now && startDate <= sixtyDaysFromNow;
+      });
+    } catch (err) {
+      console.error('Failed to load time-off:', err);
+    }
+  }
+
+  async function approveTimeOff(id: string) {
+    processingAction = true;
+    try {
+      await api.capacity.timeOff.approve(id);
+      toast.success('Time-off request approved');
+      await loadTimeOff();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to approve request');
+    } finally {
+      processingAction = false;
+    }
+  }
+
+  function openRejectModal(id: string) {
+    selectedTimeOffId = id;
+    rejectionReason = '';
+    showRejectModal = true;
+  }
+
+  async function rejectTimeOff() {
+    if (!rejectionReason.trim()) {
+      toast.error('Please provide a rejection reason');
+      return;
+    }
+
+    processingAction = true;
+    try {
+      await api.capacity.timeOff.reject(selectedTimeOffId, rejectionReason);
+      toast.success('Time-off request rejected');
+      showRejectModal = false;
+      selectedTimeOffId = '';
+      rejectionReason = '';
+      await loadTimeOff();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to reject request');
+    } finally {
+      processingAction = false;
+    }
+  }
+
   function getRoleBadgeVariant(role: string) {
     switch (role) {
       case 'SUPER_ADMIN':
@@ -147,6 +223,7 @@
   $: if (userId && browser) {
     loadUser();
     loadAvailability();
+    loadTimeOff();
   }
 
   $: totalAllocation = (allocations || []).reduce((sum, a) => sum + (a.allocatedHours || 0), 0);
@@ -214,6 +291,108 @@
         </Button>
       </div>
     </div>
+
+    <!-- Time-Off Alerts -->
+    {#if pendingTimeOff.length > 0 || upcomingTimeOff.length > 0}
+      <!-- Pending Requests Banner -->
+      {#if pendingTimeOff.length > 0}
+        <Card class="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
+          <div class="p-4">
+            <div class="flex items-start gap-4">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
+                <AlertCircle class="h-5 w-5" />
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold text-amber-800 dark:text-amber-200">
+                  Pending Time-Off Requests ({pendingTimeOff.length})
+                </h3>
+                <p class="text-sm text-amber-700 dark:text-amber-300 mb-3">
+                  This employee has time-off requests awaiting your approval
+                </p>
+                <div class="space-y-2">
+                  {#each pendingTimeOff as request}
+                    <div class="flex items-center justify-between rounded-lg bg-white/60 dark:bg-amber-900/50 p-3">
+                      <div class="flex items-center gap-3">
+                        <Plane class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <div>
+                          <span class="font-medium text-amber-900 dark:text-amber-100">
+                            {TIME_OFF_TYPE_LABELS[request.type]} - {request.hours}h
+                          </span>
+                          <p class="text-xs text-amber-600 dark:text-amber-400">
+                            {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                          </p>
+                          {#if request.reason}
+                            <p class="text-xs text-amber-700 dark:text-amber-300 italic mt-1">
+                              {request.reason}
+                            </p>
+                          {/if}
+                        </div>
+                      </div>
+                      <div class="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          on:click={() => approveTimeOff(request.id)}
+                          disabled={processingAction}
+                        >
+                          <Check class="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          on:click={() => openRejectModal(request.id)}
+                          disabled={processingAction}
+                        >
+                          <X class="h-4 w-4 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      {/if}
+
+      <!-- Upcoming Approved Time-Off -->
+      {#if upcomingTimeOff.length > 0}
+        <Card class="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
+          <div class="p-4">
+            <div class="flex items-start gap-4">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                <Plane class="h-5 w-5" />
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold text-blue-800 dark:text-blue-200">
+                  Upcoming Time-Off ({upcomingTimeOff.length})
+                </h3>
+                <p class="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                  This employee has approved time-off scheduled
+                </p>
+                <div class="space-y-2">
+                  {#each upcomingTimeOff as request}
+                    <div class="flex items-center gap-3 rounded-lg bg-white/60 dark:bg-blue-900/50 p-3">
+                      <Plane class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <div>
+                        <span class="font-medium text-blue-900 dark:text-blue-100">
+                          {TIME_OFF_TYPE_LABELS[request.type]} - {request.hours}h
+                        </span>
+                        <p class="text-xs text-blue-600 dark:text-blue-400">
+                          {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                        </p>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      {/if}
+    {/if}
 
     <!-- Performance Summary Stats -->
     <div class="grid gap-4 md:grid-cols-4">
@@ -660,5 +839,52 @@
     {user}
     on:success={handleUserUpdated}
   />
+
+  <!-- Rejection Modal -->
+  <Modal bind:open={showRejectModal} title="Reject Time-Off Request" size="md">
+    <div class="space-y-4">
+      <p class="text-sm text-muted-foreground">
+        Please provide a reason for rejecting this time-off request. This will be visible to the employee.
+      </p>
+      <div>
+        <label for="rejection-reason" class="mb-2 block text-sm font-medium">
+          Rejection Reason <span class="text-destructive">*</span>
+        </label>
+        <textarea
+          id="rejection-reason"
+          bind:value={rejectionReason}
+          rows="4"
+          class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder="e.g., Overlaps with critical project deadline, insufficient coverage during requested period, etc."
+          required
+        ></textarea>
+        <p class="mt-1 text-xs text-muted-foreground">
+          Be clear and professional - the employee will see this explanation.
+        </p>
+      </div>
+    </div>
+
+    <div slot="footer" class="flex justify-end gap-2">
+      <Button
+        variant="outline"
+        on:click={() => {
+          showRejectModal = false;
+          selectedTimeOffId = '';
+          rejectionReason = '';
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="destructive"
+        on:click={rejectTimeOff}
+        loading={processingAction}
+        disabled={!rejectionReason.trim()}
+      >
+        <X class="mr-2 h-4 w-4" />
+        Reject Request
+      </Button>
+    </div>
+  </Modal>
 
 {/if}

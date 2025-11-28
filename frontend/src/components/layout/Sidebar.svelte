@@ -61,8 +61,8 @@
 
   // Compute active state directly in the template using reactive page store
   function isActive(href: string, pathname: string): boolean {
-    // Admin routes are all siblings, use exact matching only
-    if (href.startsWith('/admin')) {
+    // Admin routes and capacity routes are all siblings, use exact matching only
+    if (href.startsWith('/admin') || href.startsWith('/capacity')) {
       return pathname === href;
     }
 

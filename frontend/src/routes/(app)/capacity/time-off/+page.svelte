@@ -3,7 +3,7 @@
   import { api, type TimeOffRequest } from '$lib/api/client';
   import { Card, Button, Badge, EmptyState, Modal, Select } from '$components/shared';
   import { toast } from 'svelte-sonner';
-  import { Calendar, Check, X, Clock, User as UserIcon, Plus, Filter } from 'lucide-svelte';
+  import { Calendar, Check, X, Clock, User as UserIcon, Filter } from 'lucide-svelte';
   import { format, parseISO, differenceInDays } from 'date-fns';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -16,6 +16,7 @@
   let currentPage = 1;
   let totalPages = 1;
   let totalCount = 0;
+  let mounted = false;
 
   // Filters
   let statusFilter: 'all' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' = 'all';
@@ -26,17 +27,9 @@
   let selectedRequest: TimeOffRequest | null = null;
   let actionLoading = false;
 
-  // New request form
-  let showNewRequestModal = false;
-  let newRequestType: 'VACATION' | 'SICK' | 'PERSONAL' | 'HOLIDAY' | 'OTHER' = 'VACATION';
-  let newRequestStartDate = '';
-  let newRequestEndDate = '';
-  let newRequestHours = 8;
-  let newRequestReason = '';
-  let saving = false;
-
   onMount(async () => {
     await loadRequests();
+    mounted = true;
   });
 
   async function loadRequests() {
@@ -54,12 +47,15 @@
         params.type = typeFilter;
       }
 
-      const response = await api.capacity.timeOff.list(params);
-      requests = response.data;
-      totalPages = response.totalPages;
-      totalCount = response.total;
+      const response = await api.capacity.timeOff.listAll(params);
+      requests = response.data || [];
+      totalPages = response.totalPages || 1;
+      totalCount = response.total || 0;
     } catch (err) {
       toast.error((err as { message?: string })?.message || 'Failed to load leave requests');
+      requests = [];
+      totalPages = 1;
+      totalCount = 0;
     } finally {
       loading = false;
     }
@@ -98,40 +94,6 @@
     }
   }
 
-  async function createRequest() {
-    if (!newRequestStartDate || !newRequestEndDate) {
-      toast.error('Please select start and end dates');
-      return;
-    }
-
-    saving = true;
-    try {
-      await api.capacity.timeOff.create({
-        type: newRequestType,
-        startDate: new Date(newRequestStartDate),
-        endDate: new Date(newRequestEndDate),
-        hours: newRequestHours,
-        reason: newRequestReason.trim() || undefined,
-      });
-
-      toast.success('Leave request created');
-      showNewRequestModal = false;
-      resetNewRequestForm();
-      await loadRequests();
-    } catch (err) {
-      toast.error((err as { message?: string })?.message || 'Failed to create request');
-    } finally {
-      saving = false;
-    }
-  }
-
-  function resetNewRequestForm() {
-    newRequestType = 'VACATION';
-    newRequestStartDate = '';
-    newRequestEndDate = '';
-    newRequestHours = 8;
-    newRequestReason = '';
-  }
 
   function getStatusColor(status: string) {
     switch (status) {
@@ -152,9 +114,9 @@
   }
 
   $: {
-    // Reload when filters change
+    // Reload when filters change (but not on initial mount)
     statusFilter, typeFilter;
-    if (!loading) {
+    if (mounted) {
       currentPage = 1;
       loadRequests();
     }
@@ -167,17 +129,11 @@
 
 <div class="space-y-6">
   <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold">Leave Requests</h1>
-      <p class="text-sm text-muted-foreground">
-        Manage team leave requests and capacity planning
-      </p>
-    </div>
-    <Button on:click={() => { showNewRequestModal = true; }}>
-      <Plus class="mr-2 h-4 w-4" />
-      Request Leave
-    </Button>
+  <div>
+    <h1 class="text-2xl font-bold">Leave Requests</h1>
+    <p class="text-sm text-muted-foreground">
+      Manage team leave requests and capacity planning
+    </p>
   </div>
 
   <!-- Filters -->
@@ -232,14 +188,6 @@
     >
       <svelte:fragment slot="icon">
         <Calendar class="h-12 w-12" />
-      </svelte:fragment>
-      <svelte:fragment slot="action">
-        {#if statusFilter === 'all' && typeFilter === 'all'}
-          <Button on:click={() => { showNewRequestModal = true; }}>
-            <Plus class="mr-2 h-4 w-4" />
-            Request Leave
-          </Button>
-        {/if}
       </svelte:fragment>
     </EmptyState>
   {:else}
@@ -414,84 +362,3 @@
   </div>
 </Modal>
 
-<!-- New Request Modal -->
-<Modal bind:open={showNewRequestModal} title="Request Leave" size="md">
-  <form on:submit|preventDefault={createRequest} class="space-y-4">
-    <div>
-      <label for="request-type" class="mb-2 block text-sm font-medium">Type</label>
-      <select
-        id="request-type"
-        bind:value={newRequestType}
-        required
-        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <option value="VACATION">Vacation</option>
-        <option value="SICK">Sick</option>
-        <option value="PERSONAL">Personal</option>
-        <option value="HOLIDAY">Holiday</option>
-        <option value="OTHER">Other</option>
-      </select>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label for="start-date" class="mb-2 block text-sm font-medium">Start Date</label>
-        <input
-          id="start-date"
-          type="date"
-          bind:value={newRequestStartDate}
-          required
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-
-      <div>
-        <label for="end-date" class="mb-2 block text-sm font-medium">End Date</label>
-        <input
-          id="end-date"
-          type="date"
-          bind:value={newRequestEndDate}
-          required
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
-    </div>
-
-    <div>
-      <label for="hours" class="mb-2 block text-sm font-medium">Hours per Day</label>
-      <input
-        id="hours"
-        type="number"
-        bind:value={newRequestHours}
-        min="0.5"
-        max="24"
-        step="0.5"
-        required
-        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      />
-      <p class="text-xs text-muted-foreground mt-1">
-        For partial days, enter hours (e.g., 4 for half day)
-      </p>
-    </div>
-
-    <div>
-      <label for="reason" class="mb-2 block text-sm font-medium">Reason (Optional)</label>
-      <textarea
-        id="reason"
-        bind:value={newRequestReason}
-        rows="3"
-        placeholder="Optional reason for leave request..."
-        class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      ></textarea>
-    </div>
-  </form>
-
-  <div slot="footer" class="flex justify-end gap-2">
-    <Button variant="outline" on:click={() => { showNewRequestModal = false; resetNewRequestForm(); }}>
-      Cancel
-    </Button>
-    <Button on:click={createRequest} loading={saving}>
-      Submit Request
-    </Button>
-  </div>
-</Modal>

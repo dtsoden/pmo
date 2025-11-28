@@ -7,6 +7,7 @@ import {
   bulkSetAvailability,
   clearAvailabilityOverride,
   listTimeOffRequests,
+  listAllTimeOffRequests,
   getTimeOffById,
   createTimeOffRequest,
   updateTimeOffRequest,
@@ -169,6 +170,26 @@ export async function capacityRoutes(app: FastifyInstance) {
     }
   });
 
+  // Get ALL time-off requests for all users (admin/manager view)
+  app.get('/time-off/all', async (request, reply) => {
+    try {
+      // Check if user has manager role
+      const managerRoles = ['SUPER_ADMIN', 'ADMIN', 'PMO_MANAGER', 'PROJECT_MANAGER', 'RESOURCE_MANAGER'];
+      if (!managerRoles.includes(request.user.role)) {
+        return reply.code(403).send({ error: 'Manager access required' });
+      }
+
+      const query = listTimeOffQuerySchema.parse(request.query);
+      const result = await listAllTimeOffRequests(query);
+      return result;
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid query parameters', details: error.errors });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to get time-off requests' });
+    }
+  });
+
   // Get pending time-off requests (for managers)
   app.get('/time-off/pending', async (request, reply) => {
     try {
@@ -293,7 +314,8 @@ export async function capacityRoutes(app: FastifyInstance) {
       }
 
       const { id } = idParamSchema.parse(request.params);
-      const timeOff = await rejectTimeOffRequest(id, request.user.userId);
+      const body = z.object({ rejectionReason: z.string().optional() }).parse(request.body);
+      const timeOff = await rejectTimeOffRequest(id, request.user.userId, body.rejectionReason);
       return { timeOff };
     } catch (error: any) {
       if (error.message === 'Time-off request not found') {

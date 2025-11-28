@@ -78,7 +78,7 @@ docker-compose.override.yml
 
 # Prisma
 .prisma/
-migrations/
+# NOTE: migrations/ should be committed to git so fresh users can set up the database!
 
 # TypeScript
 *.tsbuildinfo

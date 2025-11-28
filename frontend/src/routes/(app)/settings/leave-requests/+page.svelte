@@ -47,7 +47,7 @@
     error = '';
 
     try {
-      const response = await api.capacity.timeOff.list({ userId: $user.id, limit: 100 });
+      const response = await api.capacity.timeOff.list({ limit: 100 });
       myRequests = response.data || [];
     } catch (err) {
       error = (err as { message?: string })?.message || 'Failed to load requests';
@@ -305,6 +305,12 @@
                       on {formatDate(request.reviewedAt)}
                     {/if}
                   </p>
+                {/if}
+                {#if request.status === 'REJECTED' && request.rejectionReason}
+                  <div class="mt-2 rounded-md bg-destructive/10 p-2 border border-destructive/20">
+                    <p class="text-xs font-medium text-destructive mb-1">Rejection Reason:</p>
+                    <p class="text-xs text-destructive/90">{request.rejectionReason}</p>
+                  </div>
                 {/if}
               </div>
               <div>

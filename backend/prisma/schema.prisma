@@ -577,7 +577,8 @@ model TimeOffRequest {
   hours             Float
 
   status            TimeOffStatus   @default(PENDING)
-  reason            String?
+  reason            String?         // Employee's reason for the request
+  rejectionReason   String?         // Manager's reason for rejection (if rejected)
 
   approvedBy        String?
   approvedAt        DateTime?
