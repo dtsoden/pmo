@@ -1,45 +1,58 @@
 # PMO Platform
 
-A custom streamlined PMO tracking platform with comprehensive project management, capacity planning, and real-time time tracking capabilities.
+A comprehensive PMO tracking platform with project management, capacity planning, and real-time time tracking. Built as a modular monolith with Node.js/TypeScript backend and SvelteKit frontend, deployed to Azure Container Apps.
 
 ## 🎯 Features
 
-### Core Capabilities
-- **User Management**: Manual user management with role-based access control (no SSO)
-- **Client Management**: Full client lifecycle with Salesforce integration placeholders
-- **Project Management**:
-  - Multi-phase projects with milestones
-  - Gantt chart visualization
-  - Task dependencies and hierarchy
-  - Agile and traditional methodologies
-- **Resource Management**:
-  - Multi-project resource allocation
-  - Capacity planning and availability tracking
-  - Team member scheduling
-- **Time Tracking**:
-  - Task-based time entries
-  - Real-time tracking with WebSocket support
-  - Chrome extension for quick clock in/out
-  - Comprehensive reporting
-- **Dashboards**:
-  - Admin dashboard with analytics
-  - User-focused views with assignments
-  - Real-time updates and notifications
+### ✅ Fully Implemented
 
-### Technical Highlights
-- **Backend**: Node.js with TypeScript, Fastify, Socket.IO
-- **Frontend**: SvelteKit with TailwindCSS
-- **Database**: PostgreSQL with Prisma ORM
-- **Real-time**: WebSockets for live updates
-- **Deployment**: Containerized for Azure Container Apps
-- **Performance**: Optimized for speed and responsiveness
+- **User Management**: 7-tier role-based access control (SUPER_ADMIN → VIEWER)
+- **Client Management**: Full CRUD with contacts and Salesforce placeholder fields
+- **Project Management**:
+  - Multi-phase projects with milestones and tasks
+  - Task dependencies and hierarchy
+  - Project assignments and resource allocation
+- **Capacity Planning**:
+  - User availability tracking
+  - Time-off request workflow with approval/rejection
+  - Rejection reasons visible to employees
+  - Prominent time-off alerts on people pages
+- **Time Tracking**:
+  - Task-based time entries with sessions
+  - Real-time timer with WebSocket sync across all pages
+  - Daily/weekly/monthly reports
+  - Timer shortcuts for quick start
+- **Analytics & Dashboards**:
+  - Personal dashboard with active timer
+  - Team utilization reports
+  - Project summaries and capacity overviews
+- **Real-time Updates**:
+  - WebSocket-powered live sync for timers, notifications, and shortcuts
+  - Instant updates across web app and Chrome extension
+
+### 🚧 Needs Implementation
+
+- **Chrome Extension**: Structure complete, timer sync working, but needs UI refinement
+- **Gantt Chart**: Visualization planned but not implemented
+- **File Upload/Storage**: Framework in place, needs implementation
+- **Email Notifications**: Configuration ready, sending logic needed
+
+### Technical Stack
+
+- **Backend**: Node.js 20+ • TypeScript • Fastify • Socket.IO • Prisma ORM
+- **Frontend**: SvelteKit • TailwindCSS • TypeScript
+- **Database**: PostgreSQL 16+ (Docker)
+- **Cache**: Redis (configured, not currently used)
+- **Real-time**: Socket.IO with WebSocket transport
+- **Platform**: Windows (NSSM service management)
+- **Deployment**: Azure Container Apps with Cloudflare Tunnel
 
 ## 📋 Prerequisites
 
-- Node.js 20+ and npm 10+
-- PostgreSQL 16+
-- Docker and Docker Compose (for containerized development)
-- Azure CLI (for deployment)
+- **Windows 10/11** (NSSM service manager)
+- **Node.js 20+** and npm 10+
+- **PostgreSQL 16+** (via Docker)
+- **Docker Desktop** (for PostgreSQL + Redis)
 
 ## 🚀 Quick Start
 
@@ -47,206 +60,283 @@ A custom streamlined PMO tracking platform with comprehensive project management
 
 ```bash
 # Navigate to the project directory
-cd pmo
+cd CNX-PMO
 
-# Install all dependencies
+# Install all workspace dependencies
 npm install
-
-# Install backend dependencies
-cd backend && npm install
-
-# Install frontend dependencies
-cd ../frontend && npm install
-
-cd ..
 ```
 
 ### 2. Environment Setup
 
 ```bash
-# Copy environment template
-cp .env.example .env
+# Windows
+copy .env.example .env
 
 # Edit .env with your configuration
-# At minimum, update:
-# - DATABASE_URL
-# - JWT_SECRET
-# - CORS_ORIGIN
+# Required:
+# - DATABASE_URL=postgresql://pmouser:pmopass@localhost:7640/pmodb
+# - JWT_SECRET=<minimum-32-character-secret>
+# - CORS_ORIGIN=http://localhost:7620
+# - PORT=7600
 ```
 
 ### 3. Database Setup
 
-Choose the appropriate setup method:
-
-#### Option A: Fresh Installation (Recommended for new setups)
+**Option A: Fresh Installation** (recommended for new setups)
 ```bash
-# Start PostgreSQL (via Docker)
+# Start PostgreSQL
 docker-compose up -d postgres
 
-# Set up database schema (fast - uses consolidated schema.sql)
+# Set up database (fast - single SQL script)
 cd backend
 npm run setup:fresh
 
 # (Optional) Load demo data
 npm run seed:test
 
-# (Optional) Open Prisma Studio to view database
+# (Optional) View database
 npm run studio -- --port 7680
 ```
 
-#### Option B: Existing Database (For production updates)
+**Option B: Existing Database** (preserves data)
 ```bash
-# Run database migrations (preserves existing data)
 cd backend
 npm run migrate
 ```
 
-### 4. Start Development Servers
+### 4. Start Services
 
-#### Option A: Using Docker Compose (Recommended)
-```bash
-# Start all services
-docker-compose up
+**Windows Service Management (Recommended)**
 
-# Access:
-# - Frontend: http://localhost:7620
-# - Backend API: http://localhost:7600
-# - PostgreSQL: localhost:7640
-# - Redis: localhost:7660
+One-time setup (run as administrator):
+```cmd
+scripts\setup-nssm.bat
 ```
 
-#### Option B: Manual Start
+Then use desktop shortcuts (auto-elevate):
+- `restart.bat.lnk` - Restart backend + frontend
+- `start.bat.lnk` - Start all services
+- `stop.bat.lnk` - Stop everything
+
+**Manual Start**
 ```bash
-# Terminal 1: Start backend
+# Terminal 1: Backend
 cd backend
+set PORT=7600
 npm run dev
 
-# Terminal 2: Start frontend
+# Terminal 2: Frontend
 cd frontend
-npm run dev
+npm run dev -- --port 7620
 ```
 
 ### 5. Access the Application
 
 - **Frontend**: http://localhost:7620
-- **Backend API**: http://localhost:7600
-- **API Health Check**: http://localhost:7600/health
-- **Prisma Studio**: Run `npm run studio -- --port 7680` in backend directory
+- **Backend API**: http://localhost:7600/health
+- **PostgreSQL**: localhost:7640
+- **Redis**: localhost:7660
+- **Prisma Studio**: http://localhost:7680
 
-## 📁 Project Structure
+**Default Login**: Your configured admin account
 
-```
-pmo/
-├── backend/                 # Node.js/TypeScript API
-│   ├── src/
-│   │   ├── modules/        # Feature modules
-│   │   │   ├── auth/       # Authentication
-│   │   │   ├── users/      # User management
-│   │   │   ├── clients/    # Client management
-│   │   │   ├── projects/   # Project management
-│   │   │   ├── resources/  # Resource allocation
-│   │   │   ├── capacity/   # Capacity planning
-│   │   │   ├── timetracking/ # Time tracking
-│   │   │   ├── analytics/  # Analytics & reporting
-│   │   │   └── notifications/ # Notifications
-│   │   ├── core/           # Core utilities
-│   │   │   ├── database/   # Prisma client
-│   │   │   ├── websocket/  # Socket.IO setup
-│   │   │   ├── middleware/ # Auth & other middleware
-│   │   │   └── utils/      # Shared utilities
-│   │   └── index.ts        # Application entry point
-│   ├── prisma/
-│   │   └── schema.prisma   # Database schema
-│   ├── Dockerfile
-│   └── package.json
-│
-├── frontend/               # SvelteKit application
-│   ├── src/
-│   │   ├── routes/        # SvelteKit routes
-│   │   ├── components/    # Svelte components
-│   │   │   ├── admin/    # Admin-specific components
-│   │   │   ├── user/     # User-specific components
-│   │   │   └── shared/   # Shared components
-│   │   ├── lib/          # Libraries and utilities
-│   │   │   ├── api/      # API client
-│   │   │   ├── stores/   # Svelte stores
-│   │   │   └── utils/    # Utilities
-│   │   ├── app.css       # Global styles
-│   │   └── app.html      # HTML template
-│   ├── Dockerfile
-│   └── package.json
-│
-├── chrome-extension/      # Time tracking Chrome extension
-│   ├── src/
-│   ├── public/
-│   └── manifest/
-│
-├── shared/               # Shared types and utilities
-│
-├── infra/               # Azure deployment configs
-│
-├── docker-compose.yml   # Docker Compose configuration
-├── .env.example        # Environment template
-└── README.md           # This file
-```
+## 🗄️ Database
 
-## 🗄️ Database Schema
+### Fresh Install vs Migrations
 
-The platform uses PostgreSQL with Prisma ORM. Key entities include:
+**Fresh Installations**: Use `npm run setup:fresh`
+- Executes consolidated `schema.sql` (entire database in one transaction)
+- Much faster than sequential migrations
+- Includes default dropdown lists (industries, departments, regions, etc.)
 
-- **Users**: User accounts with roles and hierarchy
-- **Clients**: Client organizations with Salesforce placeholders
-- **Projects**: Projects with phases, milestones, and tasks
-- **Tasks**: Hierarchical tasks with dependencies
-- **Assignments**: Project and task assignments
-- **Availability**: User availability and time-off
-- **Time Entries**: Task-based time tracking
-- **Notifications**: System notifications
+**Production Updates**: Use `npm run migrate`
+- Sequential migrations preserve existing data
+- Safe for databases with live data
 
-### Database Migrations
+### Making Schema Changes
 
-The platform supports two database setup approaches:
-
-**Fresh Installations** (recommended for new setups):
 ```bash
 cd backend
-npm run setup:fresh     # Fast - executes consolidated schema.sql
-npm run seed:test       # (Optional) Add demo data
+
+# 1. Update schema.prisma
+# 2. Create migration
+npx prisma migrate dev --name description
+
+# 3. Update consolidated schema for fresh installs
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/schema.sql
+
+# 4. Regenerate Prisma client
+npx prisma generate
 ```
 
-**Existing Databases** (for production updates with data):
+## 📁 Architecture
+
+### Modular Monolith
+
+Backend organized into self-contained modules:
+
+| Module | Purpose | Status |
+|--------|---------|--------|
+| `auth` | JWT authentication, login/register | ✅ Complete |
+| `users` | User CRUD, roles, password management | ✅ Complete |
+| `clients` | Clients, contacts, Salesforce placeholders | ✅ Complete |
+| `projects` | Projects, phases, milestones, tasks | ✅ Complete |
+| `resources` | Project assignments, allocations | ✅ Complete |
+| `capacity` | Availability, time-off approval workflow | ✅ Complete |
+| `timetracking` | Time entries, active timer, reports | ✅ Complete |
+| `analytics` | Dashboard, summaries, utilization | ✅ Complete |
+| `notifications` | Real-time notification system | ✅ Complete |
+| `extension` | Chrome extension API & shortcuts | ✅ Complete |
+
+Each module contains:
+- `*.routes.ts` - Fastify route handlers with Zod validation
+- `*.service.ts` - Business logic with Prisma queries
+
+### Request Flow
+
+```
+HTTP Request → Fastify → Auth Middleware → Route Handler → Service → Prisma → PostgreSQL
+```
+
+### WebSocket Flow
+
+```
+Client → Socket.IO → Auth Middleware → Event Handler → Broadcast to Rooms
+```
+
+**Room Patterns**:
+- `user:{userId}` - Personal updates (timer, shortcuts, notifications)
+- `project:{projectId}` - Project-specific events
+- `task:{taskId}` - Task-specific events
+
+### Database Schema
+
+**Key Relationships**:
+- Users have hierarchical manager relationships (self-referential)
+- Clients → Projects → Phases/Milestones/Tasks
+- ProjectAssignment vs TaskAssignment (project-level vs task-level)
+- ActiveTimeEntry (singleton per user) vs TimeEntry (historical)
+- Task dependencies via TaskDependency join table
+- TimeOffRequest with approval workflow and rejection reasons
+
+**Role Hierarchy** (highest to lowest):
+1. `SUPER_ADMIN` - Full system access
+2. `ADMIN` - Administrative functions
+3. `PMO_MANAGER` - PMO oversight
+4. `PROJECT_MANAGER` - Project management
+5. `RESOURCE_MANAGER` - Resource allocation
+6. `TEAM_MEMBER` - Standard user
+7. `VIEWER` - Read-only access
+
+## 🔧 Development
+
+### Backend Commands
+
 ```bash
-# Create a new migration after schema changes
 cd backend
-npx prisma migrate dev --name migration_name
 
-# Deploy migrations to production
-npx prisma migrate deploy
+npm run dev              # Start with hot reload
+npm run build            # Compile TypeScript
+npm start                # Run compiled code
 
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
+npm run migrate          # Create and apply migration
+npm run migrate:deploy   # Deploy migrations (production)
+npm run generate         # Regenerate Prisma client
+
+npm run setup:fresh      # Fresh database setup (schema.sql)
+npm run seed:test        # Install demo data
+npm run seed:clear       # Clear demo data (warns about orphaned shortcuts)
+
+npm run studio -- --port 7680  # Prisma Studio
+
+npm test                 # Run tests (vitest)
+npm run lint             # ESLint
 ```
 
-**When to use each approach:**
-- **Fresh installs**: Use `setup:fresh` - it's much faster (single SQL script vs 10+ migrations)
-- **Production updates**: Use migrations - they preserve existing data during schema changes
-- **Development**: Use migrations when iterating on schema changes
+### Frontend Commands
 
-## 🔐 Authentication & Security
+```bash
+cd frontend
+
+npm run dev -- --port 7620  # Start dev server
+npm run build               # Production build
+npm run check               # Svelte type checking
+npm run lint                # ESLint
+```
+
+### Chrome Extension Commands
+
+```bash
+cd chrome-extension
+
+npm run build    # Build extension (output: dist/)
+npm run dev      # Build in watch mode
+```
+
+After building, load unpacked extension from `chrome-extension/dist` in Chrome.
+
+## 🪟 Windows Service Management
+
+### NSSM (Non-Sucking Service Manager)
+
+Services run in the background, preventing accidental window closure.
+
+**Setup** (one-time, run as admin):
+```cmd
+scripts\setup-nssm.bat
+```
+
+**Desktop Shortcuts** (auto-elevate to admin):
+- `restart.bat.lnk` - Most commonly used
+- `start.bat.lnk` - Start all services + Docker
+- `stop.bat.lnk` - Stop everything
+
+**Manual Commands**:
+```cmd
+# Restart services (most common)
+scripts\restart.bat
+
+# Restart everything including Docker
+scripts\restart.bat --docker
+
+# Start all services
+scripts\start.bat
+
+# Stop all services
+scripts\stop.bat
+
+# Individual service control
+nssm start pmo-backend
+nssm stop pmo-frontend
+nssm restart pmo-backend
+nssm status pmo-backend
+```
+
+**Service Logs**: `logs/backend.log`, `logs/frontend.log`
+
+## 🌐 Port Assignments
+
+**CRITICAL**: All services use port 7600 as base, incrementing by 20.
+
+| Service | Port | URL |
+|---------|------|-----|
+| Backend API | **7600** | http://localhost:7600 |
+| Frontend | **7620** | http://localhost:7620 |
+| PostgreSQL | **7640** | localhost:7640 |
+| Redis | **7660** | localhost:7660 |
+| Prisma Studio | **7680** | http://localhost:7680 |
+
+**Never use**: 3000, 5173, 5432, 6379, or any default ports.
+
+## 🔐 Security
 
 - **JWT-based authentication** with configurable expiration
-- **Role-based access control (RBAC)** with 7 role levels:
-  - SUPER_ADMIN
-  - ADMIN
-  - PMO_MANAGER
-  - PROJECT_MANAGER
-  - RESOURCE_MANAGER
-  - TEAM_MEMBER
-  - VIEWER
-- **Password hashing** with bcrypt
-- **Rate limiting** on API endpoints
-- **CORS protection**
-- **Security headers** with Helmet
+- **Password hashing** with bcrypt (10 rounds)
+- **Rate limiting** on authentication endpoints
+- **CORS protection** with configurable origins
+- **Security headers** via Helmet
+- **Input validation** with Zod schemas
+- **SQL injection protection** via Prisma (parameterized queries)
 
 ## 🌐 API Endpoints
 
@@ -256,279 +346,183 @@ npx prisma migrate reset
 - `GET /api/auth/me` - Get current user
 - `POST /api/auth/logout` - Logout
 
-### Users
-- `GET /api/users` - List users
-- `GET /api/users/:id` - Get user
-- `POST /api/users` - Create user
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
-
-### Clients
-- `GET /api/clients` - List clients
-- `GET /api/clients/:id` - Get client
-- `POST /api/clients` - Create client
-- `PUT /api/clients/:id` - Update client
-
-### Projects
-- `GET /api/projects` - List projects
-- `GET /api/projects/:id` - Get project
-- `POST /api/projects` - Create project
-- `GET /api/projects/:id/phases` - Get project phases
-- `GET /api/projects/:id/milestones` - Get milestones
-- `GET /api/projects/:id/tasks` - Get project tasks
+### Capacity & Time-Off
+- `GET /api/capacity/availability` - Get availability
+- `GET /api/capacity/availability/:userId` - Get user availability
+- `PUT /api/capacity/availability/:userId` - Update availability
+- `GET /api/capacity/time-off` - List user's time-off requests
+- `GET /api/capacity/time-off/all` - List all requests (managers)
+- `POST /api/capacity/time-off` - Create time-off request
+- `POST /api/capacity/time-off/:id/approve` - Approve request
+- `POST /api/capacity/time-off/:id/reject` - Reject with reason
+- `DELETE /api/capacity/time-off/:id` - Cancel request
 
 ### Time Tracking
-- `GET /api/time-tracking/entries` - Get time entries
-- `POST /api/time-tracking/start` - Start timer
-- `POST /api/time-tracking/stop` - Stop timer
-- `GET /api/time-tracking/active` - Get active timer
-- `GET /api/time-tracking/reports/*` - Time reports
+- `GET /api/timetracking/entries` - Get time entries
+- `POST /api/timetracking/start` - Start timer
+- `POST /api/timetracking/stop` - Stop timer
+- `GET /api/timetracking/active` - Get active timer
+- `GET /api/timetracking/reports/daily` - Daily report
+- `GET /api/timetracking/reports/weekly` - Weekly report
+- `GET /api/timetracking/reports/monthly` - Monthly report
 
-### Capacity & Resources
-- `GET /api/capacity/availability` - Get availability
-- `GET /api/capacity/utilization` - Get utilization
-- `GET /api/resources/assignments` - Get assignments
-
-### Analytics
-- `GET /api/analytics/dashboard` - Dashboard data
-- `GET /api/analytics/projects/summary` - Project summary
-- `GET /api/analytics/capacity/overview` - Capacity overview
+### Extension API
+- `GET /api/extension/shortcuts` - Get timer shortcuts
+- `POST /api/extension/shortcuts` - Create shortcut
+- `PUT /api/extension/shortcuts/:id` - Update shortcut
+- `DELETE /api/extension/shortcuts/:id` - Delete shortcut
 
 ## 🔌 WebSocket Events
 
-### Time Tracking
-- `time:start` - User started tracking time
-- `time:stop` - User stopped tracking time
-- `time:started` - Broadcast to user's sessions
-- `time:stopped` - Broadcast to user's sessions
+### Timer Events
+- `time:started` - Timer started (broadcast to user)
+- `time:stopped` - Timer stopped (broadcast to user)
+- `time:updated` - Timer updated (broadcast to user)
+- `time:entry:created` - Time entry created
+- `time:entry:updated` - Time entry updated
+- `time:entry:deleted` - Time entry deleted
 
-### Project Updates
-- `project:join` - Join project room
-- `project:leave` - Leave project room
-- `project:updated` - Project was updated
+### Shortcut Events
+- `shortcuts:updated` - Shortcuts changed (broadcast to user)
 
-### Task Updates
-- `task:join` - Join task room
-- `task:leave` - Leave task room
-- `task:updated` - Task was updated
+### Project/Task Events
+- `project:updated`, `project:created`, `project:deleted`
+- `task:updated`, `task:created`, `task:deleted`
+- `task:assigned`, `task:unassigned`
 
-## 🐳 Docker Deployment
+### Notification Events
+- `notification:new` - New notification (broadcast to user)
+
+## 🐳 Docker
 
 ### Development
 ```bash
-# Start all services
-docker-compose up
-
-# Rebuild containers
-docker-compose up --build
-
-# Stop all services
-docker-compose down
+# Start PostgreSQL + Redis
+docker-compose up -d postgres redis
 
 # View logs
-docker-compose logs -f
+docker-compose logs -f postgres
+
+# Stop services
+docker-compose down
+
+# Restart database
+scripts\docker-restart.bat
 ```
 
-### Production Build
+### Database Access
 ```bash
-# Build production images
-docker-compose -f docker-compose.yml build
+# PostgreSQL CLI
+docker exec -it pmo-postgres psql -U pmouser -d pmodb
 
-# Start in production mode
-NODE_ENV=production docker-compose up -d
+# Execute SQL file
+docker exec -i pmo-postgres psql -U pmouser -d pmodb < script.sql
 ```
 
-## ☁️ Azure Deployment
+## 🚧 Known Issues & Limitations
 
-### Prerequisites
-- Azure CLI installed and logged in
-- Azure Container Registry (ACR)
-- Azure Container Apps environment
+### Chrome Extension
+- Extension structure complete, WebSocket sync working
+- Timer shortcuts sync in real-time with web app
+- UI needs refinement for production use
 
-### Deployment Steps
+### WebSocket via Cloudflare Tunnel
+- WebSocket connections may show errors in console
+- Socket.IO automatically falls back to HTTP polling (works fine)
+- Cloudflare tunnel doesn't support WebSocket upgrades by default
 
-1. **Build and push images to ACR**:
+### Data Seeding
+- Clearing test data will orphan timer shortcuts (warns user)
+- Shortcuts point to specific task UUIDs (regenerated on re-seed)
+- Script detects and cleans orphaned shortcuts automatically
+
+## 📊 Production Deployment
+
+### Azure Container Apps
+
+**Prerequisites**:
+- Azure CLI installed and authenticated
+- Container Registry (ACR) set up
+- Azure PostgreSQL Flexible Server
+
+**Environment Variables** (required):
 ```bash
-# Login to Azure
-az login
+DATABASE_URL=postgresql://user:pass@host:5432/pmodb
+JWT_SECRET=<32-char-minimum-secret>
+CORS_ORIGIN=https://yourdomain.com
+PORT=7600
+NODE_ENV=production
+```
 
-# Create resource group
-az group create --name pmo-rg --location eastus
-
-# Create container registry
-az acr create --resource-group pmo-rg --name pmoacr --sku Basic
-
-# Login to ACR
-az acr login --name pmoacr
-
+**Deployment**:
+```bash
 # Build and push images
-docker build -t pmoacr.azurecr.io/pmo-backend:latest ./backend
-docker build -t pmoacr.azurecr.io/pmo-frontend:latest ./frontend
+docker build -t <registry>/pmo-backend:latest ./backend
+docker build -t <registry>/pmo-frontend:latest ./frontend
+docker push <registry>/pmo-backend:latest
+docker push <registry>/pmo-frontend:latest
 
-docker push pmoacr.azurecr.io/pmo-backend:latest
-docker push pmoacr.azurecr.io/pmo-frontend:latest
+# Deploy via Azure CLI or CI/CD pipeline
 ```
 
-2. **Create Azure Container Apps**:
-```bash
-# Create Container Apps environment
-az containerapp env create \
-  --name pmo-env \
-  --resource-group pmo-rg \
-  --location eastus
+### Cloudflare Tunnel
 
-# Deploy backend
-az containerapp create \
-  --name pmo-backend \
-  --resource-group pmo-rg \
-  --environment pmo-env \
-  --image pmoacr.azurecr.io/pmo-backend:latest \
-  --target-port 7600 \
-  --ingress external \
-  --env-vars \
-    NODE_ENV=production \
-    DATABASE_URL=<your-postgres-url> \
-    JWT_SECRET=<your-jwt-secret>
-
-# Deploy frontend
-az containerapp create \
-  --name pmo-frontend \
-  --resource-group pmo-rg \
-  --environment pmo-env \
-  --image pmoacr.azurecr.io/pmo-frontend:latest \
-  --target-port 7620 \
-  --ingress external \
-  --env-vars \
-    PUBLIC_API_URL=<backend-url>
-```
-
-3. **Set up Azure PostgreSQL**:
-```bash
-# Create PostgreSQL server
-az postgres flexible-server create \
-  --name pmo-postgres \
-  --resource-group pmo-rg \
-  --location eastus \
-  --admin-user pmoadmin \
-  --admin-password <secure-password> \
-  --sku-name Standard_B1ms \
-  --version 16
-
-# Create database
-az postgres flexible-server db create \
-  --resource-group pmo-rg \
-  --server-name pmo-postgres \
-  --database-name pmodb
-```
-
-## 🔧 Development Workflow
-
-### Adding a New Module
-
-1. Create module directory in `backend/src/modules/`
-2. Create service file with business logic
-3. Create routes file with API endpoints
-4. Register routes in `backend/src/index.ts`
-5. Create corresponding frontend components
-
-### Database Changes
-
-1. Update `backend/prisma/schema.prisma`
-2. Create migration: `npx prisma migrate dev --name description`
-3. Update consolidated schema (for fresh installs):
-   ```bash
-   cd backend
-   npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/schema.sql
-   ```
-4. Update TypeScript types if needed
-5. Regenerate Prisma client: `npx prisma generate`
+Backend accessible via: `https://pmoservices.cnxlab.us`
+Frontend accessible via: `https://pmo.cnxlab.us`
 
 ## 🧪 Testing
 
 ```bash
-# Run backend tests
+# Backend tests
 cd backend
 npm test
 
-# Run frontend tests
+# Run specific test file
+npm test -- path/to/file.test.ts
+
+# Run tests matching pattern
+npm test -- -t "pattern"
+
+# Frontend tests
 cd frontend
 npm test
 ```
 
-## 📊 Monitoring & Logging
+## 📝 Code Conventions
 
-- **Backend**: Pino logger with pretty printing in development
-- **Database**: Prisma query logging in development
-- **WebSocket**: Connection and event logging
-- **Errors**: Structured error logging with context
-
-## 🚧 Roadmap & Next Steps
-
-### Phase 1: Foundation (Current)
-- [x] Project structure and configuration
-- [x] Database schema design
-- [x] Authentication system
-- [x] Real-time WebSocket setup
-- [ ] Complete all API endpoints
-- [ ] Build core UI components
-
-### Phase 2: Core Features
-- [ ] User management UI
-- [ ] Client management with Salesforce placeholders
-- [ ] Project creation and management
-- [ ] Resource allocation interface
-- [ ] Capacity planning dashboard
-
-### Phase 3: Time Tracking
-- [ ] Time entry UI
-- [ ] Active timer with WebSocket sync
-- [ ] Chrome extension development
-- [ ] Time reporting and analytics
-
-### Phase 4: Advanced Features
-- [ ] Gantt chart visualization
-- [ ] Advanced analytics dashboard
-- [ ] Notification system
-- [ ] File attachments
-- [ ] Activity feed
-
-### Phase 5: Polish & Production
-- [ ] Comprehensive testing
-- [ ] Performance optimization
-- [ ] Security audit
-- [ ] Documentation
-- [ ] Azure deployment automation
-
-## 🤝 Contributing
-
-This is a private project for internal use. If you're part of the development team:
-
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit for review
-5. Deploy to staging first
-
-## 📝 License
-
-Proprietary - Internal Use Only
+- **TypeScript**: Strict mode, no `any` types
+- **Imports**: Use `.js` extension (ESM requirement)
+- **Database**: Always use Prisma with `select` to limit fields
+- **Errors**: Throw in services, Fastify catches them
+- **WebSocket**: Prefix events with domain (`time:`, `project:`)
+- **Validation**: Zod schemas for all API inputs
 
 ## 🆘 Troubleshooting
 
-### Database connection failed
-- Ensure PostgreSQL is running
-- Check DATABASE_URL in .env
-- Verify network connectivity
+### Database Connection Failed
+- Verify PostgreSQL is running: `docker ps`
+- Check DATABASE_URL in `.env`
+- Test connection: `docker exec pmo-postgres psql -U pmouser -d pmodb -c "SELECT 1"`
 
-### Frontend can't reach backend
-- Check CORS_ORIGIN in backend .env
-- Verify PUBLIC_API_URL in frontend
-- Ensure backend is running on correct port
+### Frontend Can't Reach Backend
+- Check CORS_ORIGIN in backend `.env`
+- Verify backend is running on port 7600: `netstat -ano | findstr 7600`
+- Check browser console for CORS errors
 
-### WebSocket connection issues
-- Check firewall settings
+### WebSocket Connection Issues
+- Check browser console - Socket.IO may fall back to polling (normal)
 - Verify JWT token is being sent
-- Check browser console for errors
+- Check backend logs for connection attempts
+
+### Services Won't Start
+- Verify ports are not in use
+- Check service logs: `logs/backend.log`, `logs/frontend.log`
+- Restart services as administrator
+
+### Timer Shortcuts Not Syncing
+- Check WebSocket connection in extension console
+- Verify shortcuts were created via web app (not database)
+- Reload extension in `chrome://extensions`
 
 ## 📞 Support
 
