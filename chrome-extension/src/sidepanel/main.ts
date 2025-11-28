@@ -73,7 +73,7 @@ function renderShortcuts() {
       const cards = items.map((shortcut) => createShortcutCard(shortcut)).join('');
       return `
         <div style="background: rgba(107, 114, 128, 0.06); border: 1px solid rgba(107, 114, 128, 0.1); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <div style="font-size: 12px; font-weight: 600; color: #1f2937; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(59, 130, 246, 0.05); padding: 8px 12px; border-left: 4px solid rgba(59, 130, 246, 0.6); border-radius: 6px;">
+          <div style="font-size: 12px; font-weight: 600; color: #1f2937; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(59, 130, 246, 0.05); padding: 8px 12px; border-left: 4px solid rgba(59, 130, 246, 0.6); border-radius: 6px;">
             ${escapeHtml(groupName)}
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px;">

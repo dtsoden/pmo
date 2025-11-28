@@ -388,7 +388,7 @@
         <!-- Group Container -->
         <div class="bg-muted/20 border border-muted-foreground/10 rounded-lg p-4">
           <!-- Group Header -->
-          <div class="flex items-center justify-between mb-4 px-3 py-2 bg-primary/5 border-l-4 border-primary/60 rounded-md">
+          <div class="flex items-center justify-between mb-3 px-3 py-2 bg-primary/5 border-l-4 border-primary/60 rounded-md">
             <h3 class="text-sm font-semibold text-foreground/90 uppercase tracking-wider">
               {groupName}
             </h3>
