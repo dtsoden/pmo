@@ -233,14 +233,14 @@
       <svelte:fragment slot="icon">
         <Calendar class="h-12 w-12" />
       </svelte:fragment>
-      {#if statusFilter === 'all' && typeFilter === 'all'}
-        <svelte:fragment slot="action">
+      <svelte:fragment slot="action">
+        {#if statusFilter === 'all' && typeFilter === 'all'}
           <Button on:click={() => { showNewRequestModal = true; }}>
             <Plus class="mr-2 h-4 w-4" />
             Request Leave
           </Button>
-        </svelte:fragment>
-      {/if}
+        {/if}
+      </svelte:fragment>
     </EmptyState>
   {:else}
     <div class="space-y-3">
