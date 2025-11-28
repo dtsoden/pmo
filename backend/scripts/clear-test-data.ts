@@ -40,10 +40,65 @@ async function clearTestData() {
 
   console.log(`✓ Preserving admin account: ${adminUser.email}\n`);
 
+  // ============================================
+  // DETECT ORPHANED TIMER SHORTCUTS
+  // ============================================
+  // Find all timer shortcuts that reference tasks
+  // (these will become orphaned when we delete test data)
+  const allShortcutsWithTasks = await prisma.timerShortcut.findMany({
+    where: { taskId: { not: null } },
+    include: {
+      user: { select: { email: true } },
+      task: {
+        select: {
+          title: true,
+          project: { select: { name: true } }
+        }
+      }
+    }
+  });
+
+  if (allShortcutsWithTasks.length > 0) {
+    console.log('\n⚠️  WARNING: ORPHANED TIMER SHORTCUTS DETECTED');
+    console.log('════════════════════════════════════════════════');
+    console.log(`Found ${allShortcutsWithTasks.length} timer shortcut(s) that reference tasks.`);
+    console.log('These shortcuts will be DELETED because their tasks are being removed.\n');
+
+    console.log('Shortcuts that will be deleted:');
+    for (const shortcut of allShortcutsWithTasks) {
+      const taskInfo = shortcut.task
+        ? `${shortcut.task.project.name} - ${shortcut.task.title}`
+        : 'Unknown task';
+      console.log(`  • ${shortcut.label} (${shortcut.user.email}) → ${taskInfo}`);
+    }
+
+    console.log('\nThis prevents shortcuts from pointing to non-existent tasks,');
+    console.log('which causes "No task assigned" errors and sync issues.');
+    console.log('════════════════════════════════════════════════\n');
+
+    // Wait 3 seconds to let user read the warning
+    console.log('Continuing in 3 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log();
+  }
+
   // Delete in proper order to respect foreign key constraints
   // Most dependent tables first
 
   console.log('Removing time tracking data...');
+
+  // Delete timer shortcuts first (they reference tasks)
+  const timerShortcuts = await prisma.timerShortcut.deleteMany({
+    where: {
+      OR: [
+        // Delete shortcuts that reference tasks (will be orphaned)
+        { taskId: { not: null } },
+        // Also delete shortcuts belonging to test users
+        { userId: { not: adminUser.id } }
+      ]
+    }
+  });
+  console.log(`  Deleted ${timerShortcuts.count} timer shortcuts`);
   const activeTimeEntries = await prisma.activeTimeEntry.deleteMany({
     where: { userId: { not: adminUser.id } }
   });
@@ -182,6 +237,9 @@ async function clearTestData() {
   console.log(`Preserved: ${PRESERVE_EMAIL}`);
   console.log('Preserved: Dropdown lists (SystemSetting)');
   console.log('Removed: All other data');
+  if (timerShortcuts.count > 0) {
+    console.log(`         ${timerShortcuts.count} timer shortcuts (orphaned by deleted tasks)`);
+  }
   console.log('========================================\n');
 }
 
