@@ -292,34 +292,18 @@
 
     if (newGroupIndex < 0 || newGroupIndex >= groupsArray.length) return;
 
-    // Get shortcuts from both groups
-    const [currentGroupName, currentGroupShortcuts] = groupsArray[groupIndex];
-    const [adjacentGroupName, adjacentGroupShortcuts] = groupsArray[newGroupIndex];
+    // Swap groups in the array
+    const reorderedGroups = [...groupsArray];
+    [reorderedGroups[groupIndex], reorderedGroups[newGroupIndex]] =
+      [reorderedGroups[newGroupIndex], reorderedGroups[groupIndex]];
 
-    // Create new shortcuts array with swapped groups
-    const updated = [...shortcuts];
-
-    // Find indices of all shortcuts in both groups
-    const currentIndices = currentGroupShortcuts.map(s => s.originalIndex).sort((a, b) => a - b);
-    const adjacentIndices = adjacentGroupShortcuts.map(s => s.originalIndex).sort((a, b) => a - b);
-
-    // Extract the shortcuts
-    const currentShortcuts = currentIndices.map(i => updated[i]);
-    const adjacentShortcuts = adjacentIndices.map(i => updated[i]);
-
-    // Determine which group comes first
-    const firstGroupIndices = direction === 'up' ? adjacentIndices : currentIndices;
-    const firstGroupShortcuts = direction === 'up' ? adjacentShortcuts : currentShortcuts;
-    const secondGroupShortcuts = direction === 'up' ? currentShortcuts : adjacentShortcuts;
-
-    // Get the range of indices we're working with
-    const allIndices = [...currentIndices, ...adjacentIndices].sort((a, b) => a - b);
-    const startIndex = allIndices[0];
-
-    // Replace the shortcuts in the correct order
-    const reorderedShortcuts = [...firstGroupShortcuts, ...secondGroupShortcuts];
-    reorderedShortcuts.forEach((shortcut, i) => {
-      updated[startIndex + i] = shortcut;
+    // Flatten all groups back into a single shortcuts array in the new order
+    const updated: TimerShortcut[] = [];
+    reorderedGroups.forEach(([groupName, groupShortcuts]) => {
+      // Remove the originalIndex property that we added for display
+      groupShortcuts.forEach(({ originalIndex, ...shortcut }) => {
+        updated.push(shortcut as TimerShortcut);
+      });
     });
 
     // Update sortOrder for all shortcuts
