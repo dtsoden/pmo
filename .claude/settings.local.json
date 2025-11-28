@@ -57,7 +57,10 @@
       "Bash(start create-icons.html)",
       "Bash(del \"C:\\Users\\DavidSoden\\CNX-PMO\\chrome-extension\\public\\icons\\icon.svg\")",
       "Bash(start chrome-extension/create-icons.html)",
-      "Bash(del C:UsersDavidSodenCNX-PMOlayout.jpg)"
+      "Bash(del C:UsersDavidSodenCNX-PMOlayout.jpg)",
+      "Bash(grep:*)",
+      "Bash(del \"C:\\Users\\DavidSoden\\CNX-PMO\\backend\\scripts\\check-timeoff.ts\" \"C:\\Users\\DavidSoden\\CNX-PMO\\backend\\scripts\\add-current-week-timeoff.ts\")",
+      "Bash(Select-String -Pattern 'error|Error|ERROR' -Context 2,2\"\")"
     ],
     "deny": [],
     "ask": []
