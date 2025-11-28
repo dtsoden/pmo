@@ -386,9 +386,9 @@
     <div class="space-y-6">
       {#each Array.from(groupedShortcuts.entries()) as [groupName, groupShortcuts], groupIndex}
         <!-- Group Container -->
-        <div class="bg-muted/20 border border-muted-foreground/10 rounded-lg p-4">
+        <div class="bg-muted/20 border border-muted-foreground/10 rounded-lg overflow-hidden">
           <!-- Group Header -->
-          <div class="flex items-center justify-between mb-3 px-3 py-2 bg-primary/5 border-l-4 border-primary/60 rounded-md">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-muted-foreground/10 bg-muted/10">
             <h3 class="text-sm font-semibold text-foreground/90 uppercase tracking-wider">
               {groupName}
             </h3>
@@ -423,7 +423,7 @@
           </div>
 
           <!-- Shortcuts in this group -->
-          <div class="grid gap-3">
+          <div class="grid gap-3 p-4">
             {#each groupShortcuts as shortcut}
               <Card class="p-4">
                 <div class="flex items-center gap-4">
