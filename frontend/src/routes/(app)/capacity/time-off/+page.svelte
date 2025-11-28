@@ -391,27 +391,27 @@
         </div>
       </div>
     </div>
-
-    <div slot="footer" class="flex justify-end gap-2">
-      {#if selectedRequest.status === 'PENDING'}
-        <Button variant="outline" on:click={() => showRequestModal = false}>
-          Close
-        </Button>
-        <Button variant="outline" on:click={() => rejectRequest(selectedRequest.id)} loading={actionLoading}>
-          <X class="mr-2 h-4 w-4" />
-          Reject
-        </Button>
-        <Button on:click={() => approveRequest(selectedRequest.id)} loading={actionLoading}>
-          <Check class="mr-2 h-4 w-4" />
-          Approve
-        </Button>
-      {:else}
-        <Button variant="outline" on:click={() => showRequestModal = false}>
-          Close
-        </Button>
-      {/if}
-    </div>
   {/if}
+
+  <div slot="footer" class="flex justify-end gap-2">
+    {#if selectedRequest?.status === 'PENDING'}
+      <Button variant="outline" on:click={() => showRequestModal = false}>
+        Close
+      </Button>
+      <Button variant="outline" on:click={() => rejectRequest(selectedRequest.id)} loading={actionLoading}>
+        <X class="mr-2 h-4 w-4" />
+        Reject
+      </Button>
+      <Button on:click={() => approveRequest(selectedRequest.id)} loading={actionLoading}>
+        <Check class="mr-2 h-4 w-4" />
+        Approve
+      </Button>
+    {:else if selectedRequest}
+      <Button variant="outline" on:click={() => showRequestModal = false}>
+        Close
+      </Button>
+    {/if}
+  </div>
 </Modal>
 
 <!-- New Request Modal -->
