@@ -192,15 +192,20 @@ export async function extensionRoutes(app: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
-      await deleteShortcut(id, request.user.userId);
+      const result = await deleteShortcut(id, request.user.userId);
 
       // Emit WebSocket event for real-time sync
       const io = (app as any).io;
       if (io) {
         io.to(`user:${request.user.userId}`).emit('shortcuts:updated', { deletedId: id });
+
+        // If we stopped a timer, notify about that too
+        if (result.stoppedTimer) {
+          io.to(`user:${request.user.userId}`).emit('time:discarded', {});
+        }
       }
 
-      return reply.code(204).send();
+      return { success: true, stoppedTimer: result.stoppedTimer };
     } catch (error: any) {
       if (error.message === 'Shortcut not found') {
         return reply.code(404).send({ error: 'Shortcut not found' });

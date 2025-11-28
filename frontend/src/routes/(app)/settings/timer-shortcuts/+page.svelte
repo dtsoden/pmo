@@ -12,6 +12,7 @@
 
   let shortcuts: TimerShortcut[] = [];
   let loading = true;
+  let activeTimer: any = null;
 
   // Modal state
   let showModal = false;
@@ -52,7 +53,7 @@
   ];
 
   onMount(async () => {
-    await Promise.all([loadShortcuts(), loadProjects()]);
+    await Promise.all([loadShortcuts(), loadProjects(), loadActiveTimer()]);
   });
 
   async function loadShortcuts() {
@@ -72,6 +73,15 @@
       projects = response.data;
     } catch (err) {
       console.error('Failed to load projects:', err);
+    }
+  }
+
+  async function loadActiveTimer() {
+    try {
+      const result = await api.timetracking.active.get();
+      activeTimer = result.activeEntry;
+    } catch (err) {
+      console.error('Failed to load active timer:', err);
     }
   }
 
@@ -164,11 +174,28 @@
   }
 
   async function deleteShortcut(id: string) {
-    if (!confirm('Delete this shortcut?')) return;
+    const shortcut = shortcuts.find(s => s.id === id);
+    if (!shortcut) return;
+
+    // Check if there's an active timer for this shortcut's task
+    const hasActiveTimer = activeTimer && shortcut.taskId && activeTimer.taskId === shortcut.taskId;
+
+    const message = hasActiveTimer
+      ? `⚠️ WARNING: You have an active timer running for this task!\n\nDeleting this shortcut will STOP the timer and discard the time.\n\nAre you sure you want to delete "${shortcut.label}"?`
+      : `Delete "${shortcut.label}"?`;
+
+    if (!confirm(message)) return;
 
     try {
-      await api.extension.deleteShortcut(id);
-      toast.success('Shortcut deleted');
+      const result = await api.extension.deleteShortcut(id);
+
+      if (result.stoppedTimer) {
+        toast.success('Shortcut deleted and active timer stopped');
+        await loadActiveTimer(); // Refresh active timer state
+      } else {
+        toast.success('Shortcut deleted');
+      }
+
       await loadShortcuts();
     } catch (err) {
       toast.error((err as { message?: string })?.message || 'Failed to delete shortcut');

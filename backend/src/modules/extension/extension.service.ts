@@ -187,14 +187,15 @@ export async function updateShortcut(id: string, userId: string, data: UpdateSho
 
 /**
  * Delete a timer shortcut
+ * If there's an active timer for this shortcut's task, it will be stopped first
  */
 export async function deleteShortcut(id: string, userId: string) {
   logger.info({ id, userId }, 'Deleting timer shortcut');
 
-  // Verify ownership
+  // Verify ownership and get shortcut details
   const existing = await db.timerShortcut.findUnique({
     where: { id },
-    select: { userId: true },
+    select: { userId: true, taskId: true },
   });
 
   if (!existing) {
@@ -205,11 +206,31 @@ export async function deleteShortcut(id: string, userId: string) {
     throw new Error('Not authorized to delete this shortcut');
   }
 
+  // Check if there's an active timer running for this task
+  let stoppedTimer = false;
+  if (existing.taskId) {
+    const activeTimer = await db.activeTimeEntry.findUnique({
+      where: { userId },
+      select: { taskId: true },
+    });
+
+    if (activeTimer && activeTimer.taskId === existing.taskId) {
+      // Stop the timer (discard it - don't save as entry)
+      await db.activeTimeEntry.delete({
+        where: { userId },
+      });
+      stoppedTimer = true;
+      logger.info({ shortcutId: id }, 'Active timer stopped before deleting shortcut');
+    }
+  }
+
   await db.timerShortcut.delete({
     where: { id },
   });
 
-  logger.info({ shortcutId: id }, 'Timer shortcut deleted');
+  logger.info({ shortcutId: id, stoppedTimer }, 'Timer shortcut deleted');
+
+  return { stoppedTimer };
 }
 
 /**

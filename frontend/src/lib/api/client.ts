@@ -788,7 +788,7 @@ class ApiClient {
     },
 
     deleteShortcut: (id: string) =>
-      this.request<void>(`/extension/shortcuts/${id}`, { method: 'DELETE' }),
+      this.request<{ success: boolean; stoppedTimer: boolean }>(`/extension/shortcuts/${id}`, { method: 'DELETE' }),
 
     reorderShortcuts: (shortcuts: { id: string; sortOrder: number }[]) =>
       this.request<{ success: boolean }>('/extension/shortcuts/reorder', {
