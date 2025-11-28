@@ -22,10 +22,12 @@
     AlertCircle,
     ListTodo,
     TrendingUp,
+    CalendarDays,
+    XCircle,
   } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import UserForm from '../UserForm.svelte';
-  import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+  import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, parseISO } from 'date-fns';
 
   // SvelteKit props - must be declared to avoid warnings
   export let data: unknown = null;
@@ -45,6 +47,10 @@
   let error = '';
 
   let showEditModal = false;
+
+  // Availability and time-off
+  let availability: any = null;
+  let loadingAvailability = false;
 
   // Date ranges for time queries
   const now = new Date();
@@ -100,6 +106,28 @@
     loadUser();
   }
 
+  async function loadAvailability() {
+    if (!userId) return;
+
+    loadingAvailability = true;
+    try {
+      const today = new Date();
+      const startDate = format(today, 'yyyy-MM-dd');
+      const endDate = format(addDays(today, 30), 'yyyy-MM-dd');
+
+      const response = await api.capacity.availability.get(userId, {
+        startDate,
+        endDate,
+      });
+
+      availability = response.availability;
+    } catch (err) {
+      console.error('Failed to load availability:', err);
+    } finally {
+      loadingAvailability = false;
+    }
+  }
+
   function getRoleBadgeVariant(role: string) {
     switch (role) {
       case 'SUPER_ADMIN':
@@ -118,6 +146,7 @@
   // Load when userId becomes available
   $: if (userId && browser) {
     loadUser();
+    loadAvailability();
   }
 
   $: totalAllocation = (allocations || []).reduce((sum, a) => sum + (a.allocatedHours || 0), 0);
@@ -343,6 +372,94 @@
                   </div>
                 </div>
               {/each}
+            </div>
+          {/if}
+        </Card>
+
+        <!-- Availability & Time-Off -->
+        <Card>
+          <div class="border-b px-6 py-4">
+            <div class="flex items-center justify-between">
+              <h2 class="font-semibold">Availability (Next 30 Days)</h2>
+              <Button variant="ghost" size="sm" href="/capacity/time-off">
+                View All
+              </Button>
+            </div>
+          </div>
+          {#if loadingAvailability}
+            <div class="p-12 text-center">
+              <Spinner />
+            </div>
+          {:else if !availability}
+            <div class="p-6 text-center text-muted-foreground">
+              No availability data
+            </div>
+          {:else}
+            <div class="p-6">
+              <div class="grid grid-cols-7 gap-2">
+                {#each (availability.availability || []).slice(0, 28) as day}
+                  {@const isTimeOff = day.timeOff}
+                  {@const isUnavailable = day.type === 'UNAVAILABLE' && !day.timeOff}
+                  {@const isPartial = day.type === 'PARTIAL'}
+                  {@const isWeekend = new Date(day.date).getDay() === 0 || new Date(day.date).getDay() === 6}
+
+                  <div
+                    class={cn(
+                      'relative flex flex-col items-center justify-center rounded-md border p-2 text-center transition-all hover:shadow-sm',
+                      isTimeOff && 'border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20',
+                      isUnavailable && !isTimeOff && 'border-muted bg-muted/30',
+                      isPartial && 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20',
+                      !isTimeOff && !isUnavailable && !isPartial && isWeekend && 'bg-muted/20',
+                      !isTimeOff && !isUnavailable && !isPartial && !isWeekend && 'border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-950/20'
+                    )}
+                    title={day.timeOff
+                      ? `${day.timeOff.type}: ${day.timeOff.hours}h${day.timeOff.reason ? ' - ' + day.timeOff.reason : ''}`
+                      : day.notes || ''}
+                  >
+                    <div class="text-[10px] font-medium text-muted-foreground">
+                      {format(parseISO(day.date), 'MMM d')}
+                    </div>
+                    <div class="text-xs font-semibold">
+                      {#if isTimeOff}
+                        <div class="flex items-center gap-1 text-red-600 dark:text-red-400">
+                          <XCircle class="h-3 w-3" />
+                          <span class="text-[10px]">{day.timeOff.type.slice(0, 3)}</span>
+                        </div>
+                      {:else if isUnavailable}
+                        <span class="text-muted-foreground">-</span>
+                      {:else}
+                        <span class={cn(
+                          isPartial && 'text-amber-600 dark:text-amber-400',
+                          !isPartial && !isWeekend && 'text-green-600 dark:text-green-400',
+                          isWeekend && 'text-muted-foreground'
+                        )}>
+                          {day.availableHours.toFixed(0)}h
+                        </span>
+                      {/if}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+
+              <!-- Legend -->
+              <div class="mt-4 flex flex-wrap gap-4 border-t pt-4 text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="h-3 w-3 rounded border border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-950/20"></div>
+                  <span class="text-muted-foreground">Available</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-3 w-3 rounded border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20"></div>
+                  <span class="text-muted-foreground">Partial</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-3 w-3 rounded border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20"></div>
+                  <span class="text-muted-foreground">Time Off</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-3 w-3 rounded border border-muted bg-muted/30"></div>
+                  <span class="text-muted-foreground">Unavailable</span>
+                </div>
+              </div>
             </div>
           {/if}
         </Card>
