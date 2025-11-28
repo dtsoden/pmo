@@ -392,8 +392,8 @@
       </div>
     </div>
 
-    {#if selectedRequest.status === 'PENDING'}
-      <div slot="footer" class="flex justify-end gap-2">
+    <div slot="footer" class="flex justify-end gap-2">
+      {#if selectedRequest.status === 'PENDING'}
         <Button variant="outline" on:click={() => showRequestModal = false}>
           Close
         </Button>
@@ -405,8 +405,12 @@
           <Check class="mr-2 h-4 w-4" />
           Approve
         </Button>
-      </div>
-    {/if}
+      {:else}
+        <Button variant="outline" on:click={() => showRequestModal = false}>
+          Close
+        </Button>
+      {/if}
+    </div>
   {/if}
 </Modal>
 
