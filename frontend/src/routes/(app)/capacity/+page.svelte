@@ -11,7 +11,7 @@
     TIME_OFF_STATUS_LABELS,
     TIME_OFF_TYPE_LABELS,
   } from '$lib/utils';
-  import { Calendar, Users, TrendingUp, Clock, AlertTriangle, UsersRound } from 'lucide-svelte';
+  import { Calendar, Users, TrendingUp, Clock, AlertTriangle, UsersRound, Plane } from 'lucide-svelte';
   import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -282,9 +282,19 @@
                       lastName={user.user?.lastName}
                       size="sm"
                     />
-                    <span class="font-medium">
-                      {fullName(user.user?.firstName, user.user?.lastName)}
-                    </span>
+                    <div>
+                      <span class="font-medium">
+                        {fullName(user.user?.firstName, user.user?.lastName)}
+                      </span>
+                      {#if user.upcomingTimeOff && user.upcomingTimeOff.length > 0}
+                        <div class="flex items-center gap-1 mt-1">
+                          <Plane class="h-3 w-3 text-amber-600" />
+                          <span class="text-xs text-amber-600 font-medium">
+                            {user.upcomingTimeOff.length} upcoming time-off
+                          </span>
+                        </div>
+                      {/if}
+                    </div>
                   </div>
                   <span class={cn('font-semibold', getUtilizationColor(user.utilization || 0))}>
                     {formatPercent(user.utilization || 0)}
@@ -300,6 +310,25 @@
                   <span>{user.loggedHours?.toFixed(1) || 0}h logged</span>
                   <span>{user.availableHours?.toFixed(0) || 0}h available</span>
                 </div>
+                {#if user.upcomingTimeOff && user.upcomingTimeOff.length > 0}
+                  <div class="mt-2 space-y-1">
+                    {#each user.upcomingTimeOff.slice(0, 2) as timeOff}
+                      <div class="flex items-center justify-between text-xs">
+                        <span class="text-muted-foreground">
+                          {TIME_OFF_TYPE_LABELS[timeOff.type] || timeOff.type}
+                        </span>
+                        <span class="font-medium text-amber-600">
+                          {formatDate(timeOff.startDate)} - {formatDate(timeOff.endDate)}
+                        </span>
+                      </div>
+                    {/each}
+                    {#if user.upcomingTimeOff.length > 2}
+                      <div class="text-xs text-muted-foreground">
+                        +{user.upcomingTimeOff.length - 2} more
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
               </div>
             {/each}
           {/if}

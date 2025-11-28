@@ -11,10 +11,13 @@ export async function getDashboard(userId: string, userRole: string) {
   // Get user's active timer
   const activeTimer = await db.activeTimeEntry.findUnique({
     where: { userId },
-    include: {
-      user: {
-        select: { firstName: true, lastName: true },
-      },
+    select: {
+      id: true,
+      userId: true,
+      taskId: true,
+      description: true,
+      startTime: true,
+      createdAt: true,
     },
   });
 

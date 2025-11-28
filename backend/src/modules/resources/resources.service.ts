@@ -141,6 +141,29 @@ export async function createAssignment(data: CreateAssignmentData) {
     throw new Error('User already assigned to this project');
   }
 
+  // Check for approved time-off conflicts
+  const assignmentEnd = data.endDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // Default to 1 year from now if no end date
+  const timeOffConflicts = await db.timeOffRequest.findMany({
+    where: {
+      userId: data.userId,
+      status: 'APPROVED',
+      OR: [
+        {
+          startDate: { lte: assignmentEnd },
+          endDate: { gte: data.startDate },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      type: true,
+      startDate: true,
+      endDate: true,
+      hours: true,
+      reason: true,
+    },
+  });
+
   const assignment = await db.projectAssignment.create({
     data: {
       projectId: data.projectId,
@@ -156,7 +179,11 @@ export async function createAssignment(data: CreateAssignmentData) {
 
   logger.info(`User ${data.userId} assigned to project ${data.projectId} as ${data.role}`);
 
-  return assignment;
+  // Return assignment with time-off warnings if any
+  return {
+    ...assignment,
+    timeOffConflicts: timeOffConflicts.length > 0 ? timeOffConflicts : undefined,
+  };
 }
 
 export async function updateAssignment(id: string, data: UpdateAssignmentData) {
@@ -215,6 +242,13 @@ export interface ResourceAllocation {
     status: AssignmentStatus;
   }>;
   utilizationPercent: number;
+  upcomingTimeOff?: Array<{
+    id: string;
+    type: string;
+    startDate: Date;
+    endDate: Date;
+    hours: number;
+  }>;
 }
 
 export async function getResourceAllocations(params: {
@@ -269,11 +303,53 @@ export async function getResourceAllocations(params: {
     orderBy: { lastName: 'asc' },
   });
 
+  // Fetch approved time-off for all users in the date range
+  const timeOffData = await db.timeOffRequest.findMany({
+    where: {
+      userId: { in: users.map(u => u.id) },
+      status: 'APPROVED',
+      ...(startDate && endDate && {
+        OR: [
+          {
+            startDate: { lte: endDate },
+            endDate: { gte: startDate },
+          },
+        ],
+      }),
+    },
+    select: {
+      id: true,
+      userId: true,
+      type: true,
+      startDate: true,
+      endDate: true,
+      hours: true,
+    },
+    orderBy: { startDate: 'asc' },
+  });
+
+  // Group time-off by userId
+  const timeOffByUser = new Map<string, typeof timeOffData>();
+  for (const timeOff of timeOffData) {
+    if (!timeOffByUser.has(timeOff.userId)) {
+      timeOffByUser.set(timeOff.userId, []);
+    }
+    timeOffByUser.get(timeOff.userId)!.push(timeOff);
+  }
+
   return users.map(user => {
     const totalAllocated = user.projectAssignments.reduce(
       (sum, a) => sum + a.allocatedHours,
       0
     );
+
+    const upcomingTimeOff = timeOffByUser.get(user.id)?.map(t => ({
+      id: t.id,
+      type: t.type,
+      startDate: t.startDate,
+      endDate: t.endDate,
+      hours: t.hours,
+    }));
 
     return {
       userId: user.id,
@@ -299,6 +375,7 @@ export async function getResourceAllocations(params: {
       utilizationPercent: user.defaultWeeklyHours > 0
         ? Math.round((totalAllocated / user.defaultWeeklyHours) * 100)
         : 0,
+      upcomingTimeOff,
     };
   });
 }
