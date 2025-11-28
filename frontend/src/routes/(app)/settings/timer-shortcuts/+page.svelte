@@ -387,8 +387,8 @@
       {#each Array.from(groupedShortcuts.entries()) as [groupName, groupShortcuts], groupIndex}
         <div>
           <!-- Group Header -->
-          <div class="flex items-center justify-between mb-4 px-1">
-            <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          <div class="flex items-center justify-between mb-4 px-3 py-2 bg-muted/30 border-l-4 border-primary/60 rounded-md">
+            <h3 class="text-sm font-semibold text-foreground/90 uppercase tracking-wider">
               {groupName}
             </h3>
             <div class="flex items-center gap-1">
