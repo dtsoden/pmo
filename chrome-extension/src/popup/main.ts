@@ -171,7 +171,6 @@ function setupEventListeners() {
   // Timer controls
   getElement('startGenericBtn')?.addEventListener('click', handleStartGeneric);
   getElement('stopBtn')?.addEventListener('click', handleStop);
-  getElement('discardBtn')?.addEventListener('click', handleDiscard);
 
   // Not authenticated state
   getElement('openWebAppBtn')?.addEventListener('click', handleOpenWebApp);
@@ -230,22 +229,10 @@ async function handleStop() {
     await sendMessage({ type: 'STOP_TIMER' });
     activeTimer = null;
     renderTimer();
-    showToast('Time entry saved!', 'success');
+    showToast('Timer stopped and saved!', 'success');
   } catch (error: any) {
     console.error('Failed to stop timer:', error);
     showToast(error.message || 'Failed to stop timer', 'error');
-  }
-}
-
-async function handleDiscard() {
-  try {
-    await sendMessage({ type: 'DISCARD_TIMER' });
-    activeTimer = null;
-    renderTimer();
-    showToast('Timer discarded', 'success');
-  } catch (error: any) {
-    console.error('Failed to discard timer:', error);
-    showToast(error.message || 'Failed to discard timer', 'error');
   }
 }
 

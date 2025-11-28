@@ -221,6 +221,8 @@ async function refreshTimer() {
     const response = await sendMessage({ type: 'GET_ACTIVE_TIMER' });
     activeTimer = response.data;
     updateTimerStatus();
+    // Re-render shortcuts to update highlighting
+    renderShortcuts();
   } catch (error) {
     console.error('Failed to refresh timer:', error);
   }
