@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { cn } from '$lib/utils';
-  import { User, Bell, Shield, Palette, Timer, Puzzle } from 'lucide-svelte';
+  import { User, Bell, Shield, Palette, Timer, Puzzle, CalendarDays } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
   // See: https://github.com/sveltejs/kit/issues/5980
@@ -11,6 +11,7 @@
 
   const navItems = [
     { href: '/settings/profile', label: 'Profile', icon: User },
+    { href: '/settings/leave-requests', label: 'Leave Requests', icon: CalendarDays },
     { href: '/settings/extension', label: 'Browser Extension', icon: Puzzle },
     { href: '/settings/timer-shortcuts', label: 'Timer Shortcuts', icon: Timer },
     { href: '/settings/notifications', label: 'Notifications', icon: Bell },
