@@ -101,7 +101,8 @@ function createShortcutCard(shortcut: TimerShortcut): string {
   const usageText = `Used ${shortcut.useCount} time${shortcut.useCount !== 1 ? 's' : ''}`;
 
   // Check if this shortcut is currently running
-  const isActive = activeTimer && activeTimer.taskId === shortcut.taskId;
+  // Only mark as active if both have taskIds AND they match
+  const isActive = activeTimer && activeTimer.taskId && shortcut.taskId && activeTimer.taskId === shortcut.taskId;
   const activeClass = isActive ? ' active' : '';
 
   return `
@@ -184,12 +185,16 @@ async function handleShortcutClick(shortcut: TimerShortcut) {
       }
 
       // Start the new timer
+      const data: any = {
+        shortcutId: shortcut.id,
+      };
+      if (shortcut.taskId) {
+        data.taskId = shortcut.taskId;
+      }
+
       await sendMessage({
         type: 'START_TIMER',
-        data: {
-          taskId: shortcut.taskId,
-          shortcutId: shortcut.id,
-        },
+        data,
       });
 
       showToast(`Started: ${shortcut.label}`, 'success');

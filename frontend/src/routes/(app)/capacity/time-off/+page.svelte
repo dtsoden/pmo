@@ -27,6 +27,11 @@
   let selectedRequest: TimeOffRequest | null = null;
   let actionLoading = false;
 
+  // Rejection modal state
+  let showRejectModal = false;
+  let selectedTimeOffId = '';
+  let rejectionReason = '';
+
   onMount(async () => {
     await loadRequests();
     mounted = true;
@@ -80,12 +85,26 @@
     }
   }
 
-  async function rejectRequest(id: string) {
+  function openRejectModal(id: string) {
+    selectedTimeOffId = id;
+    rejectionReason = '';
+    showRequestModal = false; // Close details modal if open
+    showRejectModal = true;
+  }
+
+  async function rejectTimeOff() {
+    if (!rejectionReason.trim()) {
+      toast.error('Please provide a rejection reason');
+      return;
+    }
+
     actionLoading = true;
     try {
-      await api.capacity.timeOff.reject(id);
+      await api.capacity.timeOff.reject(selectedTimeOffId, rejectionReason);
       toast.success('Leave request rejected');
-      showRequestModal = false;
+      showRejectModal = false;
+      selectedTimeOffId = '';
+      rejectionReason = '';
       await loadRequests();
     } catch (err) {
       toast.error((err as { message?: string })?.message || 'Failed to reject request');
@@ -236,7 +255,7 @@
                 <Button
                   variant="outline"
                   size="sm"
-                  on:click={() => rejectRequest(request.id)}
+                  on:click={() => openRejectModal(request.id)}
                   loading={actionLoading}
                 >
                   <X class="mr-1 h-4 w-4" />
@@ -346,7 +365,7 @@
       <Button variant="outline" on:click={() => showRequestModal = false}>
         Close
       </Button>
-      <Button variant="outline" on:click={() => rejectRequest(selectedRequest.id)} loading={actionLoading}>
+      <Button variant="outline" on:click={() => openRejectModal(selectedRequest.id)} loading={actionLoading}>
         <X class="mr-2 h-4 w-4" />
         Reject
       </Button>
@@ -359,6 +378,53 @@
         Close
       </Button>
     {/if}
+  </div>
+</Modal>
+
+<!-- Rejection Modal -->
+<Modal bind:open={showRejectModal} title="Reject Leave Request" size="md">
+  <div class="space-y-4">
+    <p class="text-sm text-muted-foreground">
+      Please provide a reason for rejecting this leave request. This will be visible to the employee.
+    </p>
+    <div>
+      <label for="rejection-reason" class="mb-2 block text-sm font-medium">
+        Rejection Reason <span class="text-destructive">*</span>
+      </label>
+      <textarea
+        id="rejection-reason"
+        bind:value={rejectionReason}
+        rows="4"
+        class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        placeholder="e.g., Overlaps with critical project deadline, insufficient coverage during requested period, etc."
+        required
+      ></textarea>
+      <p class="mt-1 text-xs text-muted-foreground">
+        Be clear and professional - the employee will see this explanation.
+      </p>
+    </div>
+  </div>
+
+  <div slot="footer" class="flex justify-end gap-2">
+    <Button
+      variant="outline"
+      on:click={() => {
+        showRejectModal = false;
+        selectedTimeOffId = '';
+        rejectionReason = '';
+      }}
+    >
+      Cancel
+    </Button>
+    <Button
+      variant="destructive"
+      on:click={rejectTimeOff}
+      loading={actionLoading}
+      disabled={!rejectionReason.trim()}
+    >
+      <X class="mr-2 h-4 w-4" />
+      Reject Request
+    </Button>
   </div>
 </Modal>
 

@@ -197,12 +197,16 @@ function setupEventListeners() {
 
 async function handleShortcutClick(shortcut: TimerShortcut) {
   try {
+    const data: any = {
+      shortcutId: shortcut.id,
+    };
+    if (shortcut.taskId) {
+      data.taskId = shortcut.taskId;
+    }
+
     const response = await sendMessage({
       type: 'START_TIMER',
-      data: {
-        taskId: shortcut.taskId,
-        shortcutId: shortcut.id,
-      },
+      data,
     });
 
     activeTimer = response.data;

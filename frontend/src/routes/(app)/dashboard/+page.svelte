@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { api, type DashboardData } from '$lib/api/client';
   import { user } from '$lib/stores/auth';
+  import { ws } from '$lib/stores/websocket';
   import { Card, Badge, Spinner, EmptyState, ActiveTimerBanner } from '$components/shared';
   import {
     formatDate,
@@ -34,6 +35,35 @@
   let timerInterval: ReturnType<typeof setInterval> | null = null;
   let elapsedSeconds = 0;
 
+  async function refreshActiveTimer() {
+    try {
+      const data = await api.analytics.dashboard();
+
+      // Clear existing timer interval
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      // Update active timer
+      if (dashboardData) {
+        dashboardData.user.activeTimer = data.user.activeTimer;
+      }
+
+      // If there's an active timer, start updating elapsed seconds
+      if (data.user?.activeTimer) {
+        elapsedSeconds = data.user.activeTimer.elapsedSeconds || 0;
+        timerInterval = setInterval(() => {
+          elapsedSeconds++;
+        }, 1000);
+      } else {
+        elapsedSeconds = 0;
+      }
+    } catch (err) {
+      console.error('Failed to refresh timer:', err);
+    }
+  }
+
   onMount(async () => {
     try {
       dashboardData = await api.analytics.dashboard();
@@ -45,6 +75,23 @@
           elapsedSeconds++;
         }, 1000);
       }
+
+      // Listen for timer events (real-time sync)
+      const unsubTimerStarted = ws.on('time:started', (data: any) => {
+        console.log('Dashboard: Timer started event received');
+        refreshActiveTimer();
+      });
+
+      const unsubTimerStopped = ws.on('time:stopped', (data: any) => {
+        console.log('Dashboard: Timer stopped event received');
+        refreshActiveTimer();
+      });
+
+      // Cleanup WebSocket listeners on unmount
+      return () => {
+        unsubTimerStarted();
+        unsubTimerStopped();
+      };
     } catch (err) {
       error = (err as { message?: string })?.message || 'Failed to load dashboard';
     } finally {

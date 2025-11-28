@@ -76,16 +76,29 @@ cp .env.example .env
 
 ### 3. Database Setup
 
+Choose the appropriate setup method:
+
+#### Option A: Fresh Installation (Recommended for new setups)
 ```bash
 # Start PostgreSQL (via Docker)
 docker-compose up -d postgres
 
-# Run database migrations
+# Set up database schema (fast - uses consolidated schema.sql)
 cd backend
-npm run migrate
+npm run setup:fresh
+
+# (Optional) Load demo data
+npm run seed:test
 
 # (Optional) Open Prisma Studio to view database
-npm run studio
+npm run studio -- --port 7680
+```
+
+#### Option B: Existing Database (For production updates)
+```bash
+# Run database migrations (preserves existing data)
+cd backend
+npm run migrate
 ```
 
 ### 4. Start Development Servers
@@ -192,8 +205,18 @@ The platform uses PostgreSQL with Prisma ORM. Key entities include:
 
 ### Database Migrations
 
+The platform supports two database setup approaches:
+
+**Fresh Installations** (recommended for new setups):
 ```bash
-# Create a new migration
+cd backend
+npm run setup:fresh     # Fast - executes consolidated schema.sql
+npm run seed:test       # (Optional) Add demo data
+```
+
+**Existing Databases** (for production updates with data):
+```bash
+# Create a new migration after schema changes
 cd backend
 npx prisma migrate dev --name migration_name
 
@@ -203,6 +226,11 @@ npx prisma migrate deploy
 # Reset database (WARNING: deletes all data)
 npx prisma migrate reset
 ```
+
+**When to use each approach:**
+- **Fresh installs**: Use `setup:fresh` - it's much faster (single SQL script vs 10+ migrations)
+- **Production updates**: Use migrations - they preserve existing data during schema changes
+- **Development**: Use migrations when iterating on schema changes
 
 ## 🔐 Authentication & Security
 
@@ -406,9 +434,14 @@ az postgres flexible-server db create \
 ### Database Changes
 
 1. Update `backend/prisma/schema.prisma`
-2. Run `npx prisma migrate dev --name description`
-3. Update TypeScript types if needed
-4. Regenerate Prisma client: `npx prisma generate`
+2. Create migration: `npx prisma migrate dev --name description`
+3. Update consolidated schema (for fresh installs):
+   ```bash
+   cd backend
+   npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/schema.sql
+   ```
+4. Update TypeScript types if needed
+5. Regenerate Prisma client: `npx prisma generate`
 
 ## 🧪 Testing
 
