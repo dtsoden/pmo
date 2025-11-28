@@ -505,6 +505,11 @@
 
     window.addEventListener('message', handleExtensionMessage);
 
+    // Actively ping the extension to check if it's installed
+    setTimeout(() => {
+      window.postMessage({ type: 'PMO_EXTENSION_PING' }, window.location.origin);
+    }, 100);
+
     return () => {
       unsub();
       stopTimerDisplay();
