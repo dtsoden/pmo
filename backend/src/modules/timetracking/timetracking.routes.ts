@@ -299,6 +299,13 @@ export async function timeTrackingRoutes(app: FastifyInstance) {
         data.taskId ?? undefined,
         data.description ?? undefined
       );
+
+      // Emit WebSocket event for real-time sync
+      const io = (app as any).io;
+      if (io) {
+        io.to(`user:${request.user.userId}`).emit('time:updated', { activeEntry });
+      }
+
       return { activeEntry };
     } catch (error: any) {
       if (error.message === 'No active timer') {

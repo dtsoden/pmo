@@ -1,5 +1,5 @@
 import { api } from '@shared/api';
-import { websocket, onTimerStarted, onTimerStopped, onTimerDiscarded, onShortcutsUpdated } from '@shared/websocket';
+import { websocket, onTimerStarted, onTimerStopped, onTimerDiscarded, onShortcutsUpdated, onTimerUpdated } from '@shared/websocket';
 import {
   getAuth,
   setAuth,
@@ -131,6 +131,12 @@ onTimerStopped(async (event) => {
 onTimerDiscarded(async () => {
   console.log('Timer discarded event');
   await clearTimer();
+  broadcastToAllTabs({ type: 'TIMER_UPDATED' });
+});
+
+onTimerUpdated(async (event) => {
+  console.log('Timer updated event:', event);
+  await updateActiveTimer(event.activeEntry);
   broadcastToAllTabs({ type: 'TIMER_UPDATED' });
 });
 
