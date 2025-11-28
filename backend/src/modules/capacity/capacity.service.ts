@@ -28,16 +28,39 @@ export async function getUserAvailability(userId: string, range: AvailabilityRan
     throw new Error('User not found');
   }
 
-  const availability = await db.userAvailability.findMany({
-    where: {
-      userId,
-      date: {
-        gte: range.startDate,
-        lte: range.endDate,
+  // Fetch availability overrides and approved time-off requests in parallel
+  const [availability, timeOffRequests] = await Promise.all([
+    db.userAvailability.findMany({
+      where: {
+        userId,
+        date: {
+          gte: range.startDate,
+          lte: range.endDate,
+        },
       },
-    },
-    orderBy: { date: 'asc' },
-  });
+      orderBy: { date: 'asc' },
+    }),
+    db.timeOffRequest.findMany({
+      where: {
+        userId,
+        status: TimeOffStatus.APPROVED,
+        OR: [
+          {
+            startDate: { lte: range.endDate },
+            endDate: { gte: range.startDate },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        type: true,
+        startDate: true,
+        endDate: true,
+        hours: true,
+        reason: true,
+      },
+    }),
+  ]);
 
   // Build daily availability map
   const dailyAvailability: Array<{
@@ -46,6 +69,12 @@ export async function getUserAvailability(userId: string, range: AvailabilityRan
     type: AvailabilityType;
     notes: string | null;
     isOverride: boolean;
+    timeOff?: {
+      id: string;
+      type: TimeOffType;
+      hours: number;
+      reason: string | null;
+    };
   }> = [];
 
   const defaultDailyHours = user.defaultWeeklyHours / 5; // Assume 5-day week
@@ -61,6 +90,12 @@ export async function getUserAvailability(userId: string, range: AvailabilityRan
       a => a.date.toISOString().split('T')[0] === dateStr
     );
 
+    // Check if there's approved time-off for this date
+    const currentDate = new Date(current);
+    const timeOff = timeOffRequests.find(
+      t => currentDate >= t.startDate && currentDate <= t.endDate
+    );
+
     if (override) {
       dailyAvailability.push({
         date: dateStr,
@@ -68,6 +103,12 @@ export async function getUserAvailability(userId: string, range: AvailabilityRan
         type: override.type,
         notes: override.notes,
         isOverride: true,
+        timeOff: timeOff ? {
+          id: timeOff.id,
+          type: timeOff.type,
+          hours: timeOff.hours,
+          reason: timeOff.reason,
+        } : undefined,
       });
     } else {
       dailyAvailability.push({
@@ -87,6 +128,7 @@ export async function getUserAvailability(userId: string, range: AvailabilityRan
     defaultWeeklyHours: user.defaultWeeklyHours,
     defaultDailyHours,
     availability: dailyAvailability,
+    timeOffRequests, // Include full time-off requests for reference
   };
 }
 
