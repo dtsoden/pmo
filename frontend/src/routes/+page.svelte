@@ -3,14 +3,40 @@
   import { onMount } from 'svelte';
   import { isAuthenticated, isInitialized } from '$lib/stores/auth';
   import { Button, Card, Spinner } from '$components/shared';
-  import { FolderKanban, Users, Clock, ArrowRight } from 'lucide-svelte';
+  import {
+    FolderKanban,
+    Users,
+    Clock,
+    ArrowRight,
+    Database,
+    ShieldCheck,
+    Zap,
+    TrendingUp,
+    CalendarClock,
+    FileBarChart,
+    Network,
+    CheckCircle2,
+    Building2,
+    Briefcase,
+    Code,
+    Rocket,
+    Heart,
+    Layers,
+    Timer,
+    UserCheck,
+    Lock,
+    GitBranch,
+    Github,
+    Download
+  } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
   export let data: unknown = null;
   export let form: unknown = null;
   export let params: Record<string, string> = {};
 
-  let title = 'PMO Platform';
+  let title = 'PMO Platform - Enterprise Project Management You Own';
+  let year = new Date().getFullYear();
 
   onMount(() => {
     const unsubscribe = isInitialized.subscribe((initialized) => {
@@ -25,6 +51,10 @@
 
 <svelte:head>
   <title>{title}</title>
+  <meta
+    name="description"
+    content="Free, enterprise-grade PMO platform with project management, capacity planning, and time tracking. Own your platform. Own your data. No spreadsheets required."
+  />
 </svelte:head>
 
 {#if !$isInitialized}
@@ -32,76 +62,625 @@
     <Spinner size="lg" />
   </div>
 {:else}
-  <div class="min-h-screen bg-gradient-to-b from-background to-muted/30">
+  <div class="min-h-screen bg-background">
     <!-- Hero Section -->
-    <div class="container mx-auto px-4 py-20">
-      <div class="mx-auto max-w-4xl text-center">
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full border bg-muted/50 px-4 py-2 text-sm">
-          <span class="flex h-2 w-2 rounded-full bg-green-500" />
-          Enterprise-ready PMO solution
-        </div>
-        <h1 class="mb-6 text-5xl font-bold tracking-tight">
-          Streamline Your Project
-          <span class="text-primary">Management</span>
-        </h1>
-        <p class="mx-auto mb-8 max-w-2xl text-xl text-muted-foreground">
-          PMO Platform brings together project management, capacity planning, and time tracking
-          in one powerful, integrated solution.
-        </p>
-        <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button href="/login" size="lg">
-            Sign In
-            <ArrowRight class="ml-2 h-4 w-4" />
-          </Button>
-          <Button href="/register" variant="outline" size="lg">
-            Create Account
-          </Button>
+    <section class="border-b bg-background">
+      <div class="container mx-auto px-4 py-24 sm:py-32">
+        <div class="mx-auto max-w-5xl text-center">
+          <div class="mb-8 flex flex-wrap items-center justify-center gap-3">
+            <div class="inline-flex items-center gap-2 rounded-lg border bg-muted px-4 py-2 text-sm">
+              <Database class="h-4 w-4 text-primary" />
+              <span>Own Your Platform. Own Your Data.</span>
+            </div>
+            <a
+              href="https://github.com/dtsoden/pmo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 rounded-lg border bg-muted px-4 py-2 text-sm transition-colors hover:bg-muted/80"
+            >
+              <Github class="h-4 w-4" />
+              <span>Open Source on GitHub</span>
+            </a>
+          </div>
+          <h1 class="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+            Stop Using Spreadsheets for
+            <span class="text-primary">Enterprise PMO</span>
+          </h1>
+          <p class="mx-auto mb-4 max-w-3xl text-lg text-muted-foreground sm:text-xl">
+            A complete project management office platform built for large enterprises that need
+            professional solutions without the enterprise price tag. Manage projects, allocate
+            resources, track time, and deliver insights—all in one system you control.
+          </p>
+          <p class="mx-auto mb-10 max-w-2xl text-base text-muted-foreground">
+            Free for in-house use. No vendor lock-in. No per-seat fees. Deploy it, customize it,
+            and make it yours.
+          </p>
+          <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button href="/login" size="lg" class="min-w-[200px]">
+              Sign In
+              <ArrowRight class="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              href="https://github.com/dtsoden/pmo"
+              variant="outline"
+              size="lg"
+              class="min-w-[200px]"
+            >
+              <Github class="mr-2 h-4 w-4" />
+              View on GitHub
+            </Button>
+          </div>
+          <p class="mt-6 text-sm text-muted-foreground">
+            Open source and available on GitHub. Deploy on your infrastructure.
+          </p>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Features Section -->
-    <div class="container mx-auto px-4 py-16">
-      <div class="grid gap-8 md:grid-cols-3">
-        <Card class="p-8">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-            <FolderKanban class="h-6 w-6" />
-          </div>
-          <h3 class="mb-2 text-xl font-semibold">Project Management</h3>
-          <p class="text-muted-foreground">
-            Manage projects with phases, milestones, and tasks. Track progress with visual dashboards
-            and real-time updates.
+    <!-- Problem Statement -->
+    <section class="border-b bg-muted/30">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto max-w-4xl text-center">
+          <h2 class="mb-6 text-3xl font-bold sm:text-4xl">The Enterprise Budget Paradox</h2>
+          <p class="mb-8 text-lg text-muted-foreground">
+            Large organizations struggle with simple problems while budgets for real solutions
+            evaporate. Teams are forced to cobble together spreadsheets, wrestle with limited
+            low-code platforms, or pay premium prices for SaaS tools that hold your data hostage.
           </p>
-        </Card>
-
-        <Card class="p-8">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
-            <Users class="h-6 w-6" />
+          <div class="grid gap-6 text-left sm:grid-cols-3">
+            <Card class="border-2 p-6">
+              <h3 class="mb-2 font-semibold">Spreadsheet Chaos</h3>
+              <p class="text-sm text-muted-foreground">
+                Fragmented Excel files, version conflicts, no real-time updates, and zero
+                accountability.
+              </p>
+            </Card>
+            <Card class="border-2 p-6">
+              <h3 class="mb-2 font-semibold">Low-Code Limitations</h3>
+              <p class="text-sm text-muted-foreground">
+                Poor UX, rigid workflows, expensive licensing, and platforms you can't truly
+                customize.
+              </p>
+            </Card>
+            <Card class="border-2 p-6">
+              <h3 class="mb-2 font-semibold">SaaS Vendor Lock-In</h3>
+              <p class="text-sm text-muted-foreground">
+                Premium pricing, data extraction fees, per-seat costs, and features you can't
+                control.
+              </p>
+            </Card>
           </div>
-          <h3 class="mb-2 text-xl font-semibold">Capacity Planning</h3>
-          <p class="text-muted-foreground">
-            Resource allocation and availability tracking across projects. See team utilization
-            at a glance.
-          </p>
-        </Card>
-
-        <Card class="p-8">
-          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
-            <Clock class="h-6 w-6" />
-          </div>
-          <h3 class="mb-2 text-xl font-semibold">Time Tracking</h3>
-          <p class="text-muted-foreground">
-            Real-time task-based time tracking with an active timer. Generate reports and track
-            billable hours.
-          </p>
-        </Card>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <!-- Value Proposition -->
+    <section class="border-b bg-background">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto max-w-4xl text-center">
+          <h2 class="mb-6 text-3xl font-bold sm:text-4xl">
+            A Professional Solution, Built for Enterprises
+          </h2>
+          <p class="mb-12 text-lg text-muted-foreground">
+            PMO Platform delivers everything you need to run a professional services organization
+            or internal PMO—without the enterprise licensing nightmares.
+          </p>
+          <div class="grid gap-8 text-left md:grid-cols-2">
+            <div class="flex gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Database class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 class="mb-2 text-xl font-semibold">You Own the Platform</h3>
+                <p class="text-muted-foreground">
+                  Deploy on your infrastructure. Customize the code. Keep your data secure. No
+                  vendor control, no data extraction fees, no surprises.
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <ShieldCheck class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 class="mb-2 text-xl font-semibold">Free for In-House Use</h3>
+                <p class="text-muted-foreground">
+                  Use it internally forever, at no cost. Modify it to fit your processes. Only pay
+                  licensing fees if you want to resell it as a product.
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Zap class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 class="mb-2 text-xl font-semibold">Real-Time Everything</h3>
+                <p class="text-muted-foreground">
+                  WebSocket-powered live updates. Timer syncs across devices. Notifications arrive
+                  instantly. No refresh required.
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Code class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 class="mb-2 text-xl font-semibold">Modern Tech Stack</h3>
+                <p class="text-muted-foreground">
+                  Built with TypeScript, Node.js, SvelteKit, and PostgreSQL. Clean architecture,
+                  well-documented, and ready to extend.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Features -->
+    <section class="border-b bg-muted/30">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto mb-16 max-w-3xl text-center">
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Everything You Need, Integrated</h2>
+          <p class="text-lg text-muted-foreground">
+            Stop duct-taping together multiple tools. PMO Platform gives you a complete,
+            integrated system from day one.
+          </p>
+        </div>
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Project Management -->
+          <Card class="p-6">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <FolderKanban class="h-6 w-6 text-primary" />
+            </div>
+            <h3 class="mb-2 text-xl font-semibold">Complete Project Management</h3>
+            <p class="mb-4 text-sm text-muted-foreground">
+              Full project hierarchy with phases, milestones, and tasks. Dependencies, status
+              tracking, budget management, and variance analysis.
+            </p>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Multi-phase project structures
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Task dependencies and blockers
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Budget hours and cost tracking
+              </li>
+            </ul>
+          </Card>
+
+          <!-- Capacity Planning -->
+          <Card class="p-6">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <CalendarClock class="h-6 w-6 text-primary" />
+            </div>
+            <h3 class="mb-2 text-xl font-semibold">Intelligent Capacity Planning</h3>
+            <p class="mb-4 text-sm text-muted-foreground">
+              Know exactly who's available and when. Prevent overbooking. Track time-off requests
+              with approval workflows. Regional compliance built-in.
+            </p>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Real-time availability tracking
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Time-off approval workflows
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Utilization and over-allocation alerts
+              </li>
+            </ul>
+          </Card>
+
+          <!-- Time Tracking -->
+          <Card class="p-6">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <Timer class="h-6 w-6 text-primary" />
+            </div>
+            <h3 class="mb-2 text-xl font-semibold">Integrated Time Tracking</h3>
+            <p class="mb-4 text-sm text-muted-foreground">
+              Real-time timer with Chrome extension. Track billable vs. non-billable hours.
+              Generate daily, weekly, and monthly reports. Sync across all devices.
+            </p>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Active timer with live sync
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Chrome extension support
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Billable hour tracking and reports
+              </li>
+            </ul>
+          </Card>
+
+          <!-- Analytics & Reporting -->
+          <Card class="p-6">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <FileBarChart class="h-6 w-6 text-primary" />
+            </div>
+            <h3 class="mb-2 text-xl font-semibold">Advanced Analytics</h3>
+            <p class="mb-4 text-sm text-muted-foreground">
+              Real-time dashboards, project summaries, team utilization reports, and margin
+              analysis. Know exactly where you stand at any moment.
+            </p>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Project status dashboards
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Team utilization metrics
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Budget vs. actual variance
+              </li>
+            </ul>
+          </Card>
+
+          <!-- Team & Resource Management -->
+          <Card class="p-6">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <Users class="h-6 w-6 text-primary" />
+            </div>
+            <h3 class="mb-2 text-xl font-semibold">Team & Resource Management</h3>
+            <p class="mb-4 text-sm text-muted-foreground">
+              Organize teams, assign roles, manage skills. 7-tier RBAC from viewer to super admin.
+              Manager hierarchies and approval workflows.
+            </p>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                7-level role-based access control
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Skills and department tracking
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Team-level project assignments
+              </li>
+            </ul>
+          </Card>
+
+          <!-- Client Management -->
+          <Card class="p-6">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <Building2 class="h-6 w-6 text-primary" />
+            </div>
+            <h3 class="mb-2 text-xl font-semibold">Client & Opportunity Tracking</h3>
+            <p class="mb-4 text-sm text-muted-foreground">
+              Manage clients, contacts, and sales opportunities. Salesforce integration ready.
+              Track from prospect to active client to project delivery.
+            </p>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Full client and contact management
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Opportunity pipeline tracking
+              </li>
+              <li class="flex items-center gap-2">
+                <CheckCircle2 class="h-4 w-4 text-primary" />
+                Salesforce sync placeholders
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Additional Capabilities -->
+    <section class="border-b bg-background">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto mb-12 max-w-3xl text-center">
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Enterprise-Grade Capabilities</h2>
+          <p class="text-lg text-muted-foreground">
+            Features you'd expect from premium SaaS platforms, without the premium price tag.
+          </p>
+        </div>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <Zap class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Real-Time WebSocket Sync</h3>
+            <p class="text-sm text-muted-foreground">
+              Live updates across all users and devices. No refresh required.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <Lock class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Complete Audit Trails</h3>
+            <p class="text-sm text-muted-foreground">
+              Every action logged with IP tracking and change history.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <UserCheck class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Approval Workflows</h3>
+            <p class="text-sm text-muted-foreground">
+              Time-off requests, project approvals, manager-based authorization.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <Network class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Multi-Region Support</h3>
+            <p class="text-sm text-muted-foreground">
+              Timezones, regional hour limits, and compliance features.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <TrendingUp class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Utilization Analytics</h3>
+            <p class="text-sm text-muted-foreground">
+              Know exactly how your teams are allocated and where capacity exists.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <Layers class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Task Dependencies</h3>
+            <p class="text-sm text-muted-foreground">
+              Map relationships between tasks to prevent blockers.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <GitBranch class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Soft Delete Recovery</h3>
+            <p class="text-sm text-muted-foreground">
+              Deleted items can be restored. Permanent deletion requires admin.
+            </p>
+          </div>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-muted">
+              <ShieldCheck class="h-7 w-7 text-primary" />
+            </div>
+            <h3 class="font-semibold">Session Management</h3>
+            <p class="text-sm text-muted-foreground">
+              JWT auth, session tracking, and admin-level session control.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Industries -->
+    <section class="border-b bg-muted/30">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto mb-12 max-w-3xl text-center">
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Built for Professional Services</h2>
+          <p class="text-lg text-muted-foreground">
+            Any organization that delivers projects, manages teams, and needs to track capacity
+            and costs.
+          </p>
+        </div>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Card class="p-6 text-center">
+            <div class="mb-3 flex justify-center">
+              <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <Briefcase class="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <h3 class="mb-2 font-semibold">Consulting Firms</h3>
+            <p class="text-sm text-muted-foreground">
+              Track client projects, billable hours, and consultant utilization.
+            </p>
+          </Card>
+          <Card class="p-6 text-center">
+            <div class="mb-3 flex justify-center">
+              <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <Code class="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <h3 class="mb-2 font-semibold">Development Agencies</h3>
+            <p class="text-sm text-muted-foreground">
+              Manage sprints, track developer hours, and deliver projects on time.
+            </p>
+          </Card>
+          <Card class="p-6 text-center">
+            <div class="mb-3 flex justify-center">
+              <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <Rocket class="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <h3 class="mb-2 font-semibold">Internal PMOs</h3>
+            <p class="text-sm text-muted-foreground">
+              Coordinate enterprise initiatives across departments and teams.
+            </p>
+          </Card>
+          <Card class="p-6 text-center">
+            <div class="mb-3 flex justify-center">
+              <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <Heart class="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <h3 class="mb-2 font-semibold">Service Organizations</h3>
+            <p class="text-sm text-muted-foreground">
+              Any team delivering projects to internal or external customers.
+            </p>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Licensing & Pricing -->
+    <section class="border-b bg-background">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto max-w-4xl">
+          <div class="mb-8 text-center">
+            <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Simple, Transparent Licensing</h2>
+            <p class="mb-6 text-lg text-muted-foreground">
+              We believe enterprises should own their tools, not rent them forever.
+            </p>
+            <div class="flex justify-center">
+              <Button
+                href="https://github.com/dtsoden/pmo"
+                size="lg"
+                class="min-w-[240px]"
+              >
+                <Download class="mr-2 h-5 w-5" />
+                Download from GitHub
+              </Button>
+            </div>
+          </div>
+          <Card class="border-2 border-primary/20 p-8 sm:p-12">
+            <div class="grid gap-8 md:grid-cols-2">
+              <div>
+                <h3 class="mb-4 text-2xl font-bold">Free for In-House Use</h3>
+                <ul class="space-y-3">
+                  <li class="flex items-start gap-3">
+                    <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>Deploy on your infrastructure (cloud or on-premise)</span>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>Unlimited users and projects</span>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>Full access to source code</span>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>Customize and extend as needed</span>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>Keep all your data on your servers</span>
+                  </li>
+                  <li class="flex items-start gap-3">
+                    <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <span>No per-seat fees, ever</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="flex flex-col justify-between">
+                <div>
+                  <h3 class="mb-4 text-2xl font-bold">Commercial Licensing Available</h3>
+                  <p class="mb-4 text-muted-foreground">
+                    Only required if you plan to resell or redistribute this platform as your own
+                    product.
+                  </p>
+                  <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                      <div class="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground" />
+                      <span>White-label redistribution</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                      <div class="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground" />
+                      <span>SaaS offering to external customers</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                      <div class="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground" />
+                      <span>OEM partnerships</span>
+                    </li>
+                  </ul>
+                </div>
+                <p class="mt-6 text-sm text-muted-foreground">
+                  In-house use by your employees and contractors is always free, no matter the
+                  size of your organization.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="bg-muted/30">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto max-w-3xl text-center">
+          <h2 class="mb-6 text-3xl font-bold sm:text-4xl">
+            Stop paying per seat. Start owning your platform.
+          </h2>
+          <p class="mb-8 text-lg text-muted-foreground">
+            Deploy PMO Platform on your infrastructure and take control of your project management,
+            resource planning, and time tracking. No trials, no credit cards, no catch.
+          </p>
+          <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button
+              href="https://github.com/dtsoden/pmo"
+              size="lg"
+              class="min-w-[240px]"
+            >
+              <Download class="mr-2 h-5 w-5" />
+              Download from GitHub
+            </Button>
+            <Button href="/login" variant="outline" size="lg" class="min-w-[200px]">
+              Sign In
+              <ArrowRight class="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+          <p class="mt-8 text-sm text-muted-foreground">
+            Questions about deployment or licensing? Contact us at{' '}
+            <a href="mailto:support@example.com" class="text-primary hover:underline">
+              support@example.com
+            </a>
+          </p>
+        </div>
+      </div>
+    </section>
 
     <!-- Footer -->
-    <footer class="border-t py-8">
-      <div class="container mx-auto px-4 text-center text-sm text-muted-foreground">
-        <p>PMO Platform - Built for modern project teams</p>
+    <footer class="border-t bg-background py-8">
+      <div class="container mx-auto px-4">
+        <div class="flex flex-col items-center gap-4">
+          <div class="flex items-center gap-4">
+            <a
+              href="https://github.com/dtsoden/pmo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-muted-foreground transition-colors hover:text-primary"
+              aria-label="View source on GitHub"
+            >
+              <Github class="h-6 w-6" />
+            </a>
+          </div>
+          <p class="text-center text-sm text-muted-foreground">
+            PMO Platform - Made with passion by{' '}
+            <a
+              href="https://davidsoden.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-primary hover:underline"
+            >
+              David Soden
+            </a>
+            {' '}© {year}
+          </p>
+        </div>
       </div>
     </footer>
   </div>

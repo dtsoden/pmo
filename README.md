@@ -80,6 +80,36 @@ copy .env.example .env
 # - PORT=7600
 ```
 
+**Domain Configuration** (for production deployment):
+
+1. **Root `.env`**: Update backend and frontend URLs
+   ```bash
+   BACKEND_URL=https://api.yourdomain.com
+   BACKEND_WS_URL=wss://api.yourdomain.com
+   FRONTEND_URL=https://yourdomain.com
+   CORS_ORIGIN=http://localhost:7620,https://yourdomain.com
+   ```
+
+2. **Chrome Extension** (`chrome-extension/.env`): Update extension URLs
+   ```bash
+   VITE_EXTENSION_BACKEND_URL=https://api.yourdomain.com
+   VITE_EXTENSION_FRONTEND_URL=https://yourdomain.com
+   ```
+
+3. **Rebuild frontend** after changing domain:
+   ```bash
+   cd frontend
+   npm run build
+   cd ..
+   ```
+
+4. **Restart services** to apply changes:
+   ```bash
+   scripts\restart.bat
+   ```
+
+> **Note**: Frontend uses build-time variables (VITE_*), so you must rebuild after changing domains.
+
 ### 3. Database Setup
 
 **Option A: Fresh Installation** (recommended for new setups)
@@ -465,10 +495,13 @@ docker push <registry>/pmo-frontend:latest
 # Deploy via Azure CLI or CI/CD pipeline
 ```
 
-### Cloudflare Tunnel
+### Cloudflare Tunnel (or any reverse proxy)
 
-Backend accessible via: `https://pmoservices.cnxlab.us`
-Frontend accessible via: `https://pmo.cnxlab.us`
+Configure your tunnel/proxy to route:
+- **Frontend** (port 7620): `https://yourdomain.com` → `http://localhost:7620`
+- **Backend API** (port 7600): `https://api.yourdomain.com` → `http://localhost:7600`
+
+After configuring DNS and tunnel, update your `.env` files (see "Domain Configuration" above) and rebuild the frontend.
 
 ## 🧪 Testing
 
