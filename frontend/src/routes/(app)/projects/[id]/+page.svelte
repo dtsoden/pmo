@@ -507,6 +507,11 @@
           <h1 class="text-2xl font-bold">{project.name}</h1>
           <span class="text-muted-foreground">({project.code})</span>
         </div>
+        {#if project.client}
+          <p class="mt-1 text-sm font-medium">
+            <span class="text-muted-foreground">Client:</span> {project.client.name}
+          </p>
+        {/if}
         {#if project.description}
           <p class="mt-1 text-muted-foreground">{project.description}</p>
         {/if}

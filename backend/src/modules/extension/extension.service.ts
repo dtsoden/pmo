@@ -20,6 +20,12 @@ const timerShortcutSelect = {
           id: true,
           name: true,
           code: true,
+          client: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },

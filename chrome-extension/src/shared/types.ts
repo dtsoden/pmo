@@ -43,6 +43,10 @@ export interface TimerShortcut {
       id: string;
       name: string;
       code: string;
+      client: {
+        id: string;
+        name: string;
+      };
     };
   };
   label: string;
@@ -158,7 +162,9 @@ export type MessageType =
   | 'STOP_TIMER'
   | 'DISCARD_TIMER'
   | 'TIMER_UPDATED'
-  | 'SHORTCUTS_UPDATED';
+  | 'SHORTCUTS_UPDATED'
+  | 'THEME_UPDATED'
+  | 'AUTH_EXPIRED';
 
 export interface Message<T = any> {
   type: MessageType;

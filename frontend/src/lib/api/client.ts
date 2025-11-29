@@ -1432,7 +1432,11 @@ export interface TimeEntry {
   userId: string;
   user?: Pick<User, 'id' | 'firstName' | 'lastName'>;
   taskId: string;
-  task?: Pick<Task, 'id' | 'title' | 'projectId'> & { project?: Pick<Project, 'id' | 'name' | 'code'> };
+  task?: Pick<Task, 'id' | 'title' | 'projectId'> & {
+    project?: Pick<Project, 'id' | 'name' | 'code'> & {
+      client?: Pick<Client, 'id' | 'name'>;
+    }
+  };
   date: string;
   hours: number;
   billableHours: number;

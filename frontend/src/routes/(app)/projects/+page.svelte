@@ -11,7 +11,7 @@
     PRIORITY_LABELS,
     debounce,
   } from '$lib/utils';
-  import { Plus, Search, FolderKanban, Calendar, User } from 'lucide-svelte';
+  import { Plus, Search, FolderKanban, Calendar, User, Building2 } from 'lucide-svelte';
   import ProjectForm from './ProjectForm.svelte';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -227,7 +227,7 @@
             <div class="mt-4 space-y-2 text-sm text-muted-foreground">
               {#if project.client}
                 <div class="flex items-center gap-2">
-                  <User class="h-4 w-4 flex-shrink-0" />
+                  <Building2 class="h-4 w-4 flex-shrink-0" />
                   <span class="truncate">{project.client.name}</span>
                 </div>
               {/if}

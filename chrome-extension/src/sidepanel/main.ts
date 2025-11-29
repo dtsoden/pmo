@@ -99,8 +99,9 @@ function renderShortcuts() {
 }
 
 function createShortcutCard(shortcut: TimerShortcut): string {
-  const taskText = shortcut.task
-    ? `${shortcut.task.project.code} - ${shortcut.task.title}`
+  // Show "Client (bold) with building icon, Project with folder icon" instead of "Project Code - Task"
+  const projectInfo = shortcut.task?.project
+    ? `🏢 <strong>${escapeHtml(shortcut.task.project.client.name)}</strong> 📁 ${escapeHtml(shortcut.task.project.name)}`
     : 'No task assigned';
 
   const usageText = `Used ${shortcut.useCount} time${shortcut.useCount !== 1 ? 's' : ''}`;
@@ -110,6 +111,11 @@ function createShortcutCard(shortcut: TimerShortcut): string {
   const isActive = activeTimer && activeTimer.taskId && shortcut.taskId && activeTimer.taskId === shortcut.taskId;
   const activeClass = isActive ? ' active' : '';
 
+  // Add pin emoji before label if pinned
+  const labelWithPin = shortcut.isPinned
+    ? `📌 ${escapeHtml(shortcut.label)}`
+    : escapeHtml(shortcut.label);
+
   return `
     <div class="shortcut-card${activeClass}" data-shortcut-id="${shortcut.id}">
       <div class="shortcut-color" style="background-color: ${shortcut.color}">
@@ -117,13 +123,12 @@ function createShortcutCard(shortcut: TimerShortcut): string {
       </div>
       <div class="shortcut-info">
         <div class="shortcut-label">
-          ${escapeHtml(shortcut.label)}
+          ${labelWithPin}
           ${isActive ? ' <span style="color: #10b981;">●</span>' : ''}
         </div>
         <div class="shortcut-details">
-          ${shortcut.isPinned ? '<span class="shortcut-badge">Pinned</span>' : ''}
           ${isActive ? '<span class="shortcut-badge" style="background: #d1fae5; color: #065f46;">Running</span>' : ''}
-          ${escapeHtml(taskText)} • ${usageText}
+          ${projectInfo} • ${usageText}
         </div>
       </div>
     </div>

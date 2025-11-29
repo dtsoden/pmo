@@ -720,7 +720,9 @@
                         {/if}
                       </button>
                     {/if}
-                    <p class="font-medium">{entry.task?.title || 'Unknown Task'}</p>
+                    <p class="font-medium">
+                      {entry.task?.project?.client?.name || 'Unknown Client'} - {entry.task?.project?.name || 'Unknown Project'}
+                    </p>
                     {#if entry.isTimerBased}
                       <Badge variant="outline"><Timer class="h-3 w-3 mr-1" />Timer</Badge>
                       {#if !entry.sessions || entry.sessions.length === 0}
@@ -731,11 +733,12 @@
                     {/if}
                   </div>
                   <p class="text-sm text-muted-foreground">
-                    {entry.task?.project?.name || 'Unknown Project'}
                     {#if entry.sessions && entry.sessions.length > 0}
-                      - {entry.sessions.length} session{entry.sessions.length > 1 ? 's' : ''}
+                      {entry.sessions.length} session{entry.sessions.length > 1 ? 's' : ''}
                     {:else if entry.isTimerBased}
-                      - Incomplete timer entry
+                      Incomplete timer entry
+                    {:else}
+                      Task: {entry.task?.title || 'Unknown Task'}
                     {/if}
                   </p>
                 </div>
@@ -797,7 +800,10 @@
                               <Badge variant="secondary" class="text-xs">Non-billable</Badge>
                             {/if}
                           </div>
-                          <p class="mt-1">{session.description || 'No description'}</p>
+                          <p class="mt-1 font-medium text-foreground">{entry.task?.title || 'Unknown Task'}</p>
+                          {#if session.description}
+                            <p class="mt-0.5 text-muted-foreground">{session.description}</p>
+                          {/if}
                         </div>
                         <div class="flex items-center gap-2">
                           <p class="font-medium mr-2">{formatHours(session.duration)}</p>

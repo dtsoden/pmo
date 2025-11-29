@@ -142,15 +142,21 @@ function renderShortcuts() {
 }
 
 function createShortcutButton(shortcut: TimerShortcut): string {
-  const taskText = shortcut.task
-    ? `${shortcut.task.project.code} - ${shortcut.task.title}`
+  // Show client name (bold) with building icon on first line, project name with folder icon on second line
+  const projectInfo = shortcut.task?.project
+    ? `🏢 <strong>${escapeHtml(shortcut.task.project.client.name)}</strong><br>📁 ${escapeHtml(shortcut.task.project.name)}`
     : 'No task';
+
+  // Add pin emoji before label if pinned
+  const labelWithPin = shortcut.isPinned
+    ? `📌 ${escapeHtml(shortcut.label)}`
+    : escapeHtml(shortcut.label);
 
   return `
     <button class="shortcut-btn" data-shortcut-id="${shortcut.id}">
       <div class="shortcut-icon">${shortcut.icon || '⏱️'}</div>
-      <div class="shortcut-label">${escapeHtml(shortcut.label)}</div>
-      <div class="shortcut-task">${escapeHtml(taskText)}</div>
+      <div class="shortcut-label">${labelWithPin}</div>
+      <div class="shortcut-task">${projectInfo}</div>
     </button>
   `;
 }
