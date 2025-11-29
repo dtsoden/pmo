@@ -1,5 +1,6 @@
 import type { Message, MessageResponse, TimerShortcut, ActiveTimer } from '@shared/types';
 import { formatDuration, getTaskDisplayName } from '@shared/timer';
+import { initializeTheme } from '@shared/theme';
 
 // ============================================
 // STATE
@@ -15,6 +16,10 @@ let timerInterval: number | null = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Side panel loaded');
+
+  // Initialize theme first (applies immediately from storage)
+  await initializeTheme();
+
   await initialize();
   setupEventListeners();
   startTimerInterval();
@@ -72,11 +77,11 @@ function renderShortcuts() {
     .map(([groupName, items]) => {
       const cards = items.map((shortcut) => createShortcutCard(shortcut)).join('');
       return `
-        <div style="background: rgba(107, 114, 128, 0.06); border: 1px solid rgba(107, 114, 128, 0.1); border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
-          <div style="font-size: 12px; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(107, 114, 128, 0.15); padding: 12px 12px; border-bottom: 1px solid rgba(107, 114, 128, 0.1);">
+        <div class="group-section">
+          <div class="group-header">
             ${escapeHtml(groupName)}
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px;">
+          <div class="shortcuts-list">
             ${cards}
           </div>
         </div>
@@ -154,11 +159,18 @@ function setupEventListeners() {
   document.getElementById('manageBtn2')?.addEventListener('click', handleManageClick);
 
   // Listen for background messages
-  chrome.runtime.onMessage.addListener((message: Message) => {
+  chrome.runtime.onMessage.addListener(async (message: Message) => {
     if (message.type === 'TIMER_UPDATED') {
       refreshTimer();
     } else if (message.type === 'SHORTCUTS_UPDATED') {
-      refreshShortcuts();
+      // Check if this is a reconnection event (no shortcuts in local state)
+      // If so, re-initialize to fetch fresh data
+      if (shortcuts.length === 0) {
+        console.log('Received shortcuts update with empty local state - user may have reconnected, re-initializing');
+        await initialize();
+      } else {
+        refreshShortcuts();
+      }
     } else if (message.type === 'AUTH_EXPIRED') {
       // Session expired, clear state and show empty state
       console.log('Auth expired, clearing sidepanel state');

@@ -1,5 +1,5 @@
 import { api } from '@shared/api';
-import { websocket, onTimerStarted, onTimerStopped, onTimerDiscarded, onShortcutsUpdated, onTimerUpdated } from '@shared/websocket';
+import { websocket, onTimerStarted, onTimerStopped, onTimerDiscarded, onShortcutsUpdated, onTimerUpdated, onPreferencesUpdated } from '@shared/websocket';
 import {
   getAuth,
   setAuth,
@@ -10,6 +10,8 @@ import {
   clearTimer,
   getApiUrl,
   setApiUrl,
+  getTheme,
+  setTheme,
 } from '@shared/storage';
 import type {
   Message,
@@ -84,11 +86,12 @@ function setupAuthExpirationHandler() {
     websocket.disconnect();
     api.setToken(null);
     await clearTimer();
-    await setShortcuts([]);
+    // NOTE: Do NOT clear shortcuts - they should persist locally even when logged out
+    // Users can reconnect without losing their configured shortcuts
 
     // Notify all extension UI components that auth is cleared
     broadcastToAllTabs({ type: 'AUTH_EXPIRED' });
-    console.log('   - Auth cleared, UI notified');
+    console.log('   - Auth cleared, UI notified (shortcuts preserved in storage)');
   });
 }
 
@@ -110,6 +113,10 @@ async function initializeExtension() {
       // Fetch initial data
       await syncData();
 
+      // Notify UI that data is ready
+      broadcastToAllTabs({ type: 'SHORTCUTS_UPDATED' });
+      broadcastToAllTabs({ type: 'TIMER_UPDATED' });
+
       console.log('Extension initialized with existing auth');
     } else {
       console.log('No auth found, waiting for installation');
@@ -121,15 +128,22 @@ async function initializeExtension() {
 
 async function syncData() {
   try {
-    // Fetch shortcuts
-    const shortcuts = await api.getShortcuts();
-    await setShortcuts(shortcuts);
+    // Fetch shortcuts, active timer, and user preferences
+    const [shortcuts, activeTimer, preferences] = await Promise.all([
+      api.getShortcuts(),
+      api.getActiveTimer(),
+      api.getPreferences(),
+    ]);
 
-    // Fetch active timer
-    const activeTimer = await api.getActiveTimer();
+    await setShortcuts(shortcuts);
     await updateActiveTimer(activeTimer);
 
-    console.log('Data synced:', { shortcuts: shortcuts.length, hasActiveTimer: !!activeTimer });
+    // Sync theme preference
+    if (preferences.theme) {
+      await setTheme(preferences.theme);
+    }
+
+    console.log('Data synced:', { shortcuts: shortcuts.length, hasActiveTimer: !!activeTimer, theme: preferences.theme || 'system' });
   } catch (error) {
     console.error('Failed to sync data:', error);
   }
@@ -175,6 +189,21 @@ onShortcutsUpdated(async (event) => {
     console.log('   - Broadcast SHORTCUTS_UPDATED to all tabs/panels');
   } catch (error) {
     console.error('❌ Error handling shortcuts update:', error);
+  }
+});
+
+onPreferencesUpdated(async (event) => {
+  console.log('📢 PREFERENCES UPDATED EVENT RECEIVED:', event);
+  if (event.theme) {
+    try {
+      console.log('   - Theme changed to:', event.theme);
+      await setTheme(event.theme);
+      console.log('   - Stored theme in storage');
+      broadcastToAllTabs({ type: 'THEME_UPDATED', theme: event.theme });
+      console.log('   - Broadcast THEME_UPDATED to all tabs/panels');
+    } catch (error) {
+      console.error('❌ Error handling theme update:', error);
+    }
   }
 });
 
@@ -300,6 +329,12 @@ async function handleInit(data: { token: string; apiUrl: string }): Promise<Mess
     // Fetch initial data
     await syncData();
     console.log('   - Initial data synced');
+
+    // CRITICAL: Notify UI components that data has been refreshed
+    // This ensures shortcuts and active timer appear immediately after reconnection
+    broadcastToAllTabs({ type: 'SHORTCUTS_UPDATED' });
+    broadcastToAllTabs({ type: 'TIMER_UPDATED' });
+    console.log('   - UI notified of data refresh');
 
     console.log('🎉 Reconnection successful!');
     return { success: true, data: auth };

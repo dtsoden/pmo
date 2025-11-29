@@ -6,6 +6,7 @@ import type {
   ActiveTimer,
 } from '@shared/types';
 import { formatDuration, getTaskDisplayName } from '@shared/timer';
+import { initializeTheme } from '@shared/theme';
 
 // ============================================
 // STATE
@@ -22,6 +23,10 @@ let timerInterval: number | null = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Popup loaded');
+
+  // Initialize theme first (applies immediately from storage)
+  await initializeTheme();
+
   await initialize();
   setupEventListeners();
   startTimerInterval();
@@ -179,11 +184,18 @@ function setupEventListeners() {
   getElement('manageBtn')?.addEventListener('click', handleManageClick);
 
   // Listen for background messages
-  chrome.runtime.onMessage.addListener((message: Message) => {
+  chrome.runtime.onMessage.addListener(async (message: Message) => {
     if (message.type === 'TIMER_UPDATED') {
       refreshTimer();
     } else if (message.type === 'SHORTCUTS_UPDATED') {
-      refreshShortcuts();
+      // If we're not authenticated but receiving shortcuts update,
+      // it means user just reconnected - re-initialize
+      if (!auth?.isAuthenticated) {
+        console.log('Received shortcuts update while not authenticated - user reconnected, re-initializing');
+        await initialize();
+      } else {
+        refreshShortcuts();
+      }
     } else if (message.type === 'AUTH_EXPIRED') {
       // Session expired, show not authenticated state
       console.log('Auth expired, updating UI');
