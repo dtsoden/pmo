@@ -112,6 +112,7 @@ async function start() {
     await app.register(cors, {
       origin: corsOriginChecker,
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     });
 
     await app.register(jwt, {
