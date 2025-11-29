@@ -67,6 +67,7 @@ CREATE TABLE "User" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "lastLoginAt" TIMESTAMP(3),
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -134,6 +135,7 @@ CREATE TABLE "Client" (
     "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Client_pkey" PRIMARY KEY ("id")
 );
@@ -194,6 +196,7 @@ CREATE TABLE "Project" (
     "tags" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Project_pkey" PRIMARY KEY ("id")
 );
@@ -240,6 +243,7 @@ CREATE TABLE "Task" (
     "status" "TaskStatus" NOT NULL DEFAULT 'TODO',
     "priority" "TaskPriority" NOT NULL DEFAULT 'MEDIUM',
     "parentTaskId" TEXT,
+    "milestoneId" TEXT,
     "estimatedHours" DOUBLE PRECISION,
     "actualHours" DOUBLE PRECISION,
     "startDate" TIMESTAMP(3),
@@ -248,6 +252,7 @@ CREATE TABLE "Task" (
     "tags" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
@@ -501,6 +506,9 @@ CREATE INDEX "User_status_idx" ON "User"("status");
 CREATE INDEX "User_role_idx" ON "User"("role");
 
 -- CreateIndex
+CREATE INDEX "User_deletedAt_idx" ON "User"("deletedAt");
+
+-- CreateIndex
 CREATE INDEX "Team_isActive_idx" ON "Team"("isActive");
 
 -- CreateIndex
@@ -534,6 +542,9 @@ CREATE INDEX "Client_salesforceAccountId_idx" ON "Client"("salesforceAccountId")
 CREATE INDEX "Client_status_idx" ON "Client"("status");
 
 -- CreateIndex
+CREATE INDEX "Client_deletedAt_idx" ON "Client"("deletedAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ClientContact_salesforceContactId_key" ON "ClientContact"("salesforceContactId");
 
 -- CreateIndex
@@ -564,6 +575,9 @@ CREATE INDEX "Project_status_idx" ON "Project"("status");
 CREATE INDEX "Project_code_idx" ON "Project"("code");
 
 -- CreateIndex
+CREATE INDEX "Project_deletedAt_idx" ON "Project"("deletedAt");
+
+-- CreateIndex
 CREATE INDEX "ProjectPhase_projectId_idx" ON "ProjectPhase"("projectId");
 
 -- CreateIndex
@@ -589,6 +603,12 @@ CREATE INDEX "Task_status_idx" ON "Task"("status");
 
 -- CreateIndex
 CREATE INDEX "Task_parentTaskId_idx" ON "Task"("parentTaskId");
+
+-- CreateIndex
+CREATE INDEX "Task_milestoneId_idx" ON "Task"("milestoneId");
+
+-- CreateIndex
+CREATE INDEX "Task_deletedAt_idx" ON "Task"("deletedAt");
 
 -- CreateIndex
 CREATE INDEX "TaskDependency_blockingTaskId_idx" ON "TaskDependency"("blockingTaskId");
@@ -775,6 +795,9 @@ ALTER TABLE "Task" ADD CONSTRAINT "Task_phaseId_fkey" FOREIGN KEY ("phaseId") RE
 
 -- AddForeignKey
 ALTER TABLE "Task" ADD CONSTRAINT "Task_parentTaskId_fkey" FOREIGN KEY ("parentTaskId") REFERENCES "Task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Task" ADD CONSTRAINT "Task_milestoneId_fkey" FOREIGN KEY ("milestoneId") REFERENCES "Milestone"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TaskDependency" ADD CONSTRAINT "TaskDependency_blockingTaskId_fkey" FOREIGN KEY ("blockingTaskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;

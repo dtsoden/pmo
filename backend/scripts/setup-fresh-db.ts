@@ -2,7 +2,7 @@
  * Fresh Database Setup Script
  *
  * Creates the entire database schema in one shot using the consolidated schema.sql
- * This is MUCH faster than running 10+ migrations sequentially.
+ * This is MUCH faster than running 11 migrations sequentially.
  *
  * Use this for:
  * - Fresh installations

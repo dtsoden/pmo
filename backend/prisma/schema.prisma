@@ -94,10 +94,12 @@ model User {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   lastLoginAt       DateTime?
+  deletedAt         DateTime?           // Soft delete timestamp
 
   @@index([email])
   @@index([status])
   @@index([role])
+  @@index([deletedAt])
 }
 
 // ============================================
@@ -212,9 +214,11 @@ model Client {
 
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
+  deletedAt             DateTime?     // Soft delete timestamp
 
   @@index([salesforceAccountId])
   @@index([status])
+  @@index([deletedAt])
 }
 
 model ClientContact {
@@ -324,10 +328,12 @@ model Project {
 
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?           // Soft delete timestamp
 
   @@index([clientId])
   @@index([status])
   @@index([code])
+  @@index([deletedAt])
 }
 
 model ProjectPhase {
@@ -369,6 +375,9 @@ model Milestone {
 
   isCompleted       Boolean       @default(false)
 
+  // Tasks assigned to this milestone
+  tasks             Task[]
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -405,6 +414,9 @@ model Task {
   phaseId           String?
   phase             ProjectPhase?     @relation(fields: [phaseId], references: [id], onDelete: SetNull)
 
+  milestoneId       String?
+  milestone         Milestone?        @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
   title             String
   description       String?
   status            TaskStatus        @default(TODO)
@@ -440,11 +452,14 @@ model Task {
 
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  deletedAt         DateTime?         // Soft delete timestamp
 
   @@index([projectId])
   @@index([phaseId])
+  @@index([milestoneId])
   @@index([status])
   @@index([parentTaskId])
+  @@index([deletedAt])
 }
 
 model TaskDependency {
