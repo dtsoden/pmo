@@ -46,6 +46,15 @@
 
 <div class="flex min-h-screen items-center justify-center bg-muted/30 px-4">
   <Card class="w-full max-w-md p-8">
+    <!-- Logo -->
+    <div class="mb-8 flex justify-center">
+      <img
+        src="/logo.png"
+        alt="PMO Platform Logo"
+        class="h-20 w-auto"
+      />
+    </div>
+
     <div class="mb-8 text-center">
       <h1 class="text-2xl font-bold">Welcome back</h1>
       <p class="mt-2 text-sm text-muted-foreground">
@@ -85,10 +94,9 @@
       </Button>
     </form>
 
-    <div class="mt-6 text-center text-sm">
-      <span class="text-muted-foreground">Don't have an account? </span>
-      <a href="/register" class="font-medium text-primary hover:underline">
-        Sign up
+    <div class="mt-6 text-center text-sm text-muted-foreground">
+      <a href="/" class="hover:text-foreground hover:underline">
+        ← Back to home
       </a>
     </div>
   </Card>
