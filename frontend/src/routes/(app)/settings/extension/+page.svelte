@@ -44,6 +44,7 @@
       const messageHandler = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
         if (event.data?.type === 'PMO_EXTENSION_READY' && !responded) {
+          console.log('Extension responded:', event.data);
           responded = true;
           window.removeEventListener('message', messageHandler);
           resolve({
@@ -54,16 +55,18 @@
       };
 
       window.addEventListener('message', messageHandler);
+      console.log('Sending ping to extension...');
       window.postMessage({ type: 'PMO_EXTENSION_PING' }, window.location.origin);
 
-      // Timeout after 1 second
+      // Timeout after 3 seconds (increased from 1 second)
       setTimeout(() => {
         if (!responded) {
+          console.log('Extension did not respond to ping');
           responded = true;
           window.removeEventListener('message', messageHandler);
           resolve({ detected: false, authenticated: false });
         }
-      }, 1000);
+      }, 3000);
     });
   }
 
