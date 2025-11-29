@@ -90,25 +90,31 @@ copy .env.example .env
    CORS_ORIGIN=http://localhost:7620,https://yourdomain.com
    ```
 
-2. **Chrome Extension** (`chrome-extension/.env`): Update extension URLs
+2. **Frontend** (`frontend/.env`): Update extension connection URLs
    ```bash
    VITE_EXTENSION_BACKEND_URL=https://api.yourdomain.com
    VITE_EXTENSION_FRONTEND_URL=https://yourdomain.com
    ```
 
-3. **Rebuild frontend** after changing domain:
+3. **Chrome Extension** (`chrome-extension/.env`): Update extension URLs
+   ```bash
+   VITE_EXTENSION_BACKEND_URL=https://api.yourdomain.com
+   VITE_EXTENSION_FRONTEND_URL=https://yourdomain.com
+   ```
+
+4. **Rebuild frontend** after changing domain:
    ```bash
    cd frontend
    npm run build
    cd ..
    ```
 
-4. **Restart services** to apply changes:
+5. **Restart services** to apply changes:
    ```bash
    scripts\restart.bat
    ```
 
-> **Note**: Frontend uses build-time variables (VITE_*), so you must rebuild after changing domains.
+> **CRITICAL**: Both `frontend/.env` and `chrome-extension/.env` must have matching URLs! The web app uses `frontend/.env` to tell the extension where to connect. Frontend uses build-time variables (VITE_*), so you must rebuild after changing domains.
 
 ### 3. Database Setup
 
