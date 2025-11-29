@@ -6,6 +6,7 @@ const KEYS = {
   TIMER: 'pmo_timer',
   SHORTCUTS: 'pmo_shortcuts',
   API_URL: 'pmo_api_url',
+  THEME: 'pmo_theme',
 } as const;
 
 // ============================================
@@ -121,6 +122,19 @@ export function onStorageChange(callback: StorageChangeCallback): void {
       callback(changes);
     }
   });
+}
+
+// ============================================
+// THEME STORAGE
+// ============================================
+
+export async function getTheme(): Promise<'light' | 'dark' | 'system'> {
+  const result = await chrome.storage.local.get(KEYS.THEME);
+  return result[KEYS.THEME] || 'system';
+}
+
+export async function setTheme(theme: 'light' | 'dark' | 'system'): Promise<void> {
+  await chrome.storage.local.set({ [KEYS.THEME]: theme });
 }
 
 // ============================================

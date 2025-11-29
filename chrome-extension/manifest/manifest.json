@@ -15,15 +15,11 @@
     "activeTab",
     "sidePanel",
     "contextMenus",
-    "scripting",
-    "webRequest"
+    "scripting"
   ],
   "host_permissions": [
-    "http://localhost:7600/*",
-    "http://localhost:7620/*",
-    "https://pmo.cnxlab.us/*",
-    "https://pmoservices.cnxlab.us/*",
-    "https://*.azurecontainerapps.io/*"
+    "__BACKEND_URL__/*",
+    "__FRONTEND_URL__/*"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -32,15 +28,13 @@
     "default_path": "sidepanel.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": [
-        "http://localhost:7620/*",
-        "https://pmo.cnxlab.us/*",
-        "https://pmoservices.cnxlab.us/*",
-        "https://*.azurecontainerapps.io/*"
+        "__FRONTEND_URL__/*"
       ],
       "js": ["content/auth-listener.js"],
       "run_at": "document_start"

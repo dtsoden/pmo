@@ -168,6 +168,15 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // ============================================
+  // USER PREFERENCES ENDPOINTS
+  // ============================================
+
+  async getPreferences(): Promise<{ theme?: 'light' | 'dark' | 'system' }> {
+    const response = await this.request<{ preferences: any }>('/api/users/me/preferences');
+    return response.preferences || {};
+  }
 }
 
 // Create singleton instance

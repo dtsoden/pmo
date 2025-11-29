@@ -205,3 +205,7 @@ export function onShortcutsUpdated(handler: (event: any) => void): void {
 export function onTimerUpdated(handler: (event: { activeEntry: ActiveTimer }) => void): void {
   websocket.on('time:updated', handler);
 }
+
+export function onPreferencesUpdated(handler: (event: { theme?: 'light' | 'dark' | 'system' }) => void): void {
+  websocket.on('preferences:updated', handler);
+}
