@@ -67,6 +67,15 @@
     <section class="border-b bg-background">
       <div class="container mx-auto px-4 py-24 sm:py-32">
         <div class="mx-auto max-w-5xl text-center">
+          <!-- Logo -->
+          <div class="mb-12 flex justify-center">
+            <img
+              src="/logo.png"
+              alt="PMO Platform Logo"
+              class="h-24 w-auto sm:h-32"
+            />
+          </div>
+
           <div class="mb-8 flex flex-wrap items-center justify-center gap-3">
             <div class="inline-flex items-center gap-2 rounded-lg border bg-muted px-4 py-2 text-sm">
               <Database class="h-4 w-4 text-primary" />
@@ -656,7 +665,14 @@
     <!-- Footer -->
     <footer class="border-t bg-background py-8">
       <div class="container mx-auto px-4">
-        <div class="flex flex-col items-center gap-4">
+        <div class="flex flex-col items-center gap-6">
+          <!-- Logo -->
+          <img
+            src="/logo.png"
+            alt="PMO Platform Logo"
+            class="h-12 w-auto opacity-80"
+          />
+
           <div class="flex items-center gap-4">
             <a
               href="https://github.com/dtsoden/pmo"
