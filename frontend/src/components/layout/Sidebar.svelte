@@ -85,19 +85,36 @@
   )}
 >
   <!-- Logo -->
-  <div class="flex h-16 items-center justify-between border-b px-4">
+  <div class="flex h-16 items-center justify-center border-b px-4">
     {#if !collapsed}
-      <a href="/dashboard" class="flex items-center gap-2">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <span class="text-lg font-bold">P</span>
-        </div>
-        <span class="text-lg font-semibold">PMO</span>
+      <a href="/dashboard" class="flex items-center justify-center">
+        <!-- Light theme logo -->
+        <img
+          src="/logo.png"
+          alt="PMO Platform"
+          class="h-10 w-auto dark:hidden"
+        />
+        <!-- Dark theme logo -->
+        <img
+          src="/ReverseLogo.png"
+          alt="PMO Platform"
+          class="hidden h-10 w-auto dark:block"
+        />
       </a>
     {:else}
-      <a href="/dashboard" class="mx-auto">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <span class="text-lg font-bold">P</span>
-        </div>
+      <a href="/dashboard" class="flex items-center justify-center">
+        <!-- Light theme logo (icon only when collapsed) -->
+        <img
+          src="/logo.png"
+          alt="PMO Platform"
+          class="h-8 w-8 object-contain dark:hidden"
+        />
+        <!-- Dark theme logo (icon only when collapsed) -->
+        <img
+          src="/ReverseLogo.png"
+          alt="PMO Platform"
+          class="hidden h-8 w-8 object-contain dark:block"
+        />
       </a>
     {/if}
   </div>
