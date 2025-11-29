@@ -7,10 +7,15 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  restoreUser,
   getManagers,
   getUserPreferences,
   updateUserPreferences,
   changePassword,
+  addUserToTeam,
+  removeUserFromTeam,
+  assignUserToProject,
+  removeUserFromProject,
   type CreateUserData,
 } from './users.service.js';
 import { getAllDropdowns } from '../admin/dropdowns.service.js';
@@ -96,6 +101,29 @@ const updatePreferencesSchema = z.object({
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
+const addToTeamSchema = z.object({
+  teamId: z.string().uuid('Valid team ID required'),
+  role: z.enum(['LEAD', 'SENIOR', 'MEMBER']).optional(),
+});
+
+const teamIdParamSchema = z.object({
+  id: z.string().uuid(),
+  teamId: z.string().uuid(),
+});
+
+const assignToProjectSchema = z.object({
+  projectId: z.string().uuid('Valid project ID required'),
+  role: z.string().min(1, 'Role is required'),
+  allocatedHours: z.number().min(0, 'Allocated hours must be positive'),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().optional(),
+});
+
+const projectIdParamSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid(),
 });
 
 export async function userRoutes(app: FastifyInstance) {
@@ -201,7 +229,7 @@ export async function userRoutes(app: FastifyInstance) {
     }
   });
 
-  // Delete (deactivate) user (admin only)
+  // Delete (soft delete) user (admin only)
   app.delete('/:id', {
     onRequest: [requireAdminRole],
   }, async (request, reply) => {
@@ -223,6 +251,22 @@ export async function userRoutes(app: FastifyInstance) {
     }
   });
 
+  // Restore soft-deleted user (admin only)
+  app.post('/:id/restore', {
+    onRequest: [requireAdminRole],
+  }, async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      await restoreUser(id);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'Deleted user not found') {
+        return reply.code(404).send({ error: 'Deleted user not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore user' });
+    }
+  });
+
   // Get current user's preferences
   app.get('/me/preferences', async (request, reply) => {
     try {
@@ -238,6 +282,16 @@ export async function userRoutes(app: FastifyInstance) {
     try {
       const data = updatePreferencesSchema.parse(request.body);
       const preferences = await updateUserPreferences(request.user.userId, data);
+
+      // Emit WebSocket event for real-time sync to extension
+      const io = (app as any).io;
+      if (io && data.theme) {
+        console.log('📢 EMITTING preferences:updated event for user:', request.user.userId);
+        console.log('   - Theme:', data.theme);
+        io.to(`user:${request.user.userId}`).emit('preferences:updated', { theme: data.theme });
+        console.log('   - Event emitted to room: user:' + request.user.userId);
+      }
+
       return { preferences };
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -261,6 +315,85 @@ export async function userRoutes(app: FastifyInstance) {
         return reply.code(401).send({ error: error.message });
       }
       return reply.code(500).send({ error: error.message || 'Failed to change password' });
+    }
+  });
+
+  // === TEAM MEMBERSHIP ROUTES ===
+
+  // Add user to team
+  app.post('/:id/teams', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const { teamId, role } = addToTeamSchema.parse(request.body);
+      const membership = await addUserToTeam(id, teamId, role);
+      return reply.code(201).send({ membership });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid data', details: error.errors });
+      }
+      if (error.message === 'User not found' || error.message === 'Team not found') {
+        return reply.code(404).send({ error: error.message });
+      }
+      if (error.message?.includes('already')) {
+        return reply.code(409).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to add user to team' });
+    }
+  });
+
+  // Remove user from team
+  app.delete('/:id/teams/:teamId', async (request, reply) => {
+    try {
+      const { id, teamId } = teamIdParamSchema.parse(request.params);
+      await removeUserFromTeam(id, teamId);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'User not found' || error.message === 'Team not found') {
+        return reply.code(404).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to remove user from team' });
+    }
+  });
+
+  // === PROJECT ASSIGNMENT ROUTES ===
+
+  // Assign user to project
+  app.post('/:id/projects', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const data = assignToProjectSchema.parse(request.body);
+      const assignment = await assignUserToProject(id, data.projectId, {
+        role: data.role,
+        allocatedHours: data.allocatedHours,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
+      return reply.code(201).send({ assignment });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid data', details: error.errors });
+      }
+      if (error.message === 'User not found' || error.message === 'Project not found') {
+        return reply.code(404).send({ error: error.message });
+      }
+      if (error.message?.includes('already')) {
+        return reply.code(409).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to assign user to project' });
+    }
+  });
+
+  // Remove user from project
+  app.delete('/:id/projects/:projectId', async (request, reply) => {
+    try {
+      const { id, projectId } = projectIdParamSchema.parse(request.params);
+      await removeUserFromProject(id, projectId);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'User not found' || error.message?.includes('not assigned')) {
+        return reply.code(404).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to remove user from project' });
     }
   });
 

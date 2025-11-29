@@ -29,6 +29,18 @@ import {
   unlockUserAccount,
   forcePasswordReset,
   getSystemHealth,
+  listDeletedUsers,
+  listDeletedClients,
+  listDeletedProjects,
+  listDeletedTasks,
+  restoreUser,
+  restoreClient,
+  restoreProject,
+  restoreTask,
+  permanentlyDeleteUser,
+  permanentlyDeleteClient,
+  permanentlyDeleteProject,
+  permanentlyDeleteTask,
 } from './admin.service.js';
 
 import dropdownsRoutes from './dropdowns.routes.js';
@@ -525,6 +537,268 @@ export async function adminRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'Invalid request', details: error.errors });
       }
       return reply.code(500).send({ error: error.message || 'Failed to manage test data' });
+    }
+  });
+
+  // ============================================
+  // SOFT-DELETED ITEMS RECOVERY
+  // ============================================
+
+  /**
+   * GET /api/admin/deleted/users
+   * List soft-deleted users
+   */
+  app.get('/deleted/users', async (request, reply) => {
+    try {
+      const query = paginationSchema.parse(request.query);
+      const result = await listDeletedUsers(query);
+      // Return data in the format frontend expects
+      return { data: result.users };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid query parameters', details: error.errors });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to list deleted users' });
+    }
+  });
+
+  /**
+   * POST /api/admin/deleted/users/:id/restore
+   * Restore a soft-deleted user
+   */
+  app.post('/deleted/users/:id/restore', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await restoreUser(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'User restored successfully' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid user ID' });
+      }
+      if (error.message === 'User not found') {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore user' });
+    }
+  });
+
+  /**
+   * DELETE /api/admin/deleted/users/:id
+   * Permanently delete a user (hard delete)
+   */
+  app.delete('/deleted/users/:id', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await permanentlyDeleteUser(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'User permanently deleted' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid user ID' });
+      }
+      if (error.message === 'User not found') {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to delete user' });
+    }
+  });
+
+  /**
+   * GET /api/admin/deleted/clients
+   * List soft-deleted clients
+   */
+  app.get('/deleted/clients', async (request, reply) => {
+    try {
+      const query = paginationSchema.parse(request.query);
+      const result = await listDeletedClients(query);
+      // Return data in the format frontend expects
+      return { data: result.clients };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid query parameters', details: error.errors });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to list deleted clients' });
+    }
+  });
+
+  /**
+   * POST /api/admin/deleted/clients/:id/restore
+   * Restore a soft-deleted client
+   */
+  app.post('/deleted/clients/:id/restore', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await restoreClient(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'Client restored successfully' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid client ID' });
+      }
+      if (error.message === 'Client not found') {
+        return reply.code(404).send({ error: 'Client not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore client' });
+    }
+  });
+
+  /**
+   * DELETE /api/admin/deleted/clients/:id
+   * Permanently delete a client (hard delete with cascade)
+   */
+  app.delete('/deleted/clients/:id', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await permanentlyDeleteClient(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'Client permanently deleted' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid client ID' });
+      }
+      if (error.message === 'Client not found') {
+        return reply.code(404).send({ error: 'Client not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to delete client' });
+    }
+  });
+
+  /**
+   * GET /api/admin/deleted/projects
+   * List soft-deleted projects
+   */
+  app.get('/deleted/projects', async (request, reply) => {
+    try {
+      const query = paginationSchema.parse(request.query);
+      const result = await listDeletedProjects(query);
+      // Return data in the format frontend expects
+      return { data: result.projects };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid query parameters', details: error.errors });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to list deleted projects' });
+    }
+  });
+
+  /**
+   * GET /api/admin/deleted/tasks
+   * List soft-deleted tasks
+   */
+  app.get('/deleted/tasks', async (request, reply) => {
+    try {
+      const query = paginationSchema.extend({
+        projectId: z.string().uuid().optional(),
+      }).parse(request.query);
+      const result = await listDeletedTasks(query);
+      // Return data in the format frontend expects
+      return { data: result.tasks };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid query parameters', details: error.errors });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to list deleted tasks' });
+    }
+  });
+
+  /**
+   * POST /api/admin/deleted/projects/:id/restore
+   * Restore a soft-deleted project
+   */
+  app.post('/deleted/projects/:id/restore', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await restoreProject(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'Project restored successfully' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid project ID' });
+      }
+      if (error.message === 'Project not found') {
+        return reply.code(404).send({ error: 'Project not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore project' });
+    }
+  });
+
+  /**
+   * POST /api/admin/deleted/tasks/:id/restore
+   * Restore a soft-deleted task
+   */
+  app.post('/deleted/tasks/:id/restore', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await restoreTask(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'Task restored successfully' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid task ID' });
+      }
+      if (error.message === 'Task not found') {
+        return reply.code(404).send({ error: 'Task not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore task' });
+    }
+  });
+
+  /**
+   * DELETE /api/admin/deleted/projects/:id
+   * Permanently delete a project (hard delete)
+   */
+  app.delete('/deleted/projects/:id', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await permanentlyDeleteProject(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'Project permanently deleted' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid project ID' });
+      }
+      if (error.message === 'Project not found') {
+        return reply.code(404).send({ error: 'Project not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to delete project' });
+    }
+  });
+
+  /**
+   * DELETE /api/admin/deleted/tasks/:id
+   * Permanently delete a task (hard delete)
+   */
+  app.delete('/deleted/tasks/:id', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const ctx = getRequestContext(request);
+
+      await permanentlyDeleteTask(id, request.user.userId, ctx.ipAddress, ctx.userAgent);
+
+      return { success: true, message: 'Task permanently deleted' };
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid task ID' });
+      }
+      if (error.message === 'Task not found') {
+        return reply.code(404).send({ error: 'Task not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to delete task' });
     }
   });
 

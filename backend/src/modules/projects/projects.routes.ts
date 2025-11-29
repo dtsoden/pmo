@@ -7,6 +7,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  restoreProject,
   getProjectPhases,
   createPhase,
   updatePhase,
@@ -20,10 +21,15 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  restoreTask,
   addTaskDependency,
   removeTaskDependency,
   assignTask,
   unassignTask,
+  assignTeamToProject,
+  removeTeamFromProject,
+  assignPersonToProject,
+  removePersonFromProject,
   type CreateProjectData,
   type CreatePhaseData,
   type CreateMilestoneData,
@@ -115,6 +121,7 @@ const createTaskSchema = z.object({
   status: z.nativeEnum(TaskStatus).optional(),
   priority: z.nativeEnum(TaskPriority).optional(),
   phaseId: z.string().uuid().optional(),
+  milestoneId: z.string().uuid().optional(),
   parentTaskId: z.string().uuid().optional(),
   estimatedHours: z.number().positive().optional(),
   startDate: z.coerce.date().optional(),
@@ -135,6 +142,21 @@ const assignTaskSchema = z.object({
   userId: z.string().uuid(),
   isPrimary: z.boolean().optional(),
   allocatedHours: z.number().positive().optional(),
+});
+
+const assignTeamSchema = z.object({
+  teamId: z.string().uuid('Valid team ID required'),
+  allocatedHours: z.number().min(0, 'Allocated hours must be positive'),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().optional(),
+});
+
+const assignPersonSchema = z.object({
+  userId: z.string().uuid('Valid user ID required'),
+  role: z.string().min(1, 'Role is required'),
+  allocatedHours: z.number().min(0, 'Allocated hours must be positive'),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().optional(),
 });
 
 const idParamSchema = z.object({
@@ -232,7 +254,7 @@ export async function projectRoutes(app: FastifyInstance) {
     }
   });
 
-  // Delete project
+  // Delete (soft delete) project
   app.delete('/:id', async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
@@ -243,6 +265,20 @@ export async function projectRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: 'Project not found' });
       }
       return reply.code(500).send({ error: error.message || 'Failed to delete project' });
+    }
+  });
+
+  // Restore soft-deleted project
+  app.post('/:id/restore', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      await restoreProject(id);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'Deleted project not found') {
+        return reply.code(404).send({ error: 'Deleted project not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore project' });
     }
   });
 
@@ -443,7 +479,7 @@ export async function projectRoutes(app: FastifyInstance) {
     }
   });
 
-  // Delete task
+  // Delete (soft delete) task
   app.delete('/:id/tasks/:taskId', async (request, reply) => {
     try {
       const { taskId } = taskIdParamSchema.parse(request.params);
@@ -454,6 +490,20 @@ export async function projectRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: 'Task not found' });
       }
       return reply.code(500).send({ error: error.message || 'Failed to delete task' });
+    }
+  });
+
+  // Restore soft-deleted task
+  app.post('/:id/tasks/:taskId/restore', async (request, reply) => {
+    try {
+      const { taskId } = taskIdParamSchema.parse(request.params);
+      await restoreTask(taskId);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'Deleted task not found') {
+        return reply.code(404).send({ error: 'Deleted task not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore task' });
     }
   });
 
@@ -526,6 +576,86 @@ export async function projectRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: 'Assignment not found' });
       }
       return reply.code(500).send({ error: error.message || 'Failed to unassign task' });
+    }
+  });
+
+  // ========== TEAM ASSIGNMENT ROUTES ==========
+
+  // Assign team to project
+  app.post('/:id/teams', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const { teamId, allocatedHours, startDate, endDate } = assignTeamSchema.parse(request.body);
+      const assignment = await assignTeamToProject(id, { teamId, allocatedHours, startDate, endDate });
+      return reply.code(201).send({ assignment });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid data', details: error.errors });
+      }
+      if (error.message === 'Project not found' || error.message === 'Team not found') {
+        return reply.code(404).send({ error: error.message });
+      }
+      if (error.message?.includes('already')) {
+        return reply.code(409).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to assign team' });
+    }
+  });
+
+  // Remove team from project
+  app.delete('/:id/teams/:assignmentId', async (request, reply) => {
+    try {
+      const params = z.object({
+        id: z.string().uuid(),
+        assignmentId: z.string().uuid(),
+      }).parse(request.params);
+      await removeTeamFromProject(params.id, params.assignmentId);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'Project not found' || error.message === 'Assignment not found') {
+        return reply.code(404).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to remove team' });
+    }
+  });
+
+  // ========== PEOPLE ASSIGNMENT ROUTES ==========
+
+  // Assign person to project
+  app.post('/:id/people', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      const { userId, role, allocatedHours, startDate, endDate } = assignPersonSchema.parse(request.body);
+      const assignment = await assignPersonToProject(id, { userId, role, allocatedHours, startDate, endDate });
+      return reply.code(201).send({ assignment });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return reply.code(400).send({ error: 'Invalid data', details: error.errors });
+      }
+      if (error.message === 'Project not found' || error.message === 'User not found') {
+        return reply.code(404).send({ error: error.message });
+      }
+      if (error.message?.includes('already')) {
+        return reply.code(409).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to assign person' });
+    }
+  });
+
+  // Remove person from project
+  app.delete('/:id/people/:userId', async (request, reply) => {
+    try {
+      const params = z.object({
+        id: z.string().uuid(),
+        userId: z.string().uuid(),
+      }).parse(request.params);
+      await removePersonFromProject(params.id, params.userId);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'Project not found' || error.message?.includes('not assigned')) {
+        return reply.code(404).send({ error: error.message });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to remove person' });
     }
   });
 }

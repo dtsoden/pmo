@@ -26,10 +26,14 @@
   let startDate = '';
   let dueDate = '';
 
+  let lastTaskId = '';
+
   $: isEdit = !!task;
   $: title = isEdit ? 'Edit Task' : 'Create Task';
 
-  $: if (open) {
+  // Only initialize form when modal opens or task changes
+  $: if (open && (task?.id !== lastTaskId || !task)) {
+    lastTaskId = task?.id || '';
     if (task) {
       name = task.title;
       description = task.description || '';

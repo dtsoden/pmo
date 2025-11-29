@@ -7,6 +7,7 @@
 
   export let open = false;
   export let project: Project | null = null;
+  export let defaultClientId = ''; // Pre-fill client when creating from client page
 
   const dispatch = createEventDispatcher();
 
@@ -24,14 +25,19 @@
   let priority = 'MEDIUM';
   let startDate = '';
   let endDate = '';
-  let budget = '';
+  let budgetCost = '';
+  let budgetHours = '';
   let clientId = '';
   let managerId = '';
+
+  let lastProjectId = '';
 
   $: isEdit = !!project;
   $: title = isEdit ? 'Edit Project' : 'Create Project';
 
-  $: if (open) {
+  // Only initialize form when modal opens or project changes
+  $: if (open && (project?.id !== lastProjectId || !project)) {
+    lastProjectId = project?.id || '';
     if (project) {
       name = project.name;
       code = project.code;
@@ -41,7 +47,8 @@
       priority = project.priority;
       startDate = project.startDate?.split('T')[0] || '';
       endDate = project.endDate?.split('T')[0] || '';
-      budget = project.budget?.toString() || '';
+      budgetCost = project.budgetCost?.toString() || '';
+      budgetHours = project.budgetHours?.toString() || '';
       clientId = project.clientId;
       managerId = project.managerId || '';
     } else {
@@ -74,8 +81,9 @@
     priority = 'MEDIUM';
     startDate = '';
     endDate = '';
-    budget = '';
-    clientId = '';
+    budgetCost = '';
+    budgetHours = '';
+    clientId = defaultClientId; // Use default if provided
     managerId = '';
   }
 
@@ -97,7 +105,8 @@
         priority: priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
         startDate: startDate || undefined,
         endDate: endDate || undefined,
-        budget: budget ? parseFloat(budget) : undefined,
+        budgetCost: budgetCost ? parseFloat(budgetCost) : undefined,
+        budgetHours: budgetHours ? parseFloat(budgetHours) : undefined,
         clientId,
         managerId: managerId || undefined,
       };
@@ -213,7 +222,7 @@
       />
     </div>
 
-    <div class="grid gap-4 md:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-2">
       <DateInput
         id="startDate"
         label="Start Date"
@@ -226,13 +235,23 @@
         bind:value={endDate}
         min={startDate}
       />
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <Input
+        id="budgetCost"
+        type="number"
+        label="Budget (Cost)"
+        placeholder="0.00"
+        bind:value={budgetCost}
+      />
 
       <Input
-        id="budget"
+        id="budgetHours"
         type="number"
-        label="Budget"
-        placeholder="0.00"
-        bind:value={budget}
+        label="Budget (Hours)"
+        placeholder="0"
+        bind:value={budgetHours}
       />
     </div>
   </form>

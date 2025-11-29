@@ -48,6 +48,51 @@ const userWithManagerSelect = {
   },
 } satisfies Prisma.UserSelect;
 
+// Extended select with team memberships and project assignments
+const userDetailSelect = {
+  ...userWithManagerSelect,
+  teamMemberships: {
+    select: {
+      id: true,
+      role: true,
+      joinedAt: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+        },
+      },
+    },
+  },
+  projectAssignments: {
+    select: {
+      id: true,
+      role: true,
+      allocatedHours: true,
+      startDate: true,
+      endDate: true,
+      status: true,
+      project: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          status: true,
+          priority: true,
+          client: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.UserSelect;
+
 export interface ListUsersParams {
   page?: number;
   limit?: number;
@@ -112,7 +157,9 @@ export async function listUsers(params: ListUsersParams = {}) {
   const { page = 1, limit = 20, status, role, search, managerId } = params;
   const skip = (page - 1) * limit;
 
-  const where: Prisma.UserWhereInput = {};
+  const where: Prisma.UserWhereInput = {
+    deletedAt: null, // Exclude soft-deleted users
+  };
 
   if (status) {
     where.status = status;
@@ -157,11 +204,15 @@ export async function listUsers(params: ListUsersParams = {}) {
 }
 
 export async function getUserById(id: string) {
-  const user = await db.user.findUnique({
-    where: { id },
+  const user = await db.user.findFirst({
+    where: {
+      id,
+      deletedAt: null, // Exclude soft-deleted users
+    },
     select: {
-      ...userWithManagerSelect,
+      ...userDetailSelect,
       employees: {
+        where: { deletedAt: null }, // Exclude soft-deleted employees
         select: {
           id: true,
           firstName: true,
@@ -312,25 +363,50 @@ export async function updateUser(id: string, data: UpdateUserData) {
 }
 
 export async function deleteUser(id: string) {
-  const user = await db.user.findUnique({ where: { id } });
+  const user = await db.user.findFirst({
+    where: { id, deletedAt: null },
+  });
   if (!user) {
     throw new Error('User not found');
   }
 
-  // Soft delete by setting status to INACTIVE
+  // Soft delete by setting deletedAt timestamp
   await db.user.update({
     where: { id },
-    data: { status: UserStatus.INACTIVE },
+    data: { deletedAt: new Date() },
   });
 
-  logger.info(`User deactivated: ${user.email} (${user.id})`);
+  logger.info(`User soft deleted: ${user.email} (${user.id})`);
+
+  return { success: true };
+}
+
+export async function restoreUser(id: string) {
+  const user = await db.user.findFirst({
+    where: { id, deletedAt: { not: null } },
+  });
+  if (!user) {
+    throw new Error('Deleted user not found');
+  }
+
+  // Restore by clearing deletedAt timestamp
+  await db.user.update({
+    where: { id },
+    data: { deletedAt: null },
+  });
+
+  logger.info(`User restored: ${user.email} (${user.id})`);
 
   return { success: true };
 }
 
 export async function getUsersByRole(role: UserRole) {
   return db.user.findMany({
-    where: { role, status: UserStatus.ACTIVE },
+    where: {
+      role,
+      status: UserStatus.ACTIVE,
+      deletedAt: null, // Exclude soft-deleted users
+    },
     select: userSelect,
     orderBy: { lastName: 'asc' },
   });
@@ -340,6 +416,7 @@ export async function getManagers() {
   return db.user.findMany({
     where: {
       status: UserStatus.ACTIVE,
+      deletedAt: null, // Exclude soft-deleted users
       role: {
         in: [
           UserRole.SUPER_ADMIN,
@@ -444,6 +521,144 @@ export async function changePassword(userId: string, currentPassword: string, ne
   });
 
   logger.info(`Password changed for user: ${user.email} (${userId})`);
+
+  return { success: true };
+}
+
+// ============================================
+// TEAM MEMBERSHIPS
+// ============================================
+
+export async function addUserToTeam(userId: string, teamId: string, role: 'LEAD' | 'SENIOR' | 'MEMBER' = 'MEMBER') {
+  // Verify user exists and not deleted
+  const user = await db.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Import and call teams service
+  const { addTeamMember } = await import('../teams/teams.service.js');
+  return addTeamMember(teamId, userId, role);
+}
+
+export async function removeUserFromTeam(userId: string, teamId: string) {
+  // Verify user exists
+  const user = await db.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Import and call teams service
+  const { removeTeamMember } = await import('../teams/teams.service.js');
+  return removeTeamMember(teamId, userId);
+}
+
+// ============================================
+// PROJECT ASSIGNMENTS
+// ============================================
+
+export async function assignUserToProject(
+  userId: string,
+  projectId: string,
+  data: {
+    role: string;
+    allocatedHours: number;
+    startDate: Date;
+    endDate?: Date;
+  }
+) {
+  // Verify user exists and not deleted
+  const user = await db.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Verify project exists and not deleted
+  const project = await db.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+  });
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  // Check if already assigned
+  const existing = await db.projectAssignment.findUnique({
+    where: {
+      projectId_userId: {
+        projectId,
+        userId,
+      },
+    },
+  });
+
+  if (existing) {
+    throw new Error('User is already assigned to this project');
+  }
+
+  const assignment = await db.projectAssignment.create({
+    data: {
+      userId,
+      projectId,
+      role: data.role,
+      allocatedHours: data.allocatedHours,
+      startDate: data.startDate,
+      endDate: data.endDate,
+    },
+    include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          client: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  logger.info(`User ${user.email} assigned to project ${project.name}`);
+
+  return assignment;
+}
+
+export async function removeUserFromProject(userId: string, projectId: string) {
+  // Verify user exists
+  const user = await db.user.findFirst({
+    where: { id: userId, deletedAt: null },
+  });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const assignment = await db.projectAssignment.findUnique({
+    where: {
+      projectId_userId: {
+        projectId,
+        userId,
+      },
+    },
+  });
+
+  if (!assignment) {
+    throw new Error('User is not assigned to this project');
+  }
+
+  await db.projectAssignment.delete({
+    where: { id: assignment.id },
+  });
+
+  logger.info(`User ${user.email} removed from project ${projectId}`);
 
   return { success: true };
 }

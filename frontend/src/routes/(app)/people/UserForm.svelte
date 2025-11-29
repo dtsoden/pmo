@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import { api, type User, type EmploymentType, type DropdownLists } from '$lib/api/client';
-  import { Modal, Button, Input, Select, Badge } from '$components/shared';
+  import { Modal, Button, Input, Badge } from '$components/shared';
   import { ROLE_LABELS, getTimezoneAbbreviation } from '$lib/utils';
   import { toast } from 'svelte-sonner';
   import { X } from 'lucide-svelte';
@@ -43,9 +43,14 @@
   let billableRate: number | undefined = undefined;
 
   $: isEdit = !!user;
-  $: modalTitle = 'Edit Team Member';
+  $: modalTitle = isEdit && user ? `Edit ${user.firstName} ${user.lastName}` : 'Add Team Member';
 
-  $: if (open) {
+  // Track modal state to only initialize form when first opened
+  let previousOpenState = false;
+
+  $: if (open && !previousOpenState) {
+    // Modal just opened - initialize form
+    previousOpenState = true;
     if (user) {
       email = user.email;
       password = '';
@@ -69,6 +74,9 @@
       resetForm();
     }
     loadManagers();
+  } else if (!open && previousOpenState) {
+    // Modal just closed - reset state
+    previousOpenState = false;
   }
 
   async function loadManagers() {
@@ -292,15 +300,6 @@
     { value: 'AE', label: 'United Arab Emirates' },
   ];
 
-  $: managerOptions = [
-    { value: '', label: 'No Manager' },
-    ...managers.map((m) => ({ value: m.id, label: `${m.firstName} ${m.lastName}` })),
-  ];
-
-  $: departmentOptions = (dropdownLists?.departments || []).map((d) => ({ value: d, label: d }));
-
-  $: regionOptions = (dropdownLists?.regions || []).map((r) => ({ value: r, label: r }));
-
   $: skillSuggestions = dropdownLists?.skillCategories || [];
 </script>
 
@@ -356,12 +355,19 @@
         </div>
 
         <div class="grid gap-4 md:grid-cols-2">
-          <Select
-            id="managerId"
-            label="Reports To"
-            options={managerOptions}
-            bind:value={managerId}
-          />
+          <div class="space-y-1.5">
+            <label for="managerId" class="text-sm font-medium">Reports To</label>
+            <select
+              id="managerId"
+              class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              bind:value={managerId}
+            >
+              <option value="">No Manager</option>
+              {#each managers as manager}
+                <option value={manager.id}>{manager.firstName} {manager.lastName}</option>
+              {/each}
+            </select>
+          </div>
 
           <Input
             id="jobTitle"
@@ -372,13 +378,19 @@
         </div>
 
         <div class="grid gap-4 md:grid-cols-2">
-          <Select
-            id="department"
-            label="Department"
-            placeholder="Select Department"
-            options={departmentOptions}
-            bind:value={department}
-          />
+          <div class="space-y-1.5">
+            <label for="department" class="text-sm font-medium">Department</label>
+            <select
+              id="department"
+              class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              bind:value={department}
+            >
+              <option value="">Select Department</option>
+              {#each dropdownLists?.departments || [] as dept}
+                <option value={dept}>{dept}</option>
+              {/each}
+            </select>
+          </div>
 
           <Input
             id="phone"
@@ -396,37 +408,61 @@
       <h3 class="mb-3 text-sm font-semibold uppercase text-muted-foreground">Location & Employment</h3>
       <div class="space-y-4">
         <div class="grid gap-4 md:grid-cols-2">
-          <Select
-            id="country"
-            label="Country"
-            placeholder="Select Country"
-            options={countryOptions}
-            bind:value={country}
-          />
+          <div class="space-y-1.5">
+            <label for="country" class="text-sm font-medium">Country</label>
+            <select
+              id="country"
+              class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              bind:value={country}
+            >
+              <option value="">Select Country</option>
+              {#each countryOptions as option}
+                <option value={option.value}>{option.label}</option>
+              {/each}
+            </select>
+          </div>
 
-          <Select
-            id="region"
-            label="Region"
-            placeholder="Select Region"
-            options={regionOptions}
-            bind:value={region}
-          />
+          <div class="space-y-1.5">
+            <label for="region" class="text-sm font-medium">Region</label>
+            <select
+              id="region"
+              class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              bind:value={region}
+            >
+              <option value="">Select Region</option>
+              {#each dropdownLists?.regions || [] as reg}
+                <option value={reg}>{reg}</option>
+              {/each}
+            </select>
+          </div>
         </div>
 
         <div class="grid gap-4 md:grid-cols-2">
-          <Select
-            id="employmentType"
-            label="Employment Type"
-            options={employmentTypeOptions}
-            bind:value={employmentType}
-          />
+          <div class="space-y-1.5">
+            <label for="employmentType" class="text-sm font-medium">Employment Type</label>
+            <select
+              id="employmentType"
+              class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              bind:value={employmentType}
+            >
+              {#each employmentTypeOptions as option}
+                <option value={option.value}>{option.label}</option>
+              {/each}
+            </select>
+          </div>
 
-          <Select
-            id="timezone"
-            label="Timezone"
-            options={timezoneOptions}
-            bind:value={timezone}
-          />
+          <div class="space-y-1.5">
+            <label for="timezone" class="text-sm font-medium">Timezone</label>
+            <select
+              id="timezone"
+              class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              bind:value={timezone}
+            >
+              {#each timezoneOptions as option}
+                <option value={option.value}>{option.label}</option>
+              {/each}
+            </select>
+          </div>
         </div>
       </div>
     </div>

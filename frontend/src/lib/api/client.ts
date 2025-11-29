@@ -157,6 +157,47 @@ class ApiClient {
     // Get dropdown lists (available to all authenticated users)
     getDropdowns: () =>
       this.request<DropdownLists>('/users/dropdowns'),
+
+    // Team membership management
+    addToTeam: (userId: string, teamId: string, role?: 'LEAD' | 'SENIOR' | 'MEMBER') =>
+      this.request<{ membership: any }>(`/users/${userId}/teams`, {
+        method: 'POST',
+        body: JSON.stringify({ teamId, role }),
+      }),
+
+    removeFromTeam: (userId: string, teamId: string) =>
+      this.request<{ success: boolean }>(`/users/${userId}/teams/${teamId}`, {
+        method: 'DELETE',
+      }),
+
+    // Project assignment management
+    assignToProject: (userId: string, data: {
+      projectId: string;
+      role: string;
+      allocatedHours: number;
+      startDate: string;
+      endDate?: string;
+    }) =>
+      this.request<{ assignment: any }>(`/users/${userId}/projects`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    removeFromProject: (userId: string, projectId: string) =>
+      this.request<{ success: boolean }>(`/users/${userId}/projects/${projectId}`, {
+        method: 'DELETE',
+      }),
+
+    // User deletion (soft delete)
+    delete: (userId: string) =>
+      this.request<{ success: boolean }>(`/users/${userId}`, {
+        method: 'DELETE',
+      }),
+
+    restore: (userId: string) =>
+      this.request<{ success: boolean; user: User }>(`/users/${userId}/restore`, {
+        method: 'POST',
+      }),
   };
 
   // Clients endpoints
@@ -324,25 +365,42 @@ class ApiClient {
         }),
     },
 
-    // Assignments
+    // Assignments (people assigned to projects)
     assignments: {
       list: (projectId: string) =>
         this.request<ProjectAssignment[]>(`/projects/${projectId}/assignments`),
 
       create: (projectId: string, data: CreateAssignmentData) =>
-        this.request<ProjectAssignment>(`/projects/${projectId}/assignments`, {
+        this.request<ProjectAssignment>(`/projects/${projectId}/people`, {
           method: 'POST',
           body: JSON.stringify(data),
         }),
 
-      update: (projectId: string, assignmentId: string, data: UpdateAssignmentData) =>
-        this.request<ProjectAssignment>(`/projects/${projectId}/assignments/${assignmentId}`, {
+      delete: (projectId: string, userId: string) =>
+        this.request<void>(`/projects/${projectId}/people/${userId}`, {
+          method: 'DELETE',
+        }),
+    },
+
+    // Team assignments
+    teams: {
+      list: (projectId: string) =>
+        this.request<TeamProjectAssignment[]>(`/projects/${projectId}/teams`),
+
+      assign: (projectId: string, data: AssignTeamToProjectData) =>
+        this.request<TeamProjectAssignment>(`/projects/${projectId}/teams`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      update: (projectId: string, assignmentId: string, data: UpdateTeamAssignmentData) =>
+        this.request<TeamProjectAssignment>(`/projects/${projectId}/teams/${assignmentId}`, {
           method: 'PUT',
           body: JSON.stringify(data),
         }),
 
-      delete: (projectId: string, assignmentId: string) =>
-        this.request<void>(`/projects/${projectId}/assignments/${assignmentId}`, {
+      remove: (projectId: string, assignmentId: string) =>
+        this.request<void>(`/projects/${projectId}/teams/${assignmentId}`, {
           method: 'DELETE',
         }),
     },
@@ -689,6 +747,59 @@ class ApiClient {
           body: JSON.stringify({ enabled }),
         }),
     },
+
+    // Deleted items recovery
+    deletedUsers: () =>
+      this.request<{ data: any[] }>('/admin/deleted/users'),
+
+    deletedClients: () =>
+      this.request<{ data: any[] }>('/admin/deleted/clients'),
+
+    deletedProjects: () =>
+      this.request<{ data: any[] }>('/admin/deleted/projects'),
+
+    deletedTasks: () =>
+      this.request<{ data: any[] }>('/admin/deleted/tasks'),
+
+    restoreUser: (userId: string) =>
+      this.request<{ success: boolean }>(`/admin/deleted/users/${userId}/restore`, {
+        method: 'POST',
+      }),
+
+    restoreClient: (clientId: string) =>
+      this.request<{ success: boolean }>(`/admin/deleted/clients/${clientId}/restore`, {
+        method: 'POST',
+      }),
+
+    restoreProject: (projectId: string) =>
+      this.request<{ success: boolean }>(`/admin/deleted/projects/${projectId}/restore`, {
+        method: 'POST',
+      }),
+
+    restoreTask: (taskId: string) =>
+      this.request<{ success: boolean }>(`/admin/deleted/tasks/${taskId}/restore`, {
+        method: 'POST',
+      }),
+
+    permanentlyDeleteUser: (userId: string) =>
+      this.request<void>(`/admin/deleted/users/${userId}`, {
+        method: 'DELETE',
+      }),
+
+    permanentlyDeleteClient: (clientId: string) =>
+      this.request<void>(`/admin/deleted/clients/${clientId}`, {
+        method: 'DELETE',
+      }),
+
+    permanentlyDeleteProject: (projectId: string) =>
+      this.request<void>(`/admin/deleted/projects/${projectId}`, {
+        method: 'DELETE',
+      }),
+
+    permanentlyDeleteTask: (taskId: string) =>
+      this.request<void>(`/admin/deleted/tasks/${taskId}`, {
+        method: 'DELETE',
+      }),
   };
 
   // Teams endpoints
@@ -856,6 +967,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface RegisterData {
@@ -1023,7 +1135,8 @@ export interface Project {
   priority: ProjectPriority;
   startDate?: string;
   endDate?: string;
-  budget?: number;
+  budgetHours?: number;
+  budgetCost?: number;
   clientId: string;
   client?: Pick<Client, 'id' | 'name'>;
   managerId?: string;
@@ -1523,6 +1636,7 @@ export interface PaginatedResponse<T> {
 export interface ProjectListParams extends ListParams {
   status?: ProjectStatus;
   priority?: ProjectPriority;
+  type?: string;
   clientId?: string;
   managerId?: string;
 }

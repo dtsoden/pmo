@@ -23,6 +23,7 @@
   } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import ClientForm from '../ClientForm.svelte';
+  import ProjectForm from '../../projects/ProjectForm.svelte';
 
   // SvelteKit props - must be declared to avoid warnings
   export let data: unknown = null;
@@ -39,7 +40,19 @@
 
   let showEditModal = false;
   let showDeleteModal = false;
+  let showCreateProjectModal = false;
+  let showContactModal = false;
   let deleting = false;
+
+  // Contact form state
+  let editingContact: ClientContact | null = null;
+  let contactFirstName = '';
+  let contactLastName = '';
+  let contactTitle = '';
+  let contactEmail = '';
+  let contactPhone = '';
+  let contactIsPrimary = false;
+  let savingContact = false;
 
   async function loadClient() {
     loading = true;
@@ -82,6 +95,82 @@
   function handleClientUpdated() {
     showEditModal = false;
     loadClient();
+  }
+
+  function handleProjectCreated() {
+    showCreateProjectModal = false;
+    loadClient(); // Reload to refresh projects list
+  }
+
+  // Contact management functions
+  function openCreateContactModal() {
+    editingContact = null;
+    contactFirstName = '';
+    contactLastName = '';
+    contactTitle = '';
+    contactEmail = '';
+    contactPhone = '';
+    contactIsPrimary = false;
+    showContactModal = true;
+  }
+
+  function openEditContactModal(contact: ClientContact) {
+    editingContact = contact;
+    contactFirstName = contact.firstName;
+    contactLastName = contact.lastName;
+    contactTitle = contact.title || '';
+    contactEmail = contact.email || '';
+    contactPhone = contact.phone || '';
+    contactIsPrimary = contact.isPrimary;
+    showContactModal = true;
+  }
+
+  async function saveContact() {
+    if (!contactFirstName || !contactLastName) {
+      toast.error('First name and last name are required');
+      return;
+    }
+
+    savingContact = true;
+    try {
+      const data = {
+        firstName: contactFirstName,
+        lastName: contactLastName,
+        title: contactTitle || undefined,
+        email: contactEmail || undefined,
+        phone: contactPhone || undefined,
+        isPrimary: contactIsPrimary,
+      };
+
+      if (editingContact) {
+        await api.clients.contacts.update(clientId, editingContact.id, data);
+        toast.success('Contact updated successfully');
+      } else {
+        await api.clients.contacts.create(clientId, data);
+        toast.success('Contact created successfully');
+      }
+
+      showContactModal = false;
+      await loadClient();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to save contact');
+    } finally {
+      savingContact = false;
+    }
+  }
+
+  async function deleteContact(contact: ClientContact) {
+    if (!confirm(`Delete contact ${contact.firstName} ${contact.lastName}?`)) {
+      return;
+    }
+
+    try {
+      await api.clients.contacts.delete(clientId, contact.id);
+      toast.success('Contact deleted successfully');
+      await loadClient();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to delete contact');
+    }
   }
 
   onMount(loadClient);
@@ -145,7 +234,13 @@
         <Card>
           <div class="flex items-center justify-between border-b px-6 py-4">
             <h2 class="font-semibold">Projects ({projects.length})</h2>
-            <Button size="sm" href="/projects?clientId={clientId}">View All</Button>
+            <div class="flex gap-2">
+              <Button variant="outline" size="sm" on:click={() => (showCreateProjectModal = true)}>
+                <Plus class="h-4 w-4" />
+                New Project
+              </Button>
+              <Button size="sm" href="/projects?clientId={clientId}">View All</Button>
+            </div>
           </div>
           <div class="divide-y">
             {#if projects.length === 0}
@@ -153,7 +248,14 @@
                 title="No projects"
                 description="No projects have been created for this client"
                 class="py-8"
-              />
+              >
+                <svelte:fragment slot="action">
+                  <Button on:click={() => (showCreateProjectModal = true)}>
+                    <Plus class="h-4 w-4 mr-1" />
+                    Create First Project
+                  </Button>
+                </svelte:fragment>
+              </EmptyState>
             {:else}
               {#each projects.slice(0, 5) as project}
                 <a
@@ -177,7 +279,7 @@
         <Card>
           <div class="flex items-center justify-between border-b px-6 py-4">
             <h2 class="font-semibold">Contacts ({contacts.length})</h2>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" on:click={openCreateContactModal}>
               <Plus class="h-4 w-4" />
               Add Contact
             </Button>
@@ -206,21 +308,34 @@
                       {#if contact.title}
                         <p class="text-sm text-muted-foreground">{contact.title}</p>
                       {/if}
+                      <div class="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        {#if contact.email}
+                          <a href="mailto:{contact.email}" class="flex items-center gap-1 hover:text-foreground">
+                            <Mail class="h-4 w-4" />
+                            {contact.email}
+                          </a>
+                        {/if}
+                        {#if contact.phone}
+                          <a href="tel:{contact.phone}" class="flex items-center gap-1 hover:text-foreground">
+                            <Phone class="h-4 w-4" />
+                            {contact.phone}
+                          </a>
+                        {/if}
+                      </div>
                     </div>
                   </div>
-                  <div class="flex items-center gap-4 text-sm text-muted-foreground">
-                    {#if contact.email}
-                      <a href="mailto:{contact.email}" class="flex items-center gap-1 hover:text-foreground">
-                        <Mail class="h-4 w-4" />
-                        {contact.email}
-                      </a>
-                    {/if}
-                    {#if contact.phone}
-                      <a href="tel:{contact.phone}" class="flex items-center gap-1 hover:text-foreground">
-                        <Phone class="h-4 w-4" />
-                        {contact.phone}
-                      </a>
-                    {/if}
+                  <div class="flex gap-2">
+                    <Button variant="ghost" size="sm" on:click={() => openEditContactModal(contact)}>
+                      <Edit class="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="text-destructive hover:text-destructive"
+                      on:click={() => deleteContact(contact)}
+                    >
+                      <Trash2 class="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               {/each}
@@ -363,7 +478,7 @@
   <!-- Delete Confirmation Modal -->
   <Modal bind:open={showDeleteModal} title="Delete Client" size="sm">
     <p class="text-muted-foreground">
-      Are you sure you want to delete <strong>{client.name}</strong>? This action cannot be undone.
+      Are you sure you want to delete <strong>{client.name}</strong>? The client will be archived and can be restored by an administrator if needed.
     </p>
     <svelte:fragment slot="footer">
       <div class="flex justify-end gap-3">
@@ -372,6 +487,112 @@
         </Button>
         <Button variant="destructive" loading={deleting} on:click={handleDelete}>
           Delete Client
+        </Button>
+      </div>
+    </svelte:fragment>
+  </Modal>
+
+  <!-- Create Project Modal -->
+  <ProjectForm
+    bind:open={showCreateProjectModal}
+    defaultClientId={clientId}
+    on:success={handleProjectCreated}
+  />
+
+  <!-- Contact Modal -->
+  <Modal
+    bind:open={showContactModal}
+    title={editingContact ? 'Edit Contact' : 'Add Contact'}
+    size="md"
+  >
+    <div class="space-y-4">
+      <!-- Name Fields -->
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-1.5">
+          <label for="contactFirstName" class="text-sm font-medium">
+            First Name <span class="text-destructive">*</span>
+          </label>
+          <input
+            id="contactFirstName"
+            type="text"
+            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            bind:value={contactFirstName}
+            placeholder="John"
+          />
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="contactLastName" class="text-sm font-medium">
+            Last Name <span class="text-destructive">*</span>
+          </label>
+          <input
+            id="contactLastName"
+            type="text"
+            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            bind:value={contactLastName}
+            placeholder="Doe"
+          />
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="space-y-1.5">
+        <label for="contactTitle" class="text-sm font-medium">Job Title</label>
+        <input
+          id="contactTitle"
+          type="text"
+          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          bind:value={contactTitle}
+          placeholder="e.g., Project Manager"
+        />
+      </div>
+
+      <!-- Email and Phone -->
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-1.5">
+          <label for="contactEmail" class="text-sm font-medium">Email</label>
+          <input
+            id="contactEmail"
+            type="email"
+            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            bind:value={contactEmail}
+            placeholder="john.doe@example.com"
+          />
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="contactPhone" class="text-sm font-medium">Phone</label>
+          <input
+            id="contactPhone"
+            type="tel"
+            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            bind:value={contactPhone}
+            placeholder="+1 (555) 123-4567"
+          />
+        </div>
+      </div>
+
+      <!-- Primary Contact Checkbox -->
+      <div class="flex items-center gap-2">
+        <input
+          id="contactIsPrimary"
+          type="checkbox"
+          class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-ring"
+          bind:checked={contactIsPrimary}
+        />
+        <label for="contactIsPrimary" class="text-sm font-medium">
+          Set as primary contact
+        </label>
+      </div>
+    </div>
+
+    <svelte:fragment slot="footer">
+      <div class="flex justify-end gap-3">
+        <Button variant="outline" on:click={() => (showContactModal = false)}>
+          Cancel
+        </Button>
+        <Button loading={savingContact} on:click={saveContact}>
+          {editingContact ? 'Save Changes' : 'Add Contact'}
         </Button>
       </div>
     </svelte:fragment>

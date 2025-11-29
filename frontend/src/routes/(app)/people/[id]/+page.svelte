@@ -27,6 +27,10 @@
     Plane,
     Check,
     X,
+    Users,
+    UserPlus,
+    Trash2,
+    Plus,
   } from 'lucide-svelte';
   import { toast } from 'svelte-sonner';
   import UserForm from '../UserForm.svelte';
@@ -50,6 +54,31 @@
   let error = '';
 
   let showEditModal = false;
+  let showAssignTeamModal = false;
+  let showAssignProjectModal = false;
+  let showEditProjectModal = false;
+  let showDeleteModal = false;
+
+  // Team assignment form
+  let availableTeams: any[] = [];
+  let loadingTeams = false;
+  let selectedTeamId = '';
+  let selectedTeamRole: 'LEAD' | 'SENIOR' | 'MEMBER' = 'MEMBER';
+  let assigningTeam = false;
+
+  // Project assignment form
+  let availableProjects: any[] = [];
+  let loadingProjects = false;
+  let selectedProjectId = '';
+  let projectRole = '';
+  let projectHours = 40;
+  let projectStartDate = '';
+  let projectEndDate = '';
+  let assigningProject = false;
+
+  // Edit project assignment
+  let editingAssignment: any = null;
+  let updatingProject = false;
 
   // Availability and time-off
   let availability: any = null;
@@ -219,6 +248,186 @@
     }
   }
 
+  // Team membership management
+  async function loadAvailableTeams() {
+    loadingTeams = true;
+    try {
+      const response = await api.teams.list({ limit: 100 });
+      availableTeams = response.data || [];
+    } catch (err) {
+      toast.error('Failed to load teams');
+    } finally {
+      loadingTeams = false;
+    }
+  }
+
+  async function assignToTeam() {
+    if (!userId || !selectedTeamId) return;
+
+    assigningTeam = true;
+    try {
+      await api.users.addToTeam(userId, selectedTeamId, selectedTeamRole);
+      toast.success('Assigned to team successfully');
+      showAssignTeamModal = false;
+      selectedTeamId = '';
+      selectedTeamRole = 'MEMBER';
+      await loadUser();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to assign to team');
+    } finally {
+      assigningTeam = false;
+    }
+  }
+
+  async function removeFromTeam(teamId: string) {
+    if (!userId) return;
+
+    try {
+      await api.users.removeFromTeam(userId, teamId);
+      toast.success('Removed from team successfully');
+      await loadUser();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to remove from team');
+    }
+  }
+
+  // Project assignment management
+  async function loadAvailableProjects() {
+    loadingProjects = true;
+    try {
+      const response = await api.projects.list({ limit: 100, status: 'ACTIVE' });
+      availableProjects = response.data || [];
+    } catch (err) {
+      toast.error('Failed to load projects');
+    } finally {
+      loadingProjects = false;
+    }
+  }
+
+  async function assignToProject() {
+    if (!userId || !selectedProjectId || !projectRole || !projectStartDate) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    assigningProject = true;
+    try {
+      await api.users.assignToProject(userId, {
+        projectId: selectedProjectId,
+        role: projectRole,
+        allocatedHours: projectHours,
+        startDate: projectStartDate,
+        endDate: projectEndDate || undefined,
+      });
+      toast.success('Assigned to project successfully');
+      showAssignProjectModal = false;
+      selectedProjectId = '';
+      projectRole = '';
+      projectHours = 40;
+      projectStartDate = '';
+      projectEndDate = '';
+      await loadUser();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to assign to project');
+    } finally {
+      assigningProject = false;
+    }
+  }
+
+  function openEditProject(assignment: any) {
+    editingAssignment = assignment;
+    selectedProjectId = assignment.projectId;
+    projectRole = assignment.role;
+    projectHours = assignment.allocatedHours || 40;
+    projectStartDate = assignment.startDate ? new Date(assignment.startDate).toISOString().split('T')[0] : '';
+    projectEndDate = assignment.endDate ? new Date(assignment.endDate).toISOString().split('T')[0] : '';
+    showEditProjectModal = true;
+  }
+
+  async function updateProjectAssignment() {
+    if (!userId || !editingAssignment || !projectRole || !projectStartDate) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    updatingProject = true;
+    try {
+      // Remove old assignment
+      await api.users.removeFromProject(userId, editingAssignment.projectId);
+      // Add new assignment with updated data
+      await api.users.assignToProject(userId, {
+        projectId: selectedProjectId,
+        role: projectRole,
+        allocatedHours: projectHours,
+        startDate: projectStartDate,
+        endDate: projectEndDate || undefined,
+      });
+      toast.success('Project assignment updated successfully');
+      showEditProjectModal = false;
+      editingAssignment = null;
+      selectedProjectId = '';
+      projectRole = '';
+      projectHours = 40;
+      projectStartDate = '';
+      projectEndDate = '';
+      await loadUser();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to update project assignment');
+    } finally {
+      updatingProject = false;
+    }
+  }
+
+  async function removeFromProject(projectId: string) {
+    if (!userId) return;
+
+    try {
+      await api.users.removeFromProject(userId, projectId);
+      toast.success('Removed from project successfully');
+      await loadUser();
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to remove from project');
+    }
+  }
+
+  function calculateDuration(startDate: string, endDate?: string | null): string {
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : new Date();
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(diffDays / 7);
+
+    if (endDate) {
+      return `${weeks} weeks`;
+    } else {
+      return `${weeks} weeks (ongoing)`;
+    }
+  }
+
+  // User deletion
+  async function deleteUser() {
+    if (!userId) return;
+
+    try {
+      await api.users.delete(userId);
+      toast.success('User deleted successfully');
+      showDeleteModal = false;
+      window.location.href = '/people';
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Failed to delete user');
+    }
+  }
+
+  // Load teams when modal opens
+  $: if (showAssignTeamModal && browser) {
+    loadAvailableTeams();
+  }
+
+  // Load projects when modal opens
+  $: if ((showAssignProjectModal || showEditProjectModal) && browser) {
+    loadAvailableProjects();
+  }
+
   // Load when userId becomes available
   $: if (userId && browser) {
     loadUser();
@@ -280,6 +489,11 @@
               <Badge variant={user.status === 'ACTIVE' ? 'success' : 'default'}>
                 {user.status === 'ACTIVE' ? 'Active' : 'Inactive'}
               </Badge>
+              {#if user.deletedAt}
+                <Badge variant="destructive">
+                  Deleted
+                </Badge>
+              {/if}
             </div>
           </div>
         </div>
@@ -288,6 +502,10 @@
         <Button variant="outline" on:click={() => (showEditModal = true)}>
           <Edit class="h-4 w-4" />
           Edit Profile
+        </Button>
+        <Button variant="destructive" on:click={() => (showDeleteModal = true)}>
+          <Trash2 class="h-4 w-4" />
+          Delete User
         </Button>
       </div>
     </div>
@@ -460,14 +678,76 @@
     <div class="grid gap-6 lg:grid-cols-3">
       <!-- Main Content -->
       <div class="space-y-6 lg:col-span-2">
+        <!-- Team Memberships -->
+        <Card>
+          <div class="border-b px-6 py-4">
+            <div class="flex items-center justify-between">
+              <h2 class="font-semibold">Team Memberships</h2>
+              <Button size="sm" on:click={() => (showAssignTeamModal = true)}>
+                <UserPlus class="h-4 w-4 mr-1" />
+                Assign to Team
+              </Button>
+            </div>
+          </div>
+          {#if !user?.teamMemberships || user.teamMemberships.length === 0}
+            <div class="p-6 text-center text-muted-foreground">
+              Not a member of any teams
+            </div>
+          {:else}
+            <div class="divide-y">
+              {#each user.teamMemberships as membership}
+                <div class="flex items-center justify-between px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Users class="h-5 w-5" />
+                    </div>
+                    <div>
+                      <a
+                        href="/teams/{membership.team.id}"
+                        class="font-medium hover:text-primary"
+                      >
+                        {membership.team.name}
+                      </a>
+                      {#if membership.team.description}
+                        <p class="text-sm text-muted-foreground">{membership.team.description}</p>
+                      {/if}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="text-right">
+                      <Badge variant="default">{membership.role}</Badge>
+                      <p class="text-xs text-muted-foreground mt-1">
+                        Joined {formatDate(membership.joinedAt)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      on:click={() => removeFromTeam(membership.team.id)}
+                    >
+                      <X class="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </Card>
+
         <!-- Project Assignments -->
         <Card>
           <div class="border-b px-6 py-4">
             <div class="flex items-center justify-between">
-              <h2 class="font-semibold">Project Assignments</h2>
-              <span class="text-sm text-muted-foreground">
-                Total: {totalAllocation}h/week
-              </span>
+              <div>
+                <h2 class="font-semibold">Project Assignments</h2>
+                <span class="text-xs text-muted-foreground">
+                  Total: {totalAllocation}h/week
+                </span>
+              </div>
+              <Button size="sm" on:click={() => (showAssignProjectModal = true)}>
+                <Plus class="h-4 w-4 mr-1" />
+                Assign to Project
+              </Button>
             </div>
           </div>
           {#if !allocations || allocations.length === 0}
@@ -482,7 +762,7 @@
                     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <FolderKanban class="h-5 w-5" />
                     </div>
-                    <div>
+                    <div class="flex-1">
                       <a
                         href="/projects/{assignment.project?.id || assignment.projectId}"
                         class="font-medium hover:text-primary"
@@ -490,11 +770,48 @@
                         {assignment.project?.name || 'Unknown Project'}
                       </a>
                       <p class="text-sm text-muted-foreground">{assignment.role}</p>
+                      <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {#if assignment.startDate}
+                          <span class="flex items-center gap-1">
+                            <Calendar class="h-3 w-3" />
+                            {formatDate(assignment.startDate)}
+                            {#if assignment.endDate}
+                              → {formatDate(assignment.endDate)}
+                            {:else}
+                              → ongoing
+                            {/if}
+                          </span>
+                        {/if}
+                        {#if assignment.startDate}
+                          <span class="flex items-center gap-1">
+                            <Clock class="h-3 w-3" />
+                            {calculateDuration(assignment.startDate, assignment.endDate)}
+                          </span>
+                        {/if}
+                      </div>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <p class="font-semibold">{assignment.allocatedHours}h/wk</p>
-                    <p class="text-sm text-muted-foreground">{assignment.status}</p>
+                  <div class="flex items-center gap-3">
+                    <div class="text-right">
+                      <p class="font-semibold">{assignment.allocatedHours}h/wk</p>
+                      <Badge variant="default" class="text-xs">{assignment.status}</Badge>
+                    </div>
+                    <div class="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        on:click={() => openEditProject(assignment)}
+                      >
+                        <Edit class="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        on:click={() => removeFromProject(assignment.project?.id || assignment.projectId, assignment.project?.name || 'this project')}
+                      >
+                        <X class="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               {/each}
@@ -883,6 +1200,308 @@
       >
         <X class="mr-2 h-4 w-4" />
         Reject Request
+      </Button>
+    </div>
+  </Modal>
+
+  <!-- Assign to Team Modal -->
+  <Modal bind:open={showAssignTeamModal} title="Assign to Team" size="md">
+    <div class="space-y-4">
+      {#if loadingTeams}
+        <div class="py-8 text-center">
+          <Spinner />
+        </div>
+      {:else}
+        <div>
+          <label for="team-select" class="mb-2 block text-sm font-medium">
+            Team <span class="text-destructive">*</span>
+          </label>
+          <select
+            id="team-select"
+            bind:value={selectedTeamId}
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
+          >
+            <option value="">Select a team...</option>
+            {#each availableTeams as team}
+              <option value={team.id}>{team.name}</option>
+            {/each}
+          </select>
+        </div>
+
+        <div>
+          <label for="team-role" class="mb-2 block text-sm font-medium">
+            Role <span class="text-destructive">*</span>
+          </label>
+          <select
+            id="team-role"
+            bind:value={selectedTeamRole}
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
+          >
+            <option value="MEMBER">Member</option>
+            <option value="SENIOR">Senior</option>
+            <option value="LEAD">Lead</option>
+          </select>
+        </div>
+      {/if}
+    </div>
+
+    <div slot="footer" class="flex justify-end gap-2">
+      <Button variant="outline" on:click={() => (showAssignTeamModal = false)}>
+        Cancel
+      </Button>
+      <Button
+        variant="default"
+        on:click={assignToTeam}
+        loading={assigningTeam}
+        disabled={!selectedTeamId || loadingTeams}
+      >
+        <UserPlus class="mr-2 h-4 w-4" />
+        Assign to Team
+      </Button>
+    </div>
+  </Modal>
+
+  <!-- Assign to Project Modal -->
+  <Modal bind:open={showAssignProjectModal} title="Assign to Project" size="lg">
+    <div class="space-y-4">
+      {#if loadingProjects}
+        <div class="py-8 text-center">
+          <Spinner />
+        </div>
+      {:else}
+        <div>
+          <label for="project-select" class="mb-2 block text-sm font-medium">
+            Project <span class="text-destructive">*</span>
+          </label>
+          <select
+            id="project-select"
+            bind:value={selectedProjectId}
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
+          >
+            <option value="">Select a project...</option>
+            {#each availableProjects as project}
+              <option value={project.id}>{project.name} ({project.code})</option>
+            {/each}
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="project-role" class="mb-2 block text-sm font-medium">
+              Role <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="project-role"
+              type="text"
+              bind:value={projectRole}
+              placeholder="e.g., Developer, Designer, PM"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="project-hours" class="mb-2 block text-sm font-medium">
+              Hours per Week <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="project-hours"
+              type="number"
+              bind:value={projectHours}
+              min="0"
+              max="168"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="project-start" class="mb-2 block text-sm font-medium">
+              Start Date <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="project-start"
+              type="date"
+              bind:value={projectStartDate}
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="project-end" class="mb-2 block text-sm font-medium">
+              End Date (Optional)
+            </label>
+            <input
+              id="project-end"
+              type="date"
+              bind:value={projectEndDate}
+              min={projectStartDate}
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <div slot="footer" class="flex justify-end gap-2">
+      <Button variant="outline" on:click={() => (showAssignProjectModal = false)}>
+        Cancel
+      </Button>
+      <Button
+        variant="default"
+        on:click={assignToProject}
+        loading={assigningProject}
+        disabled={!selectedProjectId || !projectRole || !projectStartDate || loadingProjects}
+      >
+        <Plus class="mr-2 h-4 w-4" />
+        Assign to Project
+      </Button>
+    </div>
+  </Modal>
+
+  <!-- Edit Project Assignment Modal -->
+  <Modal bind:open={showEditProjectModal} title="Edit Project Assignment" size="lg">
+    <div class="space-y-4">
+      {#if loadingProjects}
+        <div class="py-8 text-center">
+          <Spinner />
+        </div>
+      {:else}
+        <div>
+          <label for="edit-project-select" class="mb-2 block text-sm font-medium">
+            Project <span class="text-destructive">*</span>
+          </label>
+          <select
+            id="edit-project-select"
+            bind:value={selectedProjectId}
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
+          >
+            <option value="">Select a project...</option>
+            {#each availableProjects as project}
+              <option value={project.id}>{project.name} ({project.code})</option>
+            {/each}
+          </select>
+          <p class="mt-1 text-xs text-muted-foreground">
+            Changing the project will create a new assignment
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="edit-project-role" class="mb-2 block text-sm font-medium">
+              Role <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="edit-project-role"
+              type="text"
+              bind:value={projectRole}
+              placeholder="e.g., Developer, Designer, PM"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="edit-project-hours" class="mb-2 block text-sm font-medium">
+              Hours per Week <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="edit-project-hours"
+              type="number"
+              bind:value={projectHours}
+              min="0"
+              max="168"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="edit-project-start" class="mb-2 block text-sm font-medium">
+              Start Date <span class="text-destructive">*</span>
+            </label>
+            <input
+              id="edit-project-start"
+              type="date"
+              bind:value={projectStartDate}
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="edit-project-end" class="mb-2 block text-sm font-medium">
+              End Date (Optional)
+            </label>
+            <input
+              id="edit-project-end"
+              type="date"
+              bind:value={projectEndDate}
+              min={projectStartDate}
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <div slot="footer" class="flex justify-end gap-2">
+      <Button variant="outline" on:click={() => {
+        showEditProjectModal = false;
+        editingAssignment = null;
+      }}>
+        Cancel
+      </Button>
+      <Button
+        variant="default"
+        on:click={updateProjectAssignment}
+        loading={updatingProject}
+        disabled={!selectedProjectId || !projectRole || !projectStartDate || loadingProjects}
+      >
+        <Edit class="mr-2 h-4 w-4" />
+        Update Assignment
+      </Button>
+    </div>
+  </Modal>
+
+  <!-- Delete User Confirmation Modal -->
+  <Modal bind:open={showDeleteModal} title="Delete User" size="md">
+    <div class="space-y-4">
+      <div class="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+        <div class="flex gap-3">
+          <AlertCircle class="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+          <div>
+            <p class="font-medium text-destructive">Warning: This action will soft-delete the user</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+              The user will be marked as deleted and hidden from most views. Admin users can restore deleted users if needed.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {#if user}
+        <p class="text-sm">
+          Are you sure you want to delete <span class="font-semibold">{fullName(user.firstName, user.lastName)}</span>?
+        </p>
+      {/if}
+    </div>
+
+    <div slot="footer" class="flex justify-end gap-2">
+      <Button variant="outline" on:click={() => (showDeleteModal = false)}>
+        Cancel
+      </Button>
+      <Button variant="destructive" on:click={deleteUser}>
+        <Trash2 class="mr-2 h-4 w-4" />
+        Delete User
       </Button>
     </div>
   </Modal>

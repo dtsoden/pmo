@@ -161,7 +161,9 @@ export async function listProjects(params: ListProjectsParams = {}) {
   const { page = 1, limit = 20, status, priority, clientId, managerId, search } = params;
   const skip = (page - 1) * limit;
 
-  const where: Prisma.ProjectWhereInput = {};
+  const where: Prisma.ProjectWhereInput = {
+    deletedAt: null, // Exclude soft-deleted projects
+  };
 
   if (status) where.status = status;
   if (priority) where.priority = priority;
@@ -216,8 +218,11 @@ export async function listProjects(params: ListProjectsParams = {}) {
 }
 
 export async function getProjectById(id: string) {
-  const project = await db.project.findUnique({
-    where: { id },
+  const project = await db.project.findFirst({
+    where: {
+      id,
+      deletedAt: null, // Exclude soft-deleted projects
+    },
     select: projectDetailSelect,
   });
 
@@ -314,15 +319,39 @@ export async function updateProject(id: string, data: UpdateProjectData) {
 }
 
 export async function deleteProject(id: string) {
-  const project = await db.project.findUnique({ where: { id } });
+  const project = await db.project.findFirst({
+    where: { id, deletedAt: null },
+  });
   if (!project) {
     throw new Error('Project not found');
   }
 
-  // Cascade delete handled by Prisma schema
-  await db.project.delete({ where: { id } });
+  // Soft delete by setting deletedAt timestamp
+  await db.project.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
 
-  logger.info(`Project deleted: ${project.name} (${project.code})`);
+  logger.info(`Project soft deleted: ${project.name} (${project.code})`);
+
+  return { success: true };
+}
+
+export async function restoreProject(id: string) {
+  const project = await db.project.findFirst({
+    where: { id, deletedAt: { not: null } },
+  });
+  if (!project) {
+    throw new Error('Deleted project not found');
+  }
+
+  // Restore by clearing deletedAt timestamp
+  await db.project.update({
+    where: { id },
+    data: { deletedAt: null },
+  });
+
+  logger.info(`Project restored: ${project.name} (${project.code})`);
 
   return { success: true };
 }
@@ -563,6 +592,7 @@ export interface CreateTaskData {
   status?: TaskStatus;
   priority?: TaskPriority;
   phaseId?: string;
+  milestoneId?: string;
   parentTaskId?: string;
   estimatedHours?: number;
   startDate?: Date;
@@ -579,7 +609,10 @@ export async function getProjectTasks(projectId: string, params: ListTasksParams
     throw new Error('Project not found');
   }
 
-  const where: Prisma.TaskWhereInput = { projectId };
+  const where: Prisma.TaskWhereInput = {
+    projectId,
+    deletedAt: null, // Exclude soft-deleted tasks
+  };
 
   if (status) where.status = status;
   if (priority) where.priority = priority;
@@ -622,8 +655,11 @@ export async function getProjectTasks(projectId: string, params: ListTasksParams
 }
 
 export async function getTaskById(taskId: string) {
-  const task = await db.task.findUnique({
-    where: { id: taskId },
+  const task = await db.task.findFirst({
+    where: {
+      id: taskId,
+      deletedAt: null, // Exclude soft-deleted tasks
+    },
     select: {
       ...taskListSelect,
       phase: {
@@ -633,6 +669,7 @@ export async function getTaskById(taskId: string) {
         select: { id: true, title: true },
       },
       subtasks: {
+        where: { deletedAt: null }, // Exclude soft-deleted subtasks
         select: taskListSelect,
         orderBy: { createdAt: 'asc' },
       },
@@ -678,6 +715,14 @@ export async function createTask(projectId: string, data: CreateTaskData) {
     }
   }
 
+  // Validate milestone if provided
+  if (data.milestoneId) {
+    const milestone = await db.milestone.findUnique({ where: { id: data.milestoneId } });
+    if (!milestone || milestone.projectId !== projectId) {
+      throw new Error('Milestone not found or does not belong to this project');
+    }
+  }
+
   // Validate parent task if provided
   if (data.parentTaskId) {
     const parentTask = await db.task.findUnique({ where: { id: data.parentTaskId } });
@@ -694,6 +739,7 @@ export async function createTask(projectId: string, data: CreateTaskData) {
       status: data.status || TaskStatus.TODO,
       priority: data.priority || TaskPriority.MEDIUM,
       phaseId: data.phaseId,
+      milestoneId: data.milestoneId,
       parentTaskId: data.parentTaskId,
       estimatedHours: data.estimatedHours,
       startDate: data.startDate,
@@ -735,14 +781,39 @@ export async function updateTask(taskId: string, data: Partial<CreateTaskData> &
 }
 
 export async function deleteTask(taskId: string) {
-  const task = await db.task.findUnique({ where: { id: taskId } });
+  const task = await db.task.findFirst({
+    where: { id: taskId, deletedAt: null },
+  });
   if (!task) {
     throw new Error('Task not found');
   }
 
-  await db.task.delete({ where: { id: taskId } });
+  // Soft delete by setting deletedAt timestamp
+  await db.task.update({
+    where: { id: taskId },
+    data: { deletedAt: new Date() },
+  });
 
-  logger.info(`Task deleted: ${task.title} (${taskId})`);
+  logger.info(`Task soft deleted: ${task.title} (${taskId})`);
+
+  return { success: true };
+}
+
+export async function restoreTask(taskId: string) {
+  const task = await db.task.findFirst({
+    where: { id: taskId, deletedAt: { not: null } },
+  });
+  if (!task) {
+    throw new Error('Deleted task not found');
+  }
+
+  // Restore by clearing deletedAt timestamp
+  await db.task.update({
+    where: { id: taskId },
+    data: { deletedAt: null },
+  });
+
+  logger.info(`Task restored: ${task.title} (${taskId})`);
 
   return { success: true };
 }
@@ -782,6 +853,154 @@ export async function removeTaskDependency(dependencyId: string) {
   }
 
   await db.taskDependency.delete({ where: { id: dependencyId } });
+
+  return { success: true };
+}
+
+// ============================================
+// TEAM ASSIGNMENTS TO PROJECTS
+// ============================================
+
+export async function assignTeamToProject(
+  projectId: string,
+  data: {
+    teamId: string;
+    allocatedHours: number;
+    startDate: Date;
+    endDate?: Date;
+  }
+) {
+  // Verify project exists and not deleted
+  const project = await db.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+  });
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  // Import and call teams service
+  const { assignTeamToProject: assignTeam } = await import('../teams/teams.service.js');
+  return assignTeam({
+    teamId: data.teamId,
+    projectId,
+    allocatedHours: data.allocatedHours,
+    startDate: data.startDate,
+    endDate: data.endDate,
+  });
+}
+
+export async function removeTeamFromProject(projectId: string, assignmentId: string) {
+  // Verify project exists
+  const project = await db.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+  });
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  // Import and call teams service
+  const { removeTeamFromProject: removeTeam } = await import('../teams/teams.service.js');
+  return removeTeam(assignmentId);
+}
+
+// ============================================
+// PEOPLE ASSIGNMENTS TO PROJECTS
+// ============================================
+
+export async function assignPersonToProject(
+  projectId: string,
+  data: {
+    userId: string;
+    role: string;
+    allocatedHours: number;
+    startDate: Date;
+    endDate?: Date;
+  }
+) {
+  // Verify project exists and not deleted
+  const project = await db.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+  });
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  // Verify user exists and not deleted
+  const user = await db.user.findFirst({
+    where: { id: data.userId, deletedAt: null },
+  });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Check if already assigned
+  const existing = await db.projectAssignment.findUnique({
+    where: {
+      projectId_userId: {
+        projectId,
+        userId: data.userId,
+      },
+    },
+  });
+
+  if (existing) {
+    throw new Error('User is already assigned to this project');
+  }
+
+  const assignment = await db.projectAssignment.create({
+    data: {
+      userId: data.userId,
+      projectId,
+      role: data.role,
+      allocatedHours: data.allocatedHours,
+      startDate: data.startDate,
+      endDate: data.endDate,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+
+  logger.info(`User ${user.email} assigned to project ${project.name}`);
+
+  return assignment;
+}
+
+export async function removePersonFromProject(projectId: string, userId: string) {
+  // Verify project exists
+  const project = await db.project.findFirst({
+    where: { id: projectId, deletedAt: null },
+  });
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  const assignment = await db.projectAssignment.findUnique({
+    where: {
+      projectId_userId: {
+        projectId,
+        userId,
+      },
+    },
+  });
+
+  if (!assignment) {
+    throw new Error('User is not assigned to this project');
+  }
+
+  await db.projectAssignment.delete({
+    where: { id: assignment.id },
+  });
+
+  logger.info(`User removed from project ${project.name}`);
 
   return { success: true };
 }

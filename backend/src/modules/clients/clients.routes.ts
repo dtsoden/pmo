@@ -7,6 +7,7 @@ import {
   createClient,
   updateClient,
   deleteClient,
+  restoreClient,
   listContacts,
   addContact,
   updateContact,
@@ -175,7 +176,7 @@ export async function clientRoutes(app: FastifyInstance) {
     }
   });
 
-  // Delete client
+  // Delete (soft delete) client
   app.delete('/:id', async (request, reply) => {
     try {
       const { id } = idParamSchema.parse(request.params);
@@ -189,6 +190,20 @@ export async function clientRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: error.message });
       }
       return reply.code(500).send({ error: error.message || 'Failed to delete client' });
+    }
+  });
+
+  // Restore soft-deleted client
+  app.post('/:id/restore', async (request, reply) => {
+    try {
+      const { id } = idParamSchema.parse(request.params);
+      await restoreClient(id);
+      return { success: true };
+    } catch (error: any) {
+      if (error.message === 'Deleted client not found') {
+        return reply.code(404).send({ error: 'Deleted client not found' });
+      }
+      return reply.code(500).send({ error: error.message || 'Failed to restore client' });
     }
   });
 

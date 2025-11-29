@@ -21,6 +21,7 @@
     UserCog,
     ListOrdered,
     CalendarCheck,
+    Trash2,
   } from 'lucide-svelte';
 
   export let collapsed = false;
@@ -48,6 +49,7 @@
     { href: '/admin/users', label: 'User Management', icon: UserCog },
     { href: '/capacity/time-off', label: 'Leave Requests', icon: CalendarCheck, minRole: 'RESOURCE_MANAGER' },
     { href: '/admin/dropdowns', label: 'Dropdown Lists', icon: ListOrdered },
+    { href: '/admin/deleted-items', label: 'Deleted Items', icon: Trash2 },
     { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
     { href: '/admin/sessions', label: 'Sessions', icon: MonitorDot },
     { href: '/admin/settings', label: 'Platform Settings', icon: Sliders },

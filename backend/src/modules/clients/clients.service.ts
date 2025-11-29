@@ -149,7 +149,9 @@ export async function listClients(params: ListClientsParams = {}) {
   const { page = 1, limit = 20, status, search, industry } = params;
   const skip = (page - 1) * limit;
 
-  const where: Prisma.ClientWhereInput = {};
+  const where: Prisma.ClientWhereInput = {
+    deletedAt: null, // Exclude soft-deleted clients
+  };
 
   if (status) {
     where.status = status;
@@ -190,8 +192,11 @@ export async function listClients(params: ListClientsParams = {}) {
 }
 
 export async function getClientById(id: string) {
-  const client = await db.client.findUnique({
-    where: { id },
+  const client = await db.client.findFirst({
+    where: {
+      id,
+      deletedAt: null, // Exclude soft-deleted clients
+    },
     select: clientDetailSelect,
   });
 
@@ -264,22 +269,41 @@ export async function updateClient(id: string, data: UpdateClientData) {
 }
 
 export async function deleteClient(id: string) {
-  const client = await db.client.findUnique({
-    where: { id },
-    include: { _count: { select: { projects: true } } },
+  const client = await db.client.findFirst({
+    where: { id, deletedAt: null },
   });
 
   if (!client) {
     throw new Error('Client not found');
   }
 
-  if (client._count.projects > 0) {
-    throw new Error('Cannot delete client with associated projects');
+  // Soft delete by setting deletedAt timestamp
+  await db.client.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+
+  logger.info(`Client soft deleted: ${client.name} (${client.id})`);
+
+  return { success: true };
+}
+
+export async function restoreClient(id: string) {
+  const client = await db.client.findFirst({
+    where: { id, deletedAt: { not: null } },
+  });
+
+  if (!client) {
+    throw new Error('Deleted client not found');
   }
 
-  await db.client.delete({ where: { id } });
+  // Restore by clearing deletedAt timestamp
+  await db.client.update({
+    where: { id },
+    data: { deletedAt: null },
+  });
 
-  logger.info(`Client deleted: ${client.name} (${client.id})`);
+  logger.info(`Client restored: ${client.name} (${client.id})`);
 
   return { success: true };
 }
