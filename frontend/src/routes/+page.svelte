@@ -127,7 +127,7 @@
     </section>
 
     <!-- Problem Statement -->
-    <section class="border-b bg-muted/30">
+    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto max-w-4xl text-center">
           <h2 class="mb-6 text-3xl font-bold sm:text-4xl">The Enterprise Budget Paradox</h2>
@@ -229,7 +229,7 @@
     </section>
 
     <!-- Core Features -->
-    <section class="border-b bg-muted/30">
+    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto mb-16 max-w-3xl text-center">
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Everything You Need, Integrated</h2>
@@ -485,7 +485,7 @@
     </section>
 
     <!-- Industries -->
-    <section class="border-b bg-muted/30">
+    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto mb-12 max-w-3xl text-center">
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Built for Professional Services</h2>
@@ -628,7 +628,7 @@
     </section>
 
     <!-- Final CTA -->
-    <section class="bg-muted/30">
+    <section class="bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto max-w-3xl text-center">
           <h2 class="mb-6 text-3xl font-bold sm:text-4xl">
