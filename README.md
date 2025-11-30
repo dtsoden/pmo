@@ -1,3 +1,4 @@
+![](https://raw.githubusercontent.com/dtsoden/pmo/main/frontend/static/ReverseLogo.png)
 # PMO Platform
 
 A comprehensive PMO tracking platform with project management, capacity planning, and real-time time tracking. Built as a modular monolith with Node.js/TypeScript backend and SvelteKit frontend, deployed to Azure Container Apps.
