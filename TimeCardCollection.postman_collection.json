@@ -1,0 +1,70 @@
+{
+	"info": {
+		"_postman_id": "2b754f81-f6b8-40d0-a7c9-be0b0924bfeb",
+		"name": "TimeCardCollection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12832049",
+		"_collection_link": "https://david-soden.postman.co/workspace/PMO-Platform~297c6ae4-7e26-452a-80e5-76cce4965c86/collection/12832049-2b754f81-f6b8-40d0-a7c9-be0b0924bfeb?action=share&source=collection_link&creator=12832049"
+	},
+	"item": [
+		{
+			"name": "getTimecards",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{api-key}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "https://pmoplatform.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31",
+			"type": "default"
+		},
+		{
+			"key": "api-key",
+			"value": "pmo_live_9dcc5897be0e706ee4455e4902be0983d787ffc8",
+			"type": "default"
+		}
+	]
+}

@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api/client';
   import { Card, Button, Spinner } from '$components/shared';
-  import { toast } from 'svelte-sonner';
   import { Key, Copy, RotateCw, Trash2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-svelte';
 
   // SvelteKit props
@@ -49,19 +48,19 @@
 
   async function createKey() {
     if (!description.trim()) {
-      toast.error('Please provide a description for the API key');
+      error = 'Please provide a description for the API key';
       return;
     }
 
     try {
+      error = '';
       const result = await api.admin.timecard.createApiKey(description.trim());
       generatedKey = result.apiKey;
       showGeneratedKey = true;
       apiKey = result.keyData;
       description = '';
-      toast.success('API key created successfully');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create API key');
+      error = err.message || 'Failed to create API key';
     }
   }
 
@@ -71,13 +70,13 @@
     }
 
     try {
+      error = '';
       const result = await api.admin.timecard.regenerateApiKey();
       generatedKey = result.apiKey;
       showGeneratedKey = true;
       apiKey = result.keyData;
-      toast.success('API key regenerated successfully');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to regenerate API key');
+      error = err.message || 'Failed to regenerate API key';
     }
   }
 
@@ -87,19 +86,23 @@
     }
 
     try {
+      error = '';
       await api.admin.timecard.revokeApiKey();
       apiKey = null;
       generatedKey = null;
-      toast.success('API key revoked successfully');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to revoke API key');
+      error = err.message || 'Failed to revoke API key';
     }
   }
 
-  function copyToClipboard() {
+  async function copyToClipboard() {
     if (generatedKey) {
-      navigator.clipboard.writeText(generatedKey);
-      toast.success('API key copied to clipboard');
+      try {
+        await navigator.clipboard.writeText(generatedKey);
+        // Visual feedback via button state change could be added here if needed
+      } catch (err) {
+        error = 'Failed to copy to clipboard';
+      }
     }
   }
 
