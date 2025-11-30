@@ -282,9 +282,15 @@
                 </li>
               </ul>
             </div>
-            <div class="rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/20 p-12 flex items-center justify-center">
-              <div class="text-center">
-                <Timer class="h-32 w-32 text-primary mx-auto mb-6" />
+            <div class="rounded-lg border-2 border-primary/20 overflow-hidden bg-muted">
+              <img
+                src="/screenshots/time-tracking.png"
+                alt="Chrome Extension Time Tracking"
+                class="w-full h-auto"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+              />
+              <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-primary/5 to-primary/20" style="aspect-ratio: 16/9">
+                <Timer class="h-32 w-32 text-primary mb-6" />
                 <p class="text-lg font-semibold mb-2">Chrome Extension Time Tracking</p>
                 <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
               </div>
@@ -296,9 +302,15 @@
         <div class="mb-16">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
-              <div class="rounded-lg border-2 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-purple-500/20 p-12 flex items-center justify-center">
-                <div class="text-center">
-                  <Sparkles class="h-32 w-32 text-purple-600 mx-auto mb-6" />
+              <div class="rounded-lg border-2 border-purple-500/20 overflow-hidden bg-muted">
+                <img
+                  src="/screenshots/task-shortcuts.png"
+                  alt="Automated Task Shortcuts"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-purple-500/5 to-purple-500/20" style="aspect-ratio: 16/9">
+                  <Sparkles class="h-32 w-32 text-purple-600 mb-6" />
                   <p class="text-lg font-semibold mb-2">Automated Task Creation</p>
                   <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
                 </div>
@@ -384,9 +396,15 @@
         <div class="mb-16">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
-              <div class="rounded-lg border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-green-500/20 p-12 flex items-center justify-center">
-                <div class="text-center">
-                  <CalendarClock class="h-32 w-32 text-green-600 mx-auto mb-6" />
+              <div class="rounded-lg border-2 border-green-500/20 overflow-hidden bg-muted">
+                <img
+                  src="/screenshots/capacity-planning.png"
+                  alt="Visual Capacity Planning"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-green-500/5 to-green-500/20" style="aspect-ratio: 16/9">
+                  <CalendarClock class="h-32 w-32 text-green-600 mb-6" />
                   <p class="text-lg font-semibold mb-2">Visual Capacity Planning</p>
                   <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
                 </div>
@@ -462,9 +480,15 @@
                 </li>
               </ul>
             </div>
-            <div class="rounded-lg border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/20 p-12 flex items-center justify-center">
-              <div class="text-center">
-                <FolderKanban class="h-32 w-32 text-orange-600 mx-auto mb-6" />
+            <div class="rounded-lg border-2 border-orange-500/20 overflow-hidden bg-muted">
+              <img
+                src="/screenshots/project-management.png"
+                alt="Complete Project Management"
+                class="w-full h-auto"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+              />
+              <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-orange-500/5 to-orange-500/20" style="aspect-ratio: 16/9">
+                <FolderKanban class="h-32 w-32 text-orange-600 mb-6" />
                 <p class="text-lg font-semibold mb-2">Project Management</p>
                 <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
               </div>
@@ -476,9 +500,15 @@
         <div>
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
-              <div class="rounded-lg border-2 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-indigo-500/20 p-12 flex items-center justify-center">
-                <div class="text-center">
-                  <Building2 class="h-32 w-32 text-indigo-600 mx-auto mb-6" />
+              <div class="rounded-lg border-2 border-indigo-500/20 overflow-hidden bg-muted">
+                <img
+                  src="/screenshots/client-management.png"
+                  alt="Client Management"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-indigo-500/5 to-indigo-500/20" style="aspect-ratio: 16/9">
+                  <Building2 class="h-32 w-32 text-indigo-600 mb-6" />
                   <p class="text-lg font-semibold mb-2">Client Management</p>
                   <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
                 </div>
