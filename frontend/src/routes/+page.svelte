@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { isAuthenticated, isInitialized } from '$lib/stores/auth';
   import { Button, Card, Spinner } from '$components/shared';
+  import ImageCarousel from '$lib/components/ImageCarousel.svelte';
   import {
     FolderKanban,
     Users,
@@ -28,7 +29,12 @@
     GitBranch,
     Github,
     Download,
-    AlertTriangle
+    AlertTriangle,
+    PlayCircle,
+    ChevronRight,
+    MousePointerClick,
+    BrainCircuit,
+    Sparkles
   } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -38,6 +44,15 @@
 
   let title = 'PMO Platform - Enterprise Project Management You Own';
   let year = new Date().getFullYear();
+
+  // Analytics carousel images
+  const analyticsImages = [
+    { src: '/screenshots/analytics-dashboard.png', alt: 'Executive Analytics Dashboard - Financial KPIs and Project Health' },
+    { src: '/screenshots/analytics-dashboard-2.png', alt: 'Burnout Risk Detection and Workload Redistribution' },
+    { src: '/screenshots/analytics-dashboard-3.png', alt: 'Skills Gap Analysis with Training Recommendations' },
+    { src: '/screenshots/analytics-dashboard-4.png', alt: 'Team Capacity Health and Utilization Metrics' },
+    { src: '/screenshots/analytics-dashboard-5.png', alt: 'Project Portfolio Overview and Department Performance' }
+  ];
 
   onMount(() => {
     const unsubscribe = isInitialized.subscribe((initialized) => {
@@ -54,7 +69,7 @@
   <title>{title}</title>
   <meta
     name="description"
-    content="Free, enterprise-grade PMO platform with project management, capacity planning, and time tracking. Own your platform. Own your data. No spreadsheets required."
+    content="Free, enterprise-grade PMO platform with real-time time tracking, Chrome extension, automated task shortcuts, capacity planning, and executive analytics. Own your platform. Own your data."
   />
 </svelte:head>
 
@@ -97,9 +112,9 @@
             <span class="text-primary">Enterprise PMO</span>
           </h1>
           <p class="mx-auto mb-4 max-w-3xl text-lg text-muted-foreground sm:text-xl">
-            A complete project management office platform built for large enterprises that need
-            professional solutions without the enterprise price tag. Manage projects, allocate
-            resources, track time, and deliver insights—all in one system you control.
+            A complete project management office platform with real-time time tracking, Chrome extension,
+            automated task creation, capacity planning, and executive analytics. Built for enterprises
+            that need professional solutions without the enterprise price tag.
           </p>
           <p class="mx-auto mb-10 max-w-2xl text-base text-muted-foreground">
             Free for in-house use. No vendor lock-in. No per-seat fees. Deploy it, customize it,
@@ -221,8 +236,293 @@
       </div>
     </section>
 
-    <!-- Value Proposition -->
+    <!-- Flagship Features -->
     <section class="border-b bg-background">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto mb-12 max-w-3xl text-center">
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Features That Set Us Apart</h2>
+          <p class="text-lg text-muted-foreground">
+            Not just another project tracker. PMO Platform delivers real innovation with features
+            that solve actual problems.
+          </p>
+        </div>
+
+        <!-- Feature 1: Real-Time Time Tracking with Chrome Extension -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div>
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                <Timer class="h-4 w-4" />
+                Time Tracking
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Real-Time Timer with Chrome Extension
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Track time from anywhere with our Chrome extension. Start a timer on a task, and it syncs
+                in real-time across all your devices via WebSocket. Switch from browser extension to web app
+                seamlessly—your timer never misses a beat. Billable vs non-billable tracking built-in.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Chrome extension</strong> for one-click timer start/stop from any tab</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Real-time WebSocket sync</strong> across all devices and users</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Billable hour tracking</strong> with daily/weekly/monthly reports</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Active timer badge</strong> shows elapsed time in extension icon</span>
+                </li>
+              </ul>
+            </div>
+            <div class="rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/20 p-12 flex items-center justify-center">
+              <div class="text-center">
+                <Timer class="h-32 w-32 text-primary mx-auto mb-6" />
+                <p class="text-lg font-semibold mb-2">Chrome Extension Time Tracking</p>
+                <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 2: Automated Task Shortcuts -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div class="order-2 lg:order-1">
+              <div class="rounded-lg border-2 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-purple-500/20 p-12 flex items-center justify-center">
+                <div class="text-center">
+                  <Sparkles class="h-32 w-32 text-purple-600 mx-auto mb-6" />
+                  <p class="text-lg font-semibold mb-2">Automated Task Creation</p>
+                  <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
+                </div>
+              </div>
+            </div>
+            <div class="order-1 lg:order-2">
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-purple-500/10 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400">
+                <BrainCircuit class="h-4 w-4" />
+                Smart Automation
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Automated Task Shortcuts for Assignments
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                When you get assigned to a task, the system automatically creates a timer shortcut for you
+                in the Chrome extension. No manual setup—just click the task from your shortcuts list and
+                start tracking time instantly. Smart bidirectional syncing keeps everything in perfect harmony.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Auto-created shortcuts</strong> when assigned to tasks—zero manual work</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Searchable dropdown</strong> in extension for quick task selection</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Bidirectional sync</strong> between web app and extension</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Custom shortcuts</strong> for frequently-tracked tasks</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 3: Executive Analytics Dashboard (with carousel) -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div>
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+                <TrendingUp class="h-4 w-4" />
+                Executive Analytics
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Actionable Intelligence, Not Just Dashboards
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Executive analytics with clickable alerts that show WHO can help, WHAT to do, and WHEN to hire.
+                Real-time financial KPIs, burnout risk detection, skills gap analysis, and workload redistribution
+                recommendations. This is McKinsey-level strategic workforce intelligence.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Clickable burnout alerts</strong> with redistribution recommendations</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Skills gap analysis</strong> matched to underutilized staff for training</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Financial impact calculations</strong> for unused capacity</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Hiring recommendations</strong> when &lt;3 people have critical skills</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <ImageCarousel images={analyticsImages} autoPlayInterval={3000} />
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 4: Visual Capacity Planning -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div class="order-2 lg:order-1">
+              <div class="rounded-lg border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-green-500/20 p-12 flex items-center justify-center">
+                <div class="text-center">
+                  <CalendarClock class="h-32 w-32 text-green-600 mx-auto mb-6" />
+                  <p class="text-lg font-semibold mb-2">Visual Capacity Planning</p>
+                  <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
+                </div>
+              </div>
+            </div>
+            <div class="order-1 lg:order-2">
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400">
+                <CalendarClock class="h-4 w-4" />
+                Resource Management
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Gradient Color-Coded Capacity Visualization
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Instantly see team capacity with gradient visualization: orange (critical), yellow (low),
+                blue (moderate), green (optimal), red (over-allocated). Filter by category, paginate through
+                large teams, and view summary metrics. Time-off approval workflows with regional compliance built-in.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Gradient color system</strong> with smooth RGB interpolation</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>One-click filters</strong> for Critical, Low, Moderate, Optimal, Over-allocated</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Time-off approval workflows</strong> with manager hierarchy</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Department-level analysis</strong> with summary metrics</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 5: Complete Project Management -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div>
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-orange-500/10 px-3 py-1 text-sm font-medium text-orange-600 dark:text-orange-400">
+                <FolderKanban class="h-4 w-4" />
+                Project Management
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Full Project Hierarchy with Dependencies
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Multi-phase projects with milestones, tasks, and dependencies. Budget tracking with variance
+                analysis. Task assignments at both project and task level. Status workflows, blockers, and
+                progress tracking. Everything you need to manage complex enterprise projects.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Project → Phase → Milestone → Task</strong> hierarchy</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Task dependencies</strong> to prevent blockers and conflicts</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Budget hours and cost tracking</strong> with variance analysis</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Multi-level assignments</strong> at project and task levels</span>
+                </li>
+              </ul>
+            </div>
+            <div class="rounded-lg border-2 border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/20 p-12 flex items-center justify-center">
+              <div class="text-center">
+                <FolderKanban class="h-32 w-32 text-orange-600 mx-auto mb-6" />
+                <p class="text-lg font-semibold mb-2">Project Management</p>
+                <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 6: Client Management -->
+        <div>
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div class="order-2 lg:order-1">
+              <div class="rounded-lg border-2 border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-indigo-500/20 p-12 flex items-center justify-center">
+                <div class="text-center">
+                  <Building2 class="h-32 w-32 text-indigo-600 mx-auto mb-6" />
+                  <p class="text-lg font-semibold mb-2">Client Management</p>
+                  <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
+                </div>
+              </div>
+            </div>
+            <div class="order-1 lg:order-2">
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                <Building2 class="h-4 w-4" />
+                CRM Integration
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Client & Opportunity Pipeline Tracking
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Manage clients, contacts, and sales opportunities from prospect to delivery. Salesforce
+                integration placeholders ready for live sync. Track opportunity pipeline, client health,
+                and project assignments all in one place. Perfect for professional services firms.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Full client and contact management</strong> with notes and history</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Opportunity pipeline</strong> with stage and probability tracking</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Salesforce sync placeholders</strong> ready for API integration</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Client → Project linkage</strong> for complete visibility</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Value Proposition -->
+    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto max-w-4xl text-center">
           <h2 class="mb-6 text-3xl font-bold sm:text-4xl">
@@ -286,224 +586,8 @@
       </div>
     </section>
 
-    <!-- Advanced Features Showcase -->
+    <!-- Core Features Grid -->
     <section class="border-b bg-background">
-      <div class="container mx-auto px-4 py-16 sm:py-24">
-        <div class="mx-auto mb-12 max-w-3xl text-center">
-          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Advanced Features That Set Us Apart</h2>
-          <p class="text-lg text-muted-foreground">
-            Not just another project tracker. PMO Platform delivers McKinsey-level insights with actionable intelligence for strategic workforce planning.
-          </p>
-        </div>
-
-        <!-- Feature 1: Executive Analytics Dashboard -->
-        <div class="mb-16">
-          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-            <div class="order-2 lg:order-1">
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                <TrendingUp class="h-4 w-4" />
-                Executive Analytics
-              </div>
-              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-                Real-Time Financial & Capacity Intelligence
-              </h3>
-              <p class="mb-6 text-muted-foreground">
-                Track billable revenue, non-billable opportunity, and team utilization in real-time.
-                Interactive donut charts show project portfolio health at a glance. Color-coded capacity
-                visualization instantly identifies over-allocated teams and available resources.
-              </p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Financial KPIs with billability rate tracking</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Project portfolio health with status breakdown</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Top contributors leaderboard and department performance</span>
-                </li>
-              </ul>
-            </div>
-            <div class="order-1 lg:order-2">
-              <!-- IMAGE PLACEHOLDER #1 -->
-              <div class="relative rounded-lg border-2 border-primary/20 bg-muted overflow-hidden">
-                <img
-                  src="/screenshots/analytics-dashboard.png"
-                  alt="Executive Analytics Dashboard"
-                  class="w-full h-auto"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                />
-                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-primary/5 to-primary/20" style="aspect-ratio: 16/10">
-                  <div class="text-6xl font-bold text-primary mb-4">#1</div>
-                  <p class="text-lg font-semibold text-center">Executive Analytics Dashboard</p>
-                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feature 2: Clickable Burnout Risk - Workload Redistribution -->
-        <div class="mb-16">
-          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-            <div>
-              <!-- IMAGE PLACEHOLDER #2 -->
-              <div class="relative rounded-lg border-2 border-red-500/20 bg-muted overflow-hidden">
-                <img
-                  src="/screenshots/burnout-risk-modal.png"
-                  alt="Burnout Risk Modal with Redistribution Recommendations"
-                  class="w-full h-auto"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                />
-                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-red-500/5 to-red-500/20" style="aspect-ratio: 16/10">
-                  <div class="text-6xl font-bold text-red-600 mb-4">#2</div>
-                  <p class="text-lg font-semibold text-center">Burnout Risk Modal</p>
-                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400">
-                <AlertTriangle class="h-4 w-4" />
-                Actionable Intelligence
-              </div>
-              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-                Click for Solutions, Not Just Problems
-              </h3>
-              <p class="mb-6 text-muted-foreground">
-                When the dashboard shows burnout risk, click it. A modal appears with specific people who can help,
-                their available hours, matching skills, and even hiring recommendations if no one internally has capacity.
-                This is decision-making intelligence, not passive alerts.
-              </p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Shows WHO is over-allocated with utilization percentage</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Recommends WHO can help with capacity + skill matching</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Hiring recommendations for critical skill gaps (&lt;3 people have skill)</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feature 3: Skills Gap Analysis -->
-        <div class="mb-16">
-          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-            <div class="order-2 lg:order-1">
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400">
-                <Users class="h-4 w-4" />
-                Talent Optimization
-              </div>
-              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-                Skills Gap Analysis with Training Recommendations
-              </h3>
-              <p class="mb-6 text-muted-foreground">
-                Real-time matching of project demand vs. team supply. The system analyzes active projects and tasks
-                to identify which skills are critically needed, then matches underutilized staff to training opportunities.
-                No more guessing—get specific recommendations backed by project data.
-              </p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Calculates skills demand from 746+ active tasks across 40 projects</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Matches underutilized staff (&lt;65%) to high-demand skills they don't have</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Shows specific project opportunities: "Train in React for 3 active projects"</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Financial impact: unused capacity × $150/hr average rate</span>
-                </li>
-              </ul>
-            </div>
-            <div class="order-1 lg:order-2">
-              <!-- IMAGE PLACEHOLDER #3 -->
-              <div class="relative rounded-lg border-2 border-blue-500/20 bg-muted overflow-hidden">
-                <img
-                  src="/screenshots/skills-gap-analysis.png"
-                  alt="Skills Gap Analysis with Training Recommendations"
-                  class="w-full h-auto"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                />
-                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-blue-500/5 to-blue-500/20" style="aspect-ratio: 16/10">
-                  <div class="text-6xl font-bold text-blue-600 mb-4">#3</div>
-                  <p class="text-lg font-semibold text-center">Skills Gap Analysis</p>
-                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Feature 4: Visual Capacity Planning -->
-        <div>
-          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-            <div>
-              <!-- IMAGE PLACEHOLDER #4 -->
-              <div class="relative rounded-lg border-2 border-green-500/20 bg-muted overflow-hidden">
-                <img
-                  src="/screenshots/capacity-planning.png"
-                  alt="Visual Capacity Planning with Gradient Colors"
-                  class="w-full h-auto"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                />
-                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-green-500/5 to-green-500/20" style="aspect-ratio: 16/10">
-                  <div class="text-6xl font-bold text-green-600 mb-4">#4</div>
-                  <p class="text-lg font-semibold text-center">Capacity Planning</p>
-                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400">
-                <CalendarClock class="h-4 w-4" />
-                Resource Management
-              </div>
-              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-                Visual Capacity with Gradient Color-Coding
-              </h3>
-              <p class="mb-6 text-muted-foreground">
-                Instantly see team capacity with gradient visualization: orange (critical), yellow (low),
-                blue (moderate), green (optimal), red (over-allocated). Filter by category, paginate through
-                large teams, and view summary totals with average utilization.
-              </p>
-              <ul class="space-y-3">
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Gradient color system with smooth RGB interpolation</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>One-click filters: Critical, Low, Moderate, Optimal, Over-allocated</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span>Department-level capacity analysis with summary metrics</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Core Features -->
-    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto mb-16 max-w-3xl text-center">
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Everything You Need, Integrated</h2>
@@ -599,12 +683,16 @@
             <h3 class="mb-2 text-xl font-semibold">Advanced Analytics</h3>
             <p class="mb-4 text-sm text-muted-foreground">
               Real-time dashboards, project summaries, team utilization reports, and margin
-              analysis. Know exactly where you stand at any moment.
+              analysis. Clickable alerts with actionable recommendations.
             </p>
             <ul class="space-y-1 text-sm text-muted-foreground">
               <li class="flex items-center gap-2">
                 <CheckCircle2 class="h-4 w-4 text-primary" />
-                Project status dashboards
+                Clickable burnout risk alerts
+              </li>
+              <li class="flex items-start gap-3">
+                <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <span><strong>Skills gap analysis</strong> matched to real project demands</span>
               </li>
               <li class="flex items-center gap-2">
                 <CheckCircle2 class="h-4 w-4 text-primary" />
@@ -673,7 +761,7 @@
     </section>
 
     <!-- Additional Capabilities -->
-    <section class="border-b bg-background">
+    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto mb-12 max-w-3xl text-center">
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Enterprise-Grade Capabilities</h2>
@@ -759,7 +847,7 @@
     </section>
 
     <!-- Industries -->
-    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
+    <section class="border-b bg-background">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto mb-12 max-w-3xl text-center">
           <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Built for Professional Services</h2>
@@ -818,7 +906,7 @@
     </section>
 
     <!-- Licensing & Pricing -->
-    <section class="border-b bg-background">
+    <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto max-w-4xl">
           <div class="mb-8 text-center">
@@ -902,7 +990,7 @@
     </section>
 
     <!-- Final CTA -->
-    <section class="bg-sky-50 dark:bg-sky-900/20">
+    <section class="bg-background">
       <div class="container mx-auto px-4 py-16 sm:py-24">
         <div class="mx-auto max-w-3xl text-center">
           <h2 class="mb-6 text-3xl font-bold sm:text-4xl">
