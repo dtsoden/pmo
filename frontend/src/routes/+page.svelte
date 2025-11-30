@@ -126,38 +126,95 @@
       </div>
     </section>
 
-    <!-- Problem Statement -->
+    <!-- The Real Problem We Solve -->
     <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">
-        <div class="mx-auto max-w-4xl text-center">
-          <h2 class="mb-6 text-3xl font-bold sm:text-4xl">The Enterprise Budget Paradox</h2>
-          <p class="mb-8 text-lg text-muted-foreground">
-            Large organizations struggle with simple problems while budgets for real solutions
-            evaporate. Teams are forced to cobble together spreadsheets, wrestle with limited
-            low-code platforms, or pay premium prices for SaaS tools that hold your data hostage.
-          </p>
-          <div class="grid gap-6 text-left sm:grid-cols-3">
-            <Card class="border-2 p-6">
-              <h3 class="mb-2 font-semibold">Spreadsheet Chaos</h3>
-              <p class="text-sm text-muted-foreground">
-                Fragmented Excel files, version conflicts, no real-time updates, and zero
-                accountability.
+        <div class="mx-auto max-w-5xl">
+          <div class="mb-12 text-center">
+            <h2 class="mb-6 text-3xl font-bold sm:text-4xl">
+              Love Your Staff. Use Empathy. Solve Problems Before They Happen.
+            </h2>
+            <p class="text-xl text-muted-foreground">
+              Every leader knows the truth, but few have the data to fix it.
+            </p>
+          </div>
+
+          <div class="mb-12 rounded-xl border-2 border-primary/20 bg-background p-8 sm:p-12">
+            <div class="mb-8">
+              <h3 class="mb-4 text-2xl font-bold">The 80/20 Reality</h3>
+              <p class="mb-4 text-lg leading-relaxed text-muted-foreground">
+                The Pareto Principle doesn't lie: <span class="font-semibold text-foreground">20% of your staff are carrying 80% of the load.</span> You know who they are. They're the ones working late, picking up slack, delivering results while drowning in over-allocation.
               </p>
-            </Card>
-            <Card class="border-2 p-6">
-              <h3 class="mb-2 font-semibold">Low-Code Limitations</h3>
-              <p class="text-sm text-muted-foreground">
-                Poor UX, rigid workflows, expensive licensing, and platforms you can't truly
-                customize.
+              <p class="mb-4 text-lg leading-relaxed text-muted-foreground">
+                The other 80%? <span class="font-semibold text-foreground">They're mismanaged.</span> Not all of them are lazy—most aren't. But without visibility into capacity, skills, and project demands, you're flying blind. Some team members sit underutilized because you don't know what they can do. Others are assigned work they're not equipped for. And yes, some are coasting under the radar.
               </p>
-            </Card>
-            <Card class="border-2 p-6">
-              <h3 class="mb-2 font-semibold">SaaS Vendor Lock-In</h3>
-              <p class="text-sm text-muted-foreground">
-                Premium pricing, data extraction fees, per-seat costs, and features you can't
-                control.
+              <p class="text-lg leading-relaxed text-muted-foreground">
+                <span class="font-semibold text-foreground">The result?</span> Burnout for your top performers. Wasted capacity in your bench. Missed opportunities because you didn't know Sarah had React skills or that John's been at 40% utilization for three months.
               </p>
-            </Card>
+            </div>
+
+            <div class="border-t pt-8">
+              <h3 class="mb-4 text-2xl font-bold">The Single Pane of Glass You've Been Missing</h3>
+              <p class="mb-6 text-lg leading-relaxed text-muted-foreground">
+                PMO Platform doesn't just track projects. It gives you <span class="font-semibold text-foreground">strategic workforce intelligence at scale</span>. See who's drowning, who's available, who can help, and what skills you need to hire for—all in real time.
+              </p>
+              <div class="grid gap-6 sm:grid-cols-2">
+                <div class="flex gap-4">
+                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-500/10">
+                    <Heart class="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h4 class="mb-2 font-semibold">Protect Your Top Performers</h4>
+                    <p class="text-sm text-muted-foreground">
+                      See who's over-allocated before they burn out. Get recommendations for who can help and redistribute work based on skills and capacity.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Users class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 class="mb-2 font-semibold">Optimize Your Bench</h4>
+                    <p class="text-sm text-muted-foreground">
+                      Identify underutilized staff and get training recommendations matched to real project needs. Stop wasting capacity—invest it strategically.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+                    <TrendingUp class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h4 class="mb-2 font-semibold">Make Data-Driven Decisions</h4>
+                    <p class="text-sm text-muted-foreground">
+                      Skills gaps, utilization rates, financial impact—everything you need to know, when you need to know it. No guesswork. No spreadsheets.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex gap-4">
+                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+                    <AlertTriangle class="h-6 w-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <h4 class="mb-2 font-semibold">Solve Problems Proactively</h4>
+                    <p class="text-sm text-muted-foreground">
+                      Don't wait for people to quit or projects to fail. See issues coming and fix them before they become crises.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <p class="mb-6 text-lg text-muted-foreground">
+              This isn't about micromanagement. It's about <span class="font-semibold text-foreground">empathy at scale</span>. When you understand your team's capacity, skills, and workload, you can lead with compassion and data—not gut feelings and politics.
+            </p>
+            <Button href="/login" size="lg" class="min-w-[240px]">
+              See It In Action
+              <ArrowRight class="ml-2 h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
