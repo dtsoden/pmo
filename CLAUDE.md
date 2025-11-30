@@ -208,13 +208,15 @@ Key relationships:
 - Task dependencies via TaskDependency join table
 
 **Role Hierarchy** (highest to lowest):
-1. SUPER_ADMIN
-2. ADMIN
-3. PMO_MANAGER
-4. PROJECT_MANAGER
-5. RESOURCE_MANAGER
-6. TEAM_MEMBER
-7. VIEWER
+1. SUPER_ADMIN - Full system access
+2. ADMIN - System administration
+3. PMO_MANAGER - PMO oversight, analytics
+4. PROJECT_MANAGER - Project management, client access
+5. RESOURCE_MANAGER - Resource allocation, capacity planning
+6. TEAM_MEMBER - Standard user, time tracking
+7. VIEWER - Read-only access
+
+**For complete role permissions and access control, see [docs/PERMISSIONS.md](docs/PERMISSIONS.md)**
 
 ---
 

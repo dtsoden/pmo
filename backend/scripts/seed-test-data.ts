@@ -488,15 +488,46 @@ async function seed() {
   console.log(`  Created ${projects.length} projects`);
 
   // ============================================
-  // CREATE PROJECT ASSIGNMENTS (REALISTIC WORKLOADS)
+  // CREATE PROJECT ASSIGNMENTS (REALISTIC DEPT DISTRIBUTION)
   // ============================================
-  console.log('\nCreating project assignments...');
+  console.log('\nCreating project assignments with realistic department distribution...');
   let assignmentCount = 0;
 
-  // Track user allocations to prevent overloading (max 140h/week = human limit)
-  const userAllocations = new Map<string, number>();
+  // Get departments and calculate target utilization
   const activeUsers = users.filter(u => u.status === 'ACTIVE');
+  const departments = [...new Set(activeUsers.map(u => u.department).filter(Boolean))];
 
+  // Define target utilization levels for each department
+  const targetUtilizations: number[] = [];
+  const criticalCount = Math.floor(departments.length * 0.075);
+  for (let i = 0; i < criticalCount; i++) targetUtilizations.push(randomInt(5, 24));
+
+  const lowCount = Math.floor(departments.length * 0.125);
+  for (let i = 0; i < lowCount; i++) targetUtilizations.push(randomInt(25, 49));
+
+  const moderateCount = Math.floor(departments.length * 0.325);
+  for (let i = 0; i < moderateCount; i++) targetUtilizations.push(randomInt(50, 79));
+
+  const optimalCount = Math.floor(departments.length * 0.375);
+  for (let i = 0; i < optimalCount; i++) targetUtilizations.push(randomInt(80, 100));
+
+  const overCount = departments.length - (criticalCount + lowCount + moderateCount + optimalCount);
+  for (let i = 0; i < overCount; i++) targetUtilizations.push(randomInt(101, 130));
+
+  targetUtilizations.sort(() => Math.random() - 0.5);
+
+  // Map department to target utilization percentage
+  const deptTargets = new Map<string, number>();
+  departments.forEach((dept, i) => {
+    deptTargets.set(dept, targetUtilizations[i] || 75);
+  });
+
+  console.log(`  Target distribution: ${criticalCount} critical, ${lowCount} low, ${moderateCount} moderate, ${optimalCount} optimal, ${overCount} over-allocated`);
+
+  // Track user allocations
+  const userAllocations = new Map<string, number>();
+
+  // First pass: create assignments
   for (const project of projects) {
     const teamSize = randomInt(3, 8);
     const assignedUsers = randomElements(activeUsers, teamSize);
@@ -505,16 +536,25 @@ async function seed() {
       try {
         const currentAllocation = userAllocations.get(user.id) || 0;
 
-        // Realistic allocation: 5-40 hours per project
-        // But don't exceed 120h total (leave room for a bit of overallocation)
-        const maxNewHours = Math.min(40, 120 - currentAllocation);
+        // Get department target utilization
+        const deptTarget = deptTargets.get(user.department || '') || 75;
+        const weeklyHours = user.defaultWeeklyHours || 40;
 
-        if (maxNewHours < 5) {
-          // User is fully booked, skip this assignment
+        // Calculate max hours based on department target
+        // For over-allocated departments, allow >100% utilization
+        const targetWeekly = (weeklyHours * deptTarget) / 100;
+        const maxNewHours = Math.min(40, Math.max(5, targetWeekly - currentAllocation));
+
+        if (maxNewHours < 5 && currentAllocation >= targetWeekly) {
+          // User reached department target, skip
           continue;
         }
 
-        const allocatedHours = randomInt(5, maxNewHours);
+        // Allocate hours with some randomness to make it realistic
+        const allocatedHours = randomInt(
+          Math.max(5, Math.floor(maxNewHours * 0.3)),
+          Math.ceil(maxNewHours)
+        );
 
         await prisma.projectAssignment.create({
           data: {
@@ -607,144 +647,205 @@ async function seed() {
   console.log(`  Created ${teamAssignmentCount} team project assignments`);
 
   // ============================================
-  // CREATE TIME ENTRIES (CURRENT WEEK - BASED ON TODAY)
+  // CREATE TIME ENTRIES (FULL CURRENT MONTH - REALISTIC DISTRIBUTION)
   // ============================================
-  console.log('\nCreating time entries for current week (mix of manual and timer-based)...');
+  console.log('\nCreating time entries for current month (realistic utilization distribution)...');
   let timeEntryCount = 0;
   let sessionCount = 0;
 
-  // Get current week boundaries based on TODAY's date
+  // Get current month boundaries based on TODAY's date
   const today = new Date(); // Use actual current date
-  const currentDay = today.getDay(); // 0 (Sunday) to 6 (Saturday)
-  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Days to Monday
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() + mondayOffset);
-  weekStart.setHours(0, 0, 0, 0);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthEnd = new Date(today);
+  monthEnd.setHours(23, 59, 59, 999);
 
-  console.log(`  Week Start: ${weekStart.toDateString()} (Monday)`);
-  console.log(`  Today: ${today.toDateString()} (Day ${currentDay})`);
+  // Get all work days in current month up to today
+  const allDaysInMonth: Date[] = [];
+  for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip weekends
+      allDaysInMonth.push(new Date(d));
+    }
+  }
 
-  for (const user of activeUsers) {
-    // Create entries from Monday through today (or Monday-Friday if past Friday)
-    const daysToCreate = currentDay === 0 ? 5 : Math.min(currentDay, 5); // Sunday=0, use 5 days; otherwise up to Friday (5)
+  console.log(`  Month: ${monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`);
+  console.log(`  Work days: ${allDaysInMonth.length}`);
+  console.log(`  Creating realistic utilization distribution for marketing...`);
 
-    for (let dayOffset = 0; dayOffset < daysToCreate; dayOffset++) {
-      const entryDate = new Date(weekStart);
-      entryDate.setDate(weekStart.getDate() + dayOffset);
+  // Define target utilization levels for realistic distribution
+  const targetUtilizations: number[] = [];
 
-      // Create 2-4 entries per day, each with a DIFFERENT task
-      const numEntries = randomInt(2, 4);
-      const dailyTasks = randomElements(allTasks, numEntries); // Pick unique tasks for the day
+  // 5-10% Critical (0-24%)
+  const criticalCount = Math.floor(activeUsers.length * 0.075);
+  for (let i = 0; i < criticalCount; i++) {
+    targetUtilizations.push(randomInt(5, 24));
+  }
 
-      for (let e = 0; e < numEntries; e++) {
-        const isTimerBased = Math.random() > 0.4; // 60% timer-based, 40% manual
-        const task = dailyTasks[e]; // Use unique task from the list
-        const isBillable = Math.random() > 0.15;
+  // 10-15% Low (25-49%)
+  const lowCount = Math.floor(activeUsers.length * 0.125);
+  for (let i = 0; i < lowCount; i++) {
+    targetUtilizations.push(randomInt(25, 49));
+  }
 
-        if (isTimerBased) {
-          // TIMER-BASED ENTRY: Multiple sessions throughout the day
-          const numSessions = randomInt(1, 3);
-          let totalHours = 0;
-          let totalBillableHours = 0;
+  // 30-35% Moderate (50-79%)
+  const moderateCount = Math.floor(activeUsers.length * 0.325);
+  for (let i = 0; i < moderateCount; i++) {
+    targetUtilizations.push(randomInt(50, 79));
+  }
 
-          const sessions = [];
-          for (let s = 0; s < numSessions; s++) {
-            const sessionStartHour = 8 + (s * 3) + randomInt(0, 2);
-            const sessionDuration = randomInt(1, 3) + (randomInt(0, 60) / 60); // 1-3 hours with minutes
+  // 35-40% Optimal (80-100%)
+  const optimalCount = Math.floor(activeUsers.length * 0.375);
+  for (let i = 0; i < optimalCount; i++) {
+    targetUtilizations.push(randomInt(80, 100));
+  }
 
-            // Create time in user's local timezone (8-6 PM work hours)
-            const localSessionStart = new Date(entryDate);
-            localSessionStart.setHours(sessionStartHour, randomInt(0, 59), 0, 0);
+  // 5-10% Over-allocated (101-130%)
+  const overCount = activeUsers.length - (criticalCount + lowCount + moderateCount + optimalCount);
+  for (let i = 0; i < overCount; i++) {
+    targetUtilizations.push(randomInt(101, 130));
+  }
 
-            // Convert to UTC for database storage
-            const sessionStart = fromZonedTime(localSessionStart, user.timezone || 'UTC');
+  // Shuffle to randomize
+  targetUtilizations.sort(() => Math.random() - 0.5);
 
-            const sessionEnd = new Date(sessionStart);
-            sessionEnd.setTime(sessionEnd.getTime() + sessionDuration * 3600000);
+  for (let userIndex = 0; userIndex < activeUsers.length; userIndex++) {
+    const user = activeUsers[userIndex];
+    const targetUtil = targetUtilizations[userIndex];
 
-            const sessionBillable = s === 0 ? isBillable : Math.random() > 0.2; // First session follows entry, others mostly billable
+    // Calculate target hours for the month
+    const weeklyHours = user.defaultWeeklyHours || 40;
+    const dailyHours = weeklyHours / 5;
+    const targetMonthHours = dailyHours * allDaysInMonth.length;
+    const targetHoursToLog = (targetMonthHours * targetUtil) / 100;
 
-            sessions.push({
-              startTime: sessionStart,
-              endTime: sessionEnd,
-              duration: sessionDuration,
-              isBillable: sessionBillable,
-              description: randomElement([
-                'Working on feature implementation',
-                'Code review and debugging',
-                'Testing and QA',
-                null, // Some sessions have no description
-              ]),
-            });
+    let totalHoursLogged = 0;
+    const daysToFill = Math.ceil(allDaysInMonth.length * Math.min(targetUtil / 100, 1.0));
 
-            totalHours += sessionDuration;
-            if (sessionBillable) totalBillableHours += sessionDuration;
-          }
+    // Distribute hours across work days
+    for (let dayIndex = 0; dayIndex < daysToFill && dayIndex < allDaysInMonth.length; dayIndex++) {
+      const entryDate = allDaysInMonth[dayIndex];
+      const remainingHours = targetHoursToLog - totalHoursLogged;
 
-          await prisma.timeEntry.create({
-            data: {
-              userId: user.id,
-              taskId: task.id,
-              date: entryDate,
-              hours: totalHours,
-              billableHours: totalBillableHours,
-              isTimerBased: true,
-              sessions: {
-                create: sessions
-              }
-            }
-          });
-          timeEntryCount++;
-          sessionCount += sessions.length;
+      if (remainingHours < 0.5) break;
 
-        } else {
-          // MANUAL ENTRY: Single entry with just hours, no sessions
-          const manualHours = randomInt(1, 4) + (randomInt(0, 3) * 0.5); // 1-5.5 hours in 0.5 increments
+      // Vary hours per day for realism (4-10 hours with decimal)
+      const hoursThisDay = Math.min(
+        randomInt(4, 8) + (Math.random() * 2),
+        remainingHours,
+        dailyHours * 1.3
+      );
 
-          // Create time in user's local timezone (9 AM start)
-          const localStart = new Date(entryDate);
-          localStart.setHours(9, 0, 0, 0);
+      if (hoursThisDay < 0.5) continue;
 
-          const localEnd = new Date(entryDate);
-          localEnd.setHours(9 + Math.floor(manualHours), (manualHours % 1) * 60, 0, 0);
+      // Create entries with timer/manual mix
+      const isTimerBased = Math.random() > 0.4; // 60% timer-based, 40% manual
+      const task = randomElement(allTasks);
+      const isBillable = Math.random() > 0.15;
+
+      if (isTimerBased) {
+        // TIMER-BASED ENTRY: Use hoursThisDay distributed across 1-3 sessions
+        const numSessions = randomInt(1, 3);
+        const sessions = [];
+        let sessionHoursRemaining = hoursThisDay;
+
+        for (let s = 0; s < numSessions; s++) {
+          const sessionStartHour = 8 + (s * 3) + randomInt(0, 2);
+          const sessionDuration = s === numSessions - 1
+            ? sessionHoursRemaining // Last session gets remaining hours
+            : sessionHoursRemaining / (numSessions - s) * (0.8 + Math.random() * 0.4);
+
+          // Create time in user's local timezone
+          const localSessionStart = new Date(entryDate);
+          localSessionStart.setHours(sessionStartHour, randomInt(0, 59), 0, 0);
 
           // Convert to UTC for database storage
-          const startTime = fromZonedTime(localStart, user.timezone || 'UTC');
-          const endTime = fromZonedTime(localEnd, user.timezone || 'UTC');
+          const sessionStart = fromZonedTime(localSessionStart, user.timezone || 'UTC');
+          const sessionEnd = new Date(sessionStart);
+          sessionEnd.setTime(sessionEnd.getTime() + sessionDuration * 3600000);
 
-          await prisma.timeEntry.create({
-            data: {
-              userId: user.id,
-              taskId: task.id,
-              date: entryDate,
-              hours: manualHours,
-              billableHours: isBillable ? manualHours : 0,
-              isTimerBased: false,
-              // Manual entries have a single session for display purposes
-              sessions: {
-                create: {
-                  startTime,
-                  endTime,
-                  duration: manualHours,
-                  isBillable,
-                  description: randomElement([
-                    'Working on assigned tasks',
-                    'Code review and feedback',
-                    'Bug fixes',
-                    'Documentation',
-                    'Team meeting',
-                    'Design review',
-                    'Technical research',
-                    'Sprint planning',
-                  ]),
-                }
+          const sessionBillable = s === 0 ? isBillable : Math.random() > 0.2;
+
+          sessions.push({
+            startTime: sessionStart,
+            endTime: sessionEnd,
+            duration: sessionDuration,
+            isBillable: sessionBillable,
+            description: randomElement([
+              'Working on feature implementation',
+              'Code review and debugging',
+              'Testing and QA',
+              null,
+            ]),
+          });
+
+          sessionHoursRemaining -= sessionDuration;
+        }
+
+        const totalBillableHours = sessions.filter(s => s.isBillable).reduce((sum, s) => sum + s.duration, 0);
+
+        await prisma.timeEntry.create({
+          data: {
+            userId: user.id,
+            taskId: task.id,
+            date: entryDate,
+            hours: hoursThisDay,
+            billableHours: totalBillableHours,
+            isTimerBased: true,
+            sessions: {
+              create: sessions
+            }
+          }
+        });
+        timeEntryCount++;
+        sessionCount += sessions.length;
+
+      } else {
+        // MANUAL ENTRY: Single entry using hoursThisDay
+        // Create time in user's local timezone (9 AM start)
+        const localStart = new Date(entryDate);
+        localStart.setHours(9, 0, 0, 0);
+
+        const localEnd = new Date(entryDate);
+        localEnd.setHours(9 + Math.floor(hoursThisDay), (hoursThisDay % 1) * 60, 0, 0);
+
+        // Convert to UTC for database storage
+        const startTime = fromZonedTime(localStart, user.timezone || 'UTC');
+        const endTime = fromZonedTime(localEnd, user.timezone || 'UTC');
+
+        await prisma.timeEntry.create({
+          data: {
+            userId: user.id,
+            taskId: task.id,
+            date: entryDate,
+            hours: hoursThisDay,
+            billableHours: isBillable ? hoursThisDay : 0,
+            isTimerBased: false,
+            // Manual entries have a single session for display purposes
+            sessions: {
+              create: {
+                startTime,
+                endTime,
+                duration: hoursThisDay,
+                isBillable,
+                description: randomElement([
+                  'Working on assigned tasks',
+                  'Code review and feedback',
+                  'Bug fixes',
+                  'Documentation',
+                  'Team meeting',
+                  'Design review',
+                  'Technical research',
+                  'Sprint planning',
+                ]),
               }
             }
-          });
-          timeEntryCount++;
-          sessionCount++;
-        }
+          }
+        });
+        timeEntryCount++;
+        sessionCount++;
       }
+
+      totalHoursLogged += hoursThisDay;
     }
   }
   console.log(`  Created ${timeEntryCount} time entries (${sessionCount} total sessions)`);

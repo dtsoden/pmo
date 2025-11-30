@@ -10,8 +10,11 @@
     getTimeOffStatusVariant,
     TIME_OFF_STATUS_LABELS,
     TIME_OFF_TYPE_LABELS,
+    getUtilizationColor,
+    getUtilizationBgStyle,
+    getUtilizationCategory,
   } from '$lib/utils';
-  import { Calendar, Users, TrendingUp, Clock, AlertTriangle, UsersRound, Plane } from 'lucide-svelte';
+  import { Calendar, Users, TrendingUp, Clock, AlertTriangle, UsersRound, Plane, User, Building2 } from 'lucide-svelte';
   import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -41,7 +44,7 @@
           startDate: format(monthStart, 'yyyy-MM-dd'),
           endDate: format(monthEnd, 'yyyy-MM-dd'),
         }),
-        api.capacity.timeOff.list({ limit: 20 }),
+        api.capacity.timeOff.listAll({ limit: 20 }),
       ]);
 
       capacityAnalytics = analyticsRes;
@@ -69,26 +72,95 @@
     loadData();
   }
 
-  function getUtilizationColor(rate: number): string {
-    if (rate >= 100) return 'text-red-500';
-    if (rate >= 80) return 'text-green-500';
-    if (rate >= 50) return 'text-amber-500';
-    return 'text-muted-foreground';
-  }
-
-  function getUtilizationBgColor(rate: number): string {
-    if (rate >= 100) return 'bg-red-500';
-    if (rate >= 80) return 'bg-green-500';
-    if (rate >= 50) return 'bg-amber-500';
-    return 'bg-muted';
-  }
-
   onMount(loadData);
 
-  // Calculate over-allocated users (>100% utilization)
+  // Filters and pagination
+  type UtilizationFilter = 'all' | 'critical' | 'low' | 'moderate' | 'optimal' | 'over-allocated';
+  let teamFilter: UtilizationFilter = 'all';
+  let deptFilter: UtilizationFilter = 'all';
+  let teamPage = 1;
+  let deptPage = 1;
+  const pageSize = 10;
+
+  // Calculate utilization categories based on gradient stops - TEAM MEMBERS
   $: overAllocatedUsers = (utilization?.users || []).filter(u => u?.utilization > 100);
-  $: underUtilizedUsers = (utilization?.users || []).filter(u => u?.utilization < 50 && u?.utilization >= 0);
-  $: optimalUsers = (utilization?.users || []).filter(u => u?.utilization >= 50 && u?.utilization <= 100);
+  $: optimalUsers = (utilization?.users || []).filter(u => u?.utilization >= 80 && u?.utilization <= 100);
+  $: moderateUsers = (utilization?.users || []).filter(u => u?.utilization >= 50 && u?.utilization < 80);
+  $: lowUsers = (utilization?.users || []).filter(u => u?.utilization >= 25 && u?.utilization < 50);
+  $: criticalUsers = (utilization?.users || []).filter(u => u?.utilization >= 0 && u?.utilization < 25);
+  $: underUtilizedUsers = (utilization?.users || []).filter(u => u?.utilization >= 0 && u?.utilization < 50);
+
+  // Calculate over-allocated DEPARTMENTS
+  $: overAllocatedDepts = (capacityAnalytics?.byDepartment || []).filter(d => d?.utilization > 100);
+  $: optimalDepts = (capacityAnalytics?.byDepartment || []).filter(d => d?.utilization >= 80 && d?.utilization <= 100);
+  $: moderateDepts = (capacityAnalytics?.byDepartment || []).filter(d => d?.utilization >= 50 && d?.utilization < 80);
+  $: lowDepts = (capacityAnalytics?.byDepartment || []).filter(d => d?.utilization >= 25 && d?.utilization < 50);
+  $: criticalDepts = (capacityAnalytics?.byDepartment || []).filter(d => d?.utilization >= 0 && d?.utilization < 25);
+
+  // Filtered and paginated lists
+  $: filteredUsers = (() => {
+    const allUsers = utilization?.users || [];
+    let filtered = allUsers;
+
+    switch (teamFilter) {
+      case 'critical':
+        filtered = allUsers.filter(u => u?.utilization >= 0 && u?.utilization < 25);
+        break;
+      case 'low':
+        filtered = allUsers.filter(u => u?.utilization >= 25 && u?.utilization < 50);
+        break;
+      case 'moderate':
+        filtered = allUsers.filter(u => u?.utilization >= 50 && u?.utilization < 80);
+        break;
+      case 'optimal':
+        filtered = allUsers.filter(u => u?.utilization >= 80 && u?.utilization <= 100);
+        break;
+      case 'over-allocated':
+        filtered = allUsers.filter(u => u?.utilization > 100);
+        break;
+      default:
+        filtered = allUsers;
+    }
+
+    return filtered;
+  })();
+
+  $: paginatedUsers = filteredUsers.slice((teamPage - 1) * pageSize, teamPage * pageSize);
+  $: totalTeamPages = Math.ceil(filteredUsers.length / pageSize);
+
+  $: filteredDepts = (() => {
+    const allDepts = capacityAnalytics?.byDepartment || [];
+    let filtered = allDepts;
+
+    switch (deptFilter) {
+      case 'critical':
+        filtered = allDepts.filter(d => d?.utilization >= 0 && d?.utilization < 25);
+        break;
+      case 'low':
+        filtered = allDepts.filter(d => d?.utilization >= 25 && d?.utilization < 50);
+        break;
+      case 'moderate':
+        filtered = allDepts.filter(d => d?.utilization >= 50 && d?.utilization < 80);
+        break;
+      case 'optimal':
+        filtered = allDepts.filter(d => d?.utilization >= 80 && d?.utilization <= 100);
+        break;
+      case 'over-allocated':
+        filtered = allDepts.filter(d => d?.utilization > 100);
+        break;
+      default:
+        filtered = allDepts;
+    }
+
+    return filtered;
+  })();
+
+  $: paginatedDepts = filteredDepts.slice((deptPage - 1) * pageSize, deptPage * pageSize);
+  $: totalDeptPages = Math.ceil(filteredDepts.length / pageSize);
+
+  // Reset pagination when filter changes
+  $: if (teamFilter) teamPage = 1;
+  $: if (deptFilter) deptPage = 1;
 </script>
 
 <svelte:head>
@@ -129,19 +201,21 @@
     </Card>
   {:else}
     <!-- Summary Stats -->
-    <div class="grid gap-4 md:grid-cols-4">
+    <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+      <!-- 1. Hours Logged -->
       <Card class="p-6">
         <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-            <Users class="h-6 w-6" />
+          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
+            <Clock class="h-6 w-6" />
           </div>
           <div>
-            <p class="text-sm text-muted-foreground">Team Members</p>
-            <p class="text-2xl font-bold">{utilization?.users?.length || 0}</p>
+            <p class="text-sm text-muted-foreground">Hours Logged</p>
+            <p class="text-2xl font-bold">{utilization?.summary?.totalLogged?.toFixed(0) || 0}h</p>
           </div>
         </div>
       </Card>
 
+      <!-- 2. Avg Utilization -->
       <Card class="p-6">
         <div class="flex items-center gap-4">
           <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
@@ -156,18 +230,44 @@
         </div>
       </Card>
 
+      <!-- 3. Team Members -->
       <Card class="p-6">
         <div class="flex items-center gap-4">
-          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
-            <Clock class="h-6 w-6" />
+          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+            <Users class="h-6 w-6" />
           </div>
           <div>
-            <p class="text-sm text-muted-foreground">Hours Logged</p>
-            <p class="text-2xl font-bold">{utilization?.summary?.totalLogged?.toFixed(0) || 0}h</p>
+            <p class="text-sm text-muted-foreground">Team Members</p>
+            <p class="text-2xl font-bold">{utilization?.users?.length || 0}</p>
           </div>
         </div>
       </Card>
 
+      <!-- 4. Team Members Under-Utilized -->
+      <Card class={cn("p-6", underUtilizedUsers.length > 0 && "border-amber-200 dark:border-amber-900")}>
+        <div class="flex items-center gap-4">
+          <div class={cn(
+            "flex h-12 w-12 items-center justify-center rounded-lg",
+            underUtilizedUsers.length > 0
+              ? "bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300"
+              : "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+          )}>
+            <Users class="h-6 w-6" />
+          </div>
+          <div>
+            <p class="text-sm text-muted-foreground">Team Members</p>
+            <p class="text-xs text-muted-foreground">Under-Utilized</p>
+            <p class={cn(
+              "text-2xl font-bold",
+              underUtilizedUsers.length > 0 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"
+            )}>
+              {underUtilizedUsers.length}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <!-- 5. Team Members Over-Allocated -->
       <Card class={cn("p-6", overAllocatedUsers.length > 0 && "border-red-200 dark:border-red-900")}>
         <div class="flex items-center gap-4">
           <div class={cn(
@@ -179,7 +279,8 @@
             <AlertTriangle class="h-6 w-6" />
           </div>
           <div>
-            <p class="text-sm text-muted-foreground">Over-Allocated</p>
+            <p class="text-sm text-muted-foreground">Team Members</p>
+            <p class="text-xs text-muted-foreground">Over-Allocated</p>
             <p class={cn(
               "text-2xl font-bold",
               overAllocatedUsers.length > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
@@ -189,73 +290,64 @@
           </div>
         </div>
       </Card>
-    </div>
 
-    <!-- Over-Allocation Warnings -->
-    {#if overAllocatedUsers.length > 0}
-      <Card class="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-        <div class="flex items-start gap-4 p-4">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300">
-            <AlertTriangle class="h-5 w-5" />
+      <!-- 6. Departments Over-Allocated -->
+      <Card class={cn("p-6", overAllocatedDepts.length > 0 && "border-red-200 dark:border-red-900")}>
+        <div class="flex items-center gap-4">
+          <div class={cn(
+            "flex h-12 w-12 items-center justify-center rounded-lg",
+            overAllocatedDepts.length > 0
+              ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300"
+              : "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+          )}>
+            <UsersRound class="h-6 w-6" />
           </div>
-          <div class="flex-1">
-            <h3 class="font-semibold text-red-800 dark:text-red-200">
-              Over-Allocated Resources ({overAllocatedUsers.length})
-            </h3>
-            <p class="text-sm text-red-700 dark:text-red-300 mb-3">
-              The following team members are allocated beyond their maximum capacity:
+          <div>
+            <p class="text-sm text-muted-foreground">Departments</p>
+            <p class="text-xs text-muted-foreground">Over-Allocated</p>
+            <p class={cn(
+              "text-2xl font-bold",
+              overAllocatedDepts.length > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
+            )}>
+              {overAllocatedDepts.length}
             </p>
-            <div class="space-y-2">
-              {#each overAllocatedUsers as user}
-                <a
-                  href="/people/{user.user?.id}"
-                  class="flex items-center justify-between rounded-lg bg-white/50 dark:bg-red-900/50 p-3 hover:bg-white dark:hover:bg-red-900 transition-colors"
-                >
-                  <div class="flex items-center gap-3">
-                    <Avatar
-                      firstName={user.user?.firstName}
-                      lastName={user.user?.lastName}
-                      size="sm"
-                    />
-                    <div>
-                      <span class="font-medium text-red-900 dark:text-red-100">
-                        {fullName(user.user?.firstName, user.user?.lastName)}
-                      </span>
-                      <p class="text-xs text-red-600 dark:text-red-400">
-                        {user.loggedHours?.toFixed(1) || 0}h logged of {user.availableHours?.toFixed(0) || 0}h available
-                      </p>
-                    </div>
-                  </div>
-                  <span class="text-lg font-bold text-red-600 dark:text-red-300">
-                    {formatPercent(user.utilization || 0)}
-                  </span>
-                </a>
-              {/each}
-            </div>
           </div>
         </div>
       </Card>
-    {/if}
+    </div>
 
-    <!-- Capacity Health Summary -->
-    <Card class="p-4">
-      <div class="flex items-center gap-6">
+    <!-- KEY -->
+    <Card class="p-6">
+      <h3 class="text-lg font-bold mb-4">KEY:</h3>
+      <div class="flex flex-wrap items-center gap-4 md:gap-6">
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-full" style="background-color: {getUtilizationColor(0)}" />
+          <span class="text-sm">
+            <span class="font-medium">{criticalUsers.length}</span> Critical (0-24%)
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-full" style="background-color: {getUtilizationColor(37)}" />
+          <span class="text-sm">
+            <span class="font-medium">{lowUsers.length}</span> Low (25-49%)
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-full" style="background-color: {getUtilizationColor(65)}" />
+          <span class="text-sm">
+            <span class="font-medium">{moderateUsers.length}</span> Moderate (50-79%)
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="h-3 w-3 rounded-full" style="background-color: {getUtilizationColor(90)}" />
+          <span class="text-sm">
+            <span class="font-medium">{optimalUsers.length}</span> Optimal (80-100%)
+          </span>
+        </div>
         <div class="flex items-center gap-2">
           <div class="h-3 w-3 rounded-full bg-red-500" />
           <span class="text-sm">
             <span class="font-medium">{overAllocatedUsers.length}</span> Over-allocated (&gt;100%)
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-full bg-green-500" />
-          <span class="text-sm">
-            <span class="font-medium">{optimalUsers.length}</span> Optimal (50-100%)
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-full bg-amber-500" />
-          <span class="text-sm">
-            <span class="font-medium">{underUtilizedUsers.length}</span> Under-utilized (&lt;50%)
           </span>
         </div>
       </div>
@@ -266,22 +358,68 @@
       <Card>
         <div class="border-b px-6 py-4">
           <h2 class="font-semibold">Team Utilization</h2>
+          <!-- Filter Buttons -->
+          <div class="flex flex-wrap gap-2 mt-3">
+            <Button
+              size="sm"
+              variant={teamFilter === 'all' ? 'default' : 'outline'}
+              on:click={() => teamFilter = 'all'}
+            >
+              All ({utilization?.users?.length || 0})
+            </Button>
+            <Button
+              size="sm"
+              variant={teamFilter === 'critical' ? 'default' : 'outline'}
+              on:click={() => teamFilter = 'critical'}
+              style={teamFilter === 'critical' ? getUtilizationBgStyle(0) : ''}
+            >
+              Critical ({criticalUsers.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={teamFilter === 'low' ? 'default' : 'outline'}
+              on:click={() => teamFilter = 'low'}
+              style={teamFilter === 'low' ? getUtilizationBgStyle(37) : ''}
+            >
+              Low ({lowUsers.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={teamFilter === 'moderate' ? 'default' : 'outline'}
+              on:click={() => teamFilter = 'moderate'}
+              style={teamFilter === 'moderate' ? getUtilizationBgStyle(65) : ''}
+            >
+              Moderate ({moderateUsers.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={teamFilter === 'optimal' ? 'default' : 'outline'}
+              on:click={() => teamFilter = 'optimal'}
+              style={teamFilter === 'optimal' ? getUtilizationBgStyle(90) : ''}
+            >
+              Optimal ({optimalUsers.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={teamFilter === 'over-allocated' ? 'default' : 'outline'}
+              on:click={() => teamFilter = 'over-allocated'}
+              style={teamFilter === 'over-allocated' ? 'background-color: #ef4444; color: white;' : ''}
+            >
+              Over-allocated ({overAllocatedUsers.length})
+            </Button>
+          </div>
         </div>
         <div class="divide-y">
-          {#if !utilization?.users?.length}
+          {#if !filteredUsers.length}
             <div class="p-6 text-center text-muted-foreground">
-              No utilization data available
+              No team members match this filter
             </div>
           {:else}
-            {#each (utilization.users || []).filter(u => u?.user) as user}
+            {#each paginatedUsers.filter(u => u?.user) as user}
               <div class="px-6 py-4">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <Avatar
-                      firstName={user.user?.firstName}
-                      lastName={user.user?.lastName}
-                      size="sm"
-                    />
+                    <User class="h-5 w-5 text-muted-foreground" />
                     <div>
                       <span class="font-medium">
                         {fullName(user.user?.firstName, user.user?.lastName)}
@@ -296,14 +434,19 @@
                       {/if}
                     </div>
                   </div>
-                  <span class={cn('font-semibold', getUtilizationColor(user.utilization || 0))}>
-                    {formatPercent(user.utilization || 0)}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="px-3 py-1 rounded-lg font-semibold text-white text-sm"
+                      style={getUtilizationBgStyle(user.utilization || 0)}
+                    >
+                      {formatPercent(user.utilization || 0)}
+                    </div>
+                  </div>
                 </div>
                 <div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    class={cn('h-full transition-all', getUtilizationBgColor(user.utilization || 0))}
-                    style="width: {Math.min(user.utilization || 0, 100)}%"
+                    class="h-full transition-all"
+                    style="{getUtilizationBgStyle(user.utilization || 0)}; width: {Math.min(user.utilization || 0, 100)}%"
                   />
                 </div>
                 <div class="mt-1 flex justify-between text-xs text-muted-foreground">
@@ -333,31 +476,130 @@
             {/each}
           {/if}
         </div>
+        <!-- Pagination -->
+        {#if totalTeamPages > 1}
+          <div class="flex items-center justify-between border-t px-6 py-4">
+            <div class="text-sm text-muted-foreground">
+              Showing {((teamPage - 1) * pageSize) + 1}-{Math.min(teamPage * pageSize, filteredUsers.length)} of {filteredUsers.length}
+            </div>
+            <div class="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={teamPage === 1}
+                on:click={() => teamPage--}
+              >
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={teamPage === totalTeamPages}
+                on:click={() => teamPage++}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        {/if}
+        <!-- Summary -->
+        {#if filteredUsers.length > 0}
+          <div class="border-t bg-muted/50 px-6 py-4">
+            <div class="flex items-center justify-between text-sm">
+              <span class="font-medium">Total Hours Logged</span>
+              <span class="font-semibold">{filteredUsers.reduce((sum, u) => sum + (u.loggedHours || 0), 0).toFixed(1)}h</span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="font-medium">Total Hours Available</span>
+              <span class="font-semibold">{filteredUsers.reduce((sum, u) => sum + (u.availableHours || 0), 0).toFixed(0)}h</span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="font-medium">Average Utilization</span>
+              <span class="font-semibold">{formatPercent(filteredUsers.reduce((sum, u) => sum + (u.utilization || 0), 0) / filteredUsers.length)}</span>
+            </div>
+          </div>
+        {/if}
       </Card>
 
       <!-- Capacity Overview by Department -->
       <Card>
         <div class="border-b px-6 py-4">
           <h2 class="font-semibold">Capacity by Department</h2>
+          <!-- Filter Buttons -->
+          <div class="flex flex-wrap gap-2 mt-3">
+            <Button
+              size="sm"
+              variant={deptFilter === 'all' ? 'default' : 'outline'}
+              on:click={() => deptFilter = 'all'}
+            >
+              All ({capacityAnalytics?.byDepartment?.length || 0})
+            </Button>
+            <Button
+              size="sm"
+              variant={deptFilter === 'critical' ? 'default' : 'outline'}
+              on:click={() => deptFilter = 'critical'}
+              style={deptFilter === 'critical' ? getUtilizationBgStyle(0) : ''}
+            >
+              Critical ({criticalDepts.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={deptFilter === 'low' ? 'default' : 'outline'}
+              on:click={() => deptFilter = 'low'}
+              style={deptFilter === 'low' ? getUtilizationBgStyle(37) : ''}
+            >
+              Low ({lowDepts.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={deptFilter === 'moderate' ? 'default' : 'outline'}
+              on:click={() => deptFilter = 'moderate'}
+              style={deptFilter === 'moderate' ? getUtilizationBgStyle(65) : ''}
+            >
+              Moderate ({moderateDepts.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={deptFilter === 'optimal' ? 'default' : 'outline'}
+              on:click={() => deptFilter = 'optimal'}
+              style={deptFilter === 'optimal' ? getUtilizationBgStyle(90) : ''}
+            >
+              Optimal ({optimalDepts.length})
+            </Button>
+            <Button
+              size="sm"
+              variant={deptFilter === 'over-allocated' ? 'default' : 'outline'}
+              on:click={() => deptFilter = 'over-allocated'}
+              style={deptFilter === 'over-allocated' ? 'background-color: #ef4444; color: white;' : ''}
+            >
+              Over-allocated ({overAllocatedDepts.length})
+            </Button>
+          </div>
         </div>
         <div class="divide-y">
-          {#if !capacityAnalytics?.byDepartment?.length}
+          {#if !filteredDepts.length}
             <div class="p-6 text-center text-muted-foreground">
-              No capacity data available
+              No departments match this filter
             </div>
           {:else}
-            {#each capacityAnalytics.byDepartment as dept}
+            {#each paginatedDepts as dept}
               <div class="px-6 py-4">
                 <div class="flex items-center justify-between">
-                  <span class="font-medium">{dept.department || 'Unassigned'}</span>
-                  <span class={cn('font-semibold', getUtilizationColor(dept.utilization))}>
+                  <div class="flex items-center gap-3">
+                    <Building2 class="h-5 w-5 text-muted-foreground" />
+                    <span class="font-medium">{dept.department || 'Unassigned'}</span>
+                  </div>
+                  <div
+                    class="px-3 py-1 rounded-lg font-semibold text-white text-sm"
+                    style={getUtilizationBgStyle(dept.utilization)}
+                  >
                     {formatPercent(dept.utilization)}
-                  </span>
+                  </div>
                 </div>
                 <div class="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                   <div
-                    class={cn('h-full transition-all', getUtilizationBgColor(dept.utilization))}
-                    style="width: {Math.min(dept.utilization, 100)}%"
+                    class="h-full transition-all"
+                    style="{getUtilizationBgStyle(dept.utilization)}; width: {Math.min(dept.utilization, 100)}%"
                   />
                 </div>
                 <div class="mt-1 flex justify-between text-xs text-muted-foreground">
@@ -368,16 +610,46 @@
             {/each}
           {/if}
         </div>
+        <!-- Pagination -->
+        {#if totalDeptPages > 1}
+          <div class="flex items-center justify-between border-t px-6 py-4">
+            <div class="text-sm text-muted-foreground">
+              Showing {((deptPage - 1) * pageSize) + 1}-{Math.min(deptPage * pageSize, filteredDepts.length)} of {filteredDepts.length}
+            </div>
+            <div class="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={deptPage === 1}
+                on:click={() => deptPage--}
+              >
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={deptPage === totalDeptPages}
+                on:click={() => deptPage++}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        {/if}
         <!-- Summary -->
-        {#if capacityAnalytics}
+        {#if filteredDepts.length > 0}
           <div class="border-t bg-muted/50 px-6 py-4">
             <div class="flex items-center justify-between text-sm">
               <span class="font-medium">Total Capacity</span>
-              <span class="font-semibold">{capacityAnalytics.totalCapacity?.toFixed(0) || 0}h</span>
+              <span class="font-semibold">{filteredDepts.reduce((sum, d) => sum + (d.capacity || 0), 0).toFixed(0)}h</span>
             </div>
             <div class="flex items-center justify-between text-sm mt-1">
               <span class="font-medium">Total Allocated</span>
-              <span class="font-semibold">{capacityAnalytics.totalAllocated?.toFixed(0) || 0}h</span>
+              <span class="font-semibold">{filteredDepts.reduce((sum, d) => sum + (d.allocated || 0), 0).toFixed(0)}h</span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="font-medium">Average Utilization</span>
+              <span class="font-semibold">{formatPercent(filteredDepts.reduce((sum, d) => sum + (d.utilization || 0), 0) / filteredDepts.length)}</span>
             </div>
           </div>
         {/if}

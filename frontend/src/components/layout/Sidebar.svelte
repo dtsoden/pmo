@@ -103,15 +103,15 @@
       </a>
     {:else}
       <a href="/dashboard" class="flex items-center justify-center">
-        <!-- Light theme logo (icon only when collapsed) -->
+        <!-- Light theme icon (when collapsed) -->
         <img
-          src="/logo.png"
+          src="/ICO.png"
           alt="PMO Platform"
           class="h-8 w-8 object-contain dark:hidden"
         />
-        <!-- Dark theme logo (icon only when collapsed) -->
+        <!-- Dark theme icon (when collapsed) -->
         <img
-          src="/ReverseLogo.png"
+          src="/ReversedICO.png"
           alt="PMO Platform"
           class="hidden h-8 w-8 object-contain dark:block"
         />

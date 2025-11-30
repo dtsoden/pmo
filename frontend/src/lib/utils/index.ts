@@ -254,6 +254,97 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 11);
 }
 
+// Utilization color utilities
+/**
+ * Color stops for utilization percentage gradient:
+ * - 0-25%: Bright orange (critical warning)
+ * - 25-50%: Iridescent yellow (low)
+ * - 50-80%: PMO Blue (moderate)
+ * - 80-100%: Green (optimal)
+ * - >100%: Red (over-allocated)
+ */
+const UTILIZATION_COLOR_STOPS = [
+  { percent: 0, rgb: { r: 255, g: 140, b: 0 } },      // Bright orange (#ff8c00)
+  { percent: 25, rgb: { r: 255, g: 234, b: 0 } },     // Iridescent yellow (#ffea00)
+  { percent: 50, rgb: { r: 37, g: 99, b: 235 } },     // PMO Blue (#2563eb)
+  { percent: 80, rgb: { r: 34, g: 197, b: 94 } },     // Green (#22c55e)
+  { percent: 100, rgb: { r: 34, g: 197, b: 94 } },    // Green (#22c55e)
+];
+
+// Red color for over-allocation (>100%)
+const OVER_ALLOCATED_COLOR = { r: 239, g: 68, b: 68 };  // Red (#ef4444)
+
+/**
+ * Interpolate between two RGB colors
+ */
+function interpolateColor(
+  color1: { r: number; g: number; b: number },
+  color2: { r: number; g: number; b: number },
+  factor: number
+): { r: number; g: number; b: number } {
+  return {
+    r: Math.round(color1.r + factor * (color2.r - color1.r)),
+    g: Math.round(color1.g + factor * (color2.g - color1.g)),
+    b: Math.round(color1.b + factor * (color2.b - color1.b)),
+  };
+}
+
+/**
+ * Get RGB color for a utilization percentage with gradient between stops
+ */
+export function getUtilizationRgb(utilizationPercent: number): { r: number; g: number; b: number } {
+  // Handle over-allocation (>100%) - always red
+  if (utilizationPercent > 100) return OVER_ALLOCATED_COLOR;
+
+  // Handle edge cases
+  if (utilizationPercent <= 0) return UTILIZATION_COLOR_STOPS[0].rgb;
+  if (utilizationPercent === 100) return UTILIZATION_COLOR_STOPS[UTILIZATION_COLOR_STOPS.length - 1].rgb;
+
+  // Find the two color stops this percentage falls between
+  for (let i = 0; i < UTILIZATION_COLOR_STOPS.length - 1; i++) {
+    const currentStop = UTILIZATION_COLOR_STOPS[i];
+    const nextStop = UTILIZATION_COLOR_STOPS[i + 1];
+
+    if (utilizationPercent >= currentStop.percent && utilizationPercent <= nextStop.percent) {
+      // Calculate interpolation factor (0 to 1)
+      const range = nextStop.percent - currentStop.percent;
+      const position = utilizationPercent - currentStop.percent;
+      const factor = range > 0 ? position / range : 0;
+
+      return interpolateColor(currentStop.rgb, nextStop.rgb, factor);
+    }
+  }
+
+  // Fallback (should never reach here)
+  return UTILIZATION_COLOR_STOPS[0].rgb;
+}
+
+/**
+ * Get hex color for a utilization percentage
+ */
+export function getUtilizationColor(utilizationPercent: number): string {
+  const rgb = getUtilizationRgb(utilizationPercent);
+  return `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Get inline style for utilization background color
+ */
+export function getUtilizationBgStyle(utilizationPercent: number): string {
+  return `background-color: ${getUtilizationColor(utilizationPercent)}`;
+}
+
+/**
+ * Get utilization category label
+ */
+export function getUtilizationCategory(utilizationPercent: number): string {
+  if (utilizationPercent > 100) return 'Over-allocated';
+  if (utilizationPercent >= 80) return 'Optimal (80-100%)';
+  if (utilizationPercent >= 50) return 'Moderate (50-79%)';
+  if (utilizationPercent >= 25) return 'Low (25-49%)';
+  return 'Critical (0-24%)';
+}
+
 // Get clean timezone abbreviation (consistent 3-4 letter format)
 export function getTimezoneAbbreviation(timezone?: string): string {
   if (!timezone) return 'UTC';

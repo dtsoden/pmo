@@ -66,7 +66,10 @@
       "Bash(wc:*)",
       "Bash(git rm:*)",
       "Bash(del C:UsersDavidSodenCNX-PMObackendupdate-email.js)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx ts-node scripts/enhance-capacity-data.ts)",
+      "Bash(npx ts-node:*)"
     ],
     "deny": [],
     "ask": []

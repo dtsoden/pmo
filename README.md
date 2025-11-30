@@ -52,6 +52,14 @@ A comprehensive PMO tracking platform with project management, capacity planning
 
 ## 📚 Documentation
 
+### Security & Access Control
+
+- **[Role-Based Permissions](docs/PERMISSIONS.md)** - Complete RBAC reference
+  - 7-tier role hierarchy (SUPER_ADMIN → VIEWER)
+  - Page and feature access by role
+  - API endpoint permissions
+  - Implementation details and best practices
+
 ### Deployment Guides
 
 Choose your deployment platform:
