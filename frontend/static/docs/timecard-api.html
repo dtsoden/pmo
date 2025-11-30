@@ -220,7 +220,7 @@
 
     <h3>Step 2: Configure Your Integration</h3>
     <p>Use the following base URL for all API requests:</p>
-    <pre><code>https://pmoservices.pmoplatform.com/api/timecard</code></pre>
+    <pre><code>https://your-domain.com/api/timecard</code></pre>
 
     <!-- AUTHENTICATION -->
     <h2>🔐 Authentication</h2>
@@ -230,7 +230,7 @@
     <pre><code>Authorization: Bearer pmo_live_[your_api_key_here]</code></pre>
 
     <h4>Example Request with Authentication:</h4>
-    <pre><code>curl -X GET "https://pmoservices.pmoplatform.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31" \
+    <pre><code>curl -X GET "https://your-domain.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31" \
   -H "Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"</code></pre>
 
     <div class="note">
@@ -275,7 +275,7 @@
 
     <h4>Request Example:</h4>
     <pre><code>GET /api/timecard/export?startDate=2025-01-01&endDate=2025-01-31
-Host: pmoservices.pmoplatform.com
+Host: your-domain.com
 Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0</code></pre>
 
     <h4>Response Format:</h4>
@@ -635,7 +635,7 @@ Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0</code></
     <pre><code>const fetch = require('node-fetch');
 
 const API_KEY = 'pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0';
-const BASE_URL = 'https://pmoservices.pmoplatform.com/api/timecard';
+const BASE_URL = 'https://your-domain.com/api/timecard';
 
 async function exportTimeCards(startDate, endDate) {
   const url = `${BASE_URL}/export?startDate=${startDate}&endDate=${endDate}`;
@@ -673,7 +673,7 @@ exportTimeCards('2025-01-01', '2025-01-31')
 from datetime import datetime
 
 API_KEY = 'pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
-BASE_URL = 'https://pmoservices.pmoplatform.com/api/timecard'
+BASE_URL = 'https://your-domain.com/api/timecard'
 
 def export_time_cards(start_date, end_date):
     """Export time cards for a date range."""
@@ -712,13 +712,13 @@ except Exception as e:
     <h3>cURL Example</h3>
     <pre><code># Export time cards for January 2025
 curl -X GET \
-  "https://pmoservices.pmoplatform.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31" \
+  "https://your-domain.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31" \
   -H "Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" \
   | jq '.'
 
 # Export time cards for a single day
 curl -X GET \
-  "https://pmoservices.pmoplatform.com/api/timecard/export?startDate=2025-01-15&endDate=2025-01-15" \
+  "https://your-domain.com/api/timecard/export?startDate=2025-01-15&endDate=2025-01-15" \
   -H "Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" \
   | jq '.'</code></pre>
 
@@ -756,8 +756,8 @@ curl -X GET \
 
     <p>For API support, contact your PMO Platform administrator or reach out to:</p>
     <ul>
-      <li><strong>Email:</strong> support@pmoplatform.com</li>
-      <li><strong>Documentation:</strong> <a href="https://pmoplatform.com/docs">https://pmoplatform.com/docs</a></li>
+      <li><strong>Email:</strong> support@your-domain.com</li>
+      <li><strong>Documentation:</strong> <a href="https://your-domain.com/docs">https://your-domain.com/docs</a></li>
     </ul>
 
     <div class="success">
