@@ -63,7 +63,8 @@
   // Leave request carousel images
   const leaveRequestImages = [
     { src: '/screenshots/leave-requests.png', alt: 'Leave Request Management - Personal Dashboard' },
-    { src: '/screenshots/leave-requests-2.png', alt: 'Leave Request Approval Workflow - Manager View' }
+    { src: '/screenshots/leave-requests-2.png', alt: 'Leave Request Approval Workflow - Manager View' },
+    { src: '/screenshots/leave-requests-3.png', alt: 'Capacity Planning Integration - Recent Time Off Requests' }
   ];
 
   onMount(() => {
