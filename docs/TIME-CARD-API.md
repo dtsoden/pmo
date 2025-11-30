@@ -174,6 +174,88 @@ The API returns a JSON array containing time card data for each user who has tim
 
 ---
 
+## 🌍 Timezone Handling
+
+**CRITICAL FOR INTERNATIONAL DEPLOYMENTS**
+
+### All Timestamps are UTC
+
+All timestamps in API responses use **ISO 8601 format in UTC timezone** (indicated by `Z` suffix):
+
+```json
+{
+  "startTime": "2025-11-24T09:35:00.000Z",  // 9:35 AM UTC
+  "endTime": "2025-11-24T11:56:00.000Z"     // 11:56 AM UTC
+}
+```
+
+The `Z` suffix means **Zulu time** (UTC+0). Your integration **MUST** convert these to your local timezone.
+
+### Query Parameters are UTC Calendar Dates
+
+The `startDate` and `endDate` query parameters are **calendar dates only** (YYYY-MM-DD), interpreted as UTC:
+
+- `startDate=2025-11-24` → Midnight UTC on November 24 (`2025-11-24T00:00:00.000Z`)
+- `endDate=2025-11-24` → End of day UTC on November 24 (`2025-11-24T23:59:59.999Z`)
+
+### International Organizations - Important!
+
+For organizations with employees in different timezones:
+
+**Example Scenario:**
+- Employee in Tokyo (UTC+9) works Monday, November 24, 9:00 AM JST
+- Stored in system: `2025-11-24T00:00:00.000Z` (Sunday 11/23 midnight UTC)
+- Same timestamp shows as:
+  - **Tokyo (JST):** Monday 9:00 AM
+  - **New York (EST):** Sunday 7:00 PM
+  - **London (GMT):** Monday 12:00 AM
+
+**Implication for Date Ranges:**
+
+To export all time for an employee in Tokyo for Monday Nov 24 (JST), you need to query:
+```
+?startDate=2025-11-23&endDate=2025-11-24
+```
+Because their Monday JST spans Sunday-Monday UTC.
+
+### Best Practices
+
+1. **Always parse timestamps with timezone-aware libraries:**
+   ```python
+   from datetime import datetime
+   import pytz
+
+   # Parse UTC timestamp
+   utc_time = datetime.fromisoformat('2025-11-24T09:35:00.000Z'.replace('Z', '+00:00'))
+
+   # Convert to local timezone
+   local_tz = pytz.timezone('America/New_York')
+   local_time = utc_time.astimezone(local_tz)
+   ```
+
+2. **Account for employee timezones when requesting date ranges:**
+   - If employees work across multiple timezones, request wider date ranges
+   - Example: For "November 24" across all timezones, query Nov 23-25 UTC
+
+3. **Store the `employeeId` timezone separately:**
+   - Use the `employeeId` field to match employees to your payroll system
+   - Maintain timezone mappings in your system for accurate conversion
+
+4. **Test with international data:**
+   - Verify your integration handles UTC→local conversion correctly
+   - Test edge cases: midnight crossings, DST transitions, date boundaries
+
+### Daylight Saving Time (DST)
+
+UTC does not observe DST. Timestamps remain consistent year-round:
+- `2025-03-10T10:00:00.000Z` is always 10:00 AM UTC
+- In PST (UTC-8): 2:00 AM PST
+- After DST switch to PDT (UTC-7): 3:00 AM PDT
+
+Your integration should handle DST transitions automatically when converting from UTC to local time.
+
+---
+
 ## 💻 Code Examples
 
 ### Python Example

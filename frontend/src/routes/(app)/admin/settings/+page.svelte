@@ -13,7 +13,6 @@
     Shield,
     Bell,
     Settings,
-    Plug,
     Save,
     RotateCcw,
     AlertCircle,
@@ -52,11 +51,6 @@
       icon: Settings,
       title: 'Platform Settings',
       description: 'General platform configuration and features',
-    },
-    integrations: {
-      icon: Plug,
-      title: 'Integration Settings',
-      description: 'External service connections and APIs',
     },
   };
 
