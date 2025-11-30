@@ -156,7 +156,7 @@ A user in Tokyo working Monday 9 AM JST is actually working Sunday 12 AM UTC. We
 
 ---
 
-## 🔧 User.timezone Field (Currently Unused)
+## 🔧 User.timezone Field (Included in API Exports)
 
 The database schema includes a `timezone` field on the `User` model:
 
@@ -167,14 +167,43 @@ model User {
 }
 ```
 
-**Current Status:** Field exists but is **NOT actively used** for any timezone conversion logic.
+**Current Status:** Field is populated with IANA timezones (e.g., `"America/New_York"`, `"Europe/London"`, `"Asia/Tokyo"`) and is **included in Time Card API exports**.
 
-**Verified by:** Search for `user.timezone` across backend codebase returned zero results.
+**Usage:**
+- ✅ **Time Card API:** User timezone is included in export responses for payroll integration
+- ⚠️ **Internal Reports:** Not currently used for date range conversion or display
+- ⚠️ **Frontend Display:** Browser timezone used instead of user preference
+
+**Example Database Values:**
+```sql
+SELECT "firstName", "lastName", timezone FROM "User" LIMIT 5;
+
+ firstName | lastName |      timezone
+-----------+----------+---------------------
+ James     | Smith    | Europe/Paris
+ Mary      | Johnson  | Australia/Melbourne
+ Robert    | Williams | America/Sao_Paulo
+```
+
+**API Export Format:**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "employeeId": "EMP-12345",
+    "timezone": "America/New_York"
+  }
+}
+```
 
 **Future Enhancement Opportunity:**
 - Could be used to convert report date ranges to user's local timezone
 - Could adjust "week start" for weekly reports based on user location
-- Could provide timezone-aware calendar date filtering
+- Could provide timezone-aware calendar date filtering in frontend
+- Could override browser timezone for consistent cross-device experience
 
 ---
 

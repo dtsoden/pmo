@@ -79,7 +79,8 @@ The API returns a JSON array containing time card data for each user who has tim
       "email": "user@example.com",
       "firstName": "John",
       "lastName": "Doe",
-      "employeeId": "EMP-12345"
+      "employeeId": "EMP-12345",
+      "timezone": "America/New_York"
     },
     "summary": [
       {
@@ -128,6 +129,7 @@ The API returns a JSON array containing time card data for each user who has tim
 - `firstName` - User's first name
 - `lastName` - User's last name
 - `employeeId` - Employee ID for payroll matching (nullable)
+- `timezone` - User's IANA timezone (e.g., `"America/New_York"`, `"Europe/London"`, `"Asia/Tokyo"`)
 
 **Summary Array:**
 - `date` - Date in ISO format (YYYY-MM-DD)
@@ -203,12 +205,31 @@ The `startDate` and `endDate` query parameters are **calendar dates only** (YYYY
 For organizations with employees in different timezones:
 
 **Example Scenario:**
-- Employee in Tokyo (UTC+9) works Monday, November 24, 9:00 AM JST
-- Stored in system: `2025-11-24T00:00:00.000Z` (Sunday 11/23 midnight UTC)
-- Same timestamp shows as:
-  - **Tokyo (JST):** Monday 9:00 AM
-  - **New York (EST):** Sunday 7:00 PM
-  - **London (GMT):** Monday 12:00 AM
+
+API response includes user timezone:
+```json
+{
+  "user": {
+    "firstName": "Yuki",
+    "lastName": "Tanaka",
+    "employeeId": "EMP-2045",
+    "timezone": "Asia/Tokyo"
+  },
+  "details": [{
+    "date": "2025-11-23",
+    "sessions": [{
+      "startTime": "2025-11-24T00:00:00.000Z",
+      "endTime": "2025-11-24T09:00:00.000Z"
+    }]
+  }]
+}
+```
+
+Employee Yuki in Tokyo (UTC+9) worked Monday, November 24, 9:00 AM JST:
+- Stored as: `2025-11-24T00:00:00.000Z` (Sunday 11/23 midnight UTC)
+- User timezone: `"Asia/Tokyo"` (tells you to convert to JST)
+- UTC date: `2025-11-23` (calendar date in UTC)
+- Local date: Monday, Nov 24 (when converted to Asia/Tokyo)
 
 **Implication for Date Ranges:**
 
@@ -216,7 +237,7 @@ To export all time for an employee in Tokyo for Monday Nov 24 (JST), you need to
 ```
 ?startDate=2025-11-23&endDate=2025-11-24
 ```
-Because their Monday JST spans Sunday-Monday UTC.
+Because their Monday JST spans Sunday-Monday UTC. The `user.timezone` field helps you determine this offset.
 
 ### Best Practices
 
@@ -237,9 +258,10 @@ Because their Monday JST spans Sunday-Monday UTC.
    - If employees work across multiple timezones, request wider date ranges
    - Example: For "November 24" across all timezones, query Nov 23-25 UTC
 
-3. **Store the `employeeId` timezone separately:**
-   - Use the `employeeId` field to match employees to your payroll system
-   - Maintain timezone mappings in your system for accurate conversion
+3. **Use the `user.timezone` field for accurate conversion:**
+   - Each user object includes their IANA timezone (e.g., `"America/New_York"`, `"Asia/Tokyo"`)
+   - Use this to understand which timezone the employee works in
+   - Helps determine correct date ranges when querying specific employees
 
 4. **Test with international data:**
    - Verify your integration handles UTC→local conversion correctly

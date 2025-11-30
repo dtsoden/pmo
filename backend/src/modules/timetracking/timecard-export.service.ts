@@ -41,6 +41,7 @@ interface UserTimeCard {
     firstName: string;
     lastName: string;
     employeeId: string | null;
+    timezone: string; // IANA timezone (e.g., "America/New_York", "Europe/London")
   };
   summary: DaySummary[];
   details: DayDetail[];
@@ -74,6 +75,7 @@ export async function exportTimeCards(startDate: Date, endDate: Date): Promise<U
           firstName: true,
           lastName: true,
           phone: true, // Using phone field as employeeId placeholder
+          timezone: true,
         },
       },
       task: {
@@ -122,6 +124,7 @@ export async function exportTimeCards(startDate: Date, endDate: Date): Promise<U
           firstName: entry.user.firstName,
           lastName: entry.user.lastName,
           employeeId: entry.user.phone, // Using phone as employeeId placeholder
+          timezone: entry.user.timezone,
         },
         summary: [],
         details: [],
