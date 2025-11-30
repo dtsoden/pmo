@@ -597,7 +597,7 @@ Contributions are welcome! Please:
 5. Open a Pull Request
 
 **Before contributing:**
-- Read the [code conventions](#code-conventions) section
+- Read the [code conventions](docs/CODE-CONVENTIONS.md) guide
 - Ensure tests pass: `cd backend && npm test`
 - Follow existing code style (TypeScript, ESLint)
 - Update documentation if needed
