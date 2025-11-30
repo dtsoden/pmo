@@ -40,6 +40,11 @@
   let loading = true;
   let error = '';
 
+  // Pagination for talent optimization sections
+  let developmentPage = 1;
+  let benchPage = 1;
+  const pageSize = 10;
+
   // Default to current month for time analytics
   const now = new Date();
   const defaultStartDate = format(startOfMonth(now), 'yyyy-MM-dd');
@@ -111,12 +116,19 @@
     .slice(0, 5);
 
   // Talent optimization - use skills gap analysis data
-  $: developmentCandidates = (skillsGap?.trainingRecommendations || [])
+  $: allDevelopmentCandidates = (skillsGap?.trainingRecommendations || [])
     .filter(rec => rec.currentUtilization < 40) // Below 40% is concerning
     .sort((a, b) => a.currentUtilization - b.currentUtilization); // Worst first
 
-  $: skillsInvestmentNeeded = (skillsGap?.trainingRecommendations || [])
+  $: allSkillsInvestmentNeeded = (skillsGap?.trainingRecommendations || [])
     .filter(rec => rec.currentUtilization >= 40 && rec.currentUtilization < 65); // 40-65% could be improved
+
+  // Paginated data
+  $: developmentCandidates = allDevelopmentCandidates.slice((benchPage - 1) * pageSize, benchPage * pageSize);
+  $: skillsInvestmentNeeded = allSkillsInvestmentNeeded.slice((developmentPage - 1) * pageSize, developmentPage * pageSize);
+
+  $: developmentTotalPages = Math.ceil(allSkillsInvestmentNeeded.length / pageSize);
+  $: benchTotalPages = Math.ceil(allDevelopmentCandidates.length / pageSize);
 
   // Top skills in demand
   $: topSkillsGaps = (skillsGap?.skillsGap || []).slice(0, 10);
@@ -559,11 +571,11 @@
               </p>
             </div>
             <Badge variant="info" class="text-xs">
-              {skillsInvestmentNeeded.length} candidates
+              {allSkillsInvestmentNeeded.length} candidates
             </Badge>
           </div>
 
-          {#if skillsInvestmentNeeded.length === 0}
+          {#if allSkillsInvestmentNeeded.length === 0}
             <div class="text-center py-8 text-muted-foreground text-sm">
               All team members are well-utilized
             </div>
@@ -628,6 +640,33 @@
                 </div>
               {/each}
             </div>
+
+            <!-- Pagination -->
+            {#if developmentTotalPages > 1}
+              <div class="flex items-center justify-between pt-4 border-t">
+                <p class="text-sm text-muted-foreground">
+                  Showing {(developmentPage - 1) * pageSize + 1}-{Math.min(developmentPage * pageSize, allSkillsInvestmentNeeded.length)} of {allSkillsInvestmentNeeded.length}
+                </p>
+                <div class="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={developmentPage === 1}
+                    on:click={() => developmentPage--}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={developmentPage === developmentTotalPages}
+                    on:click={() => developmentPage++}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            {/if}
           {/if}
         </div>
 
@@ -640,12 +679,12 @@
                 Chronically underutilized resources requiring strategic review
               </p>
             </div>
-            <Badge variant={developmentCandidates.length > 0 ? 'warning' : 'default'} class="text-xs">
-              {developmentCandidates.length} flagged
+            <Badge variant={allDevelopmentCandidates.length > 0 ? 'warning' : 'default'} class="text-xs">
+              {allDevelopmentCandidates.length} flagged
             </Badge>
           </div>
 
-          {#if developmentCandidates.length === 0}
+          {#if allDevelopmentCandidates.length === 0}
             <div class="text-center py-8 text-muted-foreground text-sm">
               No chronic underutilization detected
             </div>
@@ -738,13 +777,40 @@
               {/each}
             </div>
 
+            <!-- Pagination -->
+            {#if benchTotalPages > 1}
+              <div class="flex items-center justify-between pt-4 border-t">
+                <p class="text-sm text-muted-foreground">
+                  Showing {(benchPage - 1) * pageSize + 1}-{Math.min(benchPage * pageSize, allDevelopmentCandidates.length)} of {allDevelopmentCandidates.length}
+                </p>
+                <div class="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={benchPage === 1}
+                    on:click={() => benchPage--}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={benchPage === benchTotalPages}
+                    on:click={() => benchPage++}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            {/if}
+
             <!-- Summary Impact -->
-            {#if developmentCandidates.length > 0}
-              {@const totalUnusedHours = developmentCandidates.reduce((sum, rec) =>
+            {#if allDevelopmentCandidates.length > 0}
+              {@const totalUnusedHours = allDevelopmentCandidates.reduce((sum, rec) =>
                 sum + rec.availableHours, 0
               )}
               {@const totalCostImpact = totalUnusedHours * AVERAGE_RATE}
-              {@const totalProjectMatches = developmentCandidates.reduce((sum, rec) =>
+              {@const totalProjectMatches = allDevelopmentCandidates.reduce((sum, rec) =>
                 sum + rec.potentialProjectMatches, 0
               )}
               <div class="mt-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-600">
@@ -755,7 +821,7 @@
                   </span>
                 </div>
                 <p class="text-xs text-muted-foreground">
-                  {totalUnusedHours.toFixed(0)} unused hours across {developmentCandidates.length} team members
+                  {totalUnusedHours.toFixed(0)} unused hours across {allDevelopmentCandidates.length} team members
                 </p>
                 <div class="mt-3 pt-3 border-t border-slate-300 dark:border-slate-600">
                   <p class="text-xs font-medium mb-2">Recommended Actions:</p>
