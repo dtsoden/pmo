@@ -43,7 +43,7 @@
   // Pagination for talent optimization sections
   let developmentPage = 1;
   let benchPage = 1;
-  const pageSize = 10;
+  const pageSize = 5;
 
   // Default to current month for time analytics
   const now = new Date();
