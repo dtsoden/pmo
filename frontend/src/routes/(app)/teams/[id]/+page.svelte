@@ -3,7 +3,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { api, type TeamDetail, type TeamMember, type TeamCapacity, type User, type TeamMemberRole } from '$lib/api/client';
-  import { Card, Button, Badge, Avatar, Spinner, EmptyState, Modal, Select } from '$components/shared';
+  import { Card, Button, Badge, Avatar, Spinner, EmptyState, Modal, Select, SearchableSelect } from '$components/shared';
   import { toast } from 'svelte-sonner';
   import {
     ArrowLeft,
@@ -42,6 +42,8 @@
   let selectedRole: TeamMemberRole = 'MEMBER';
   let addingMember = false;
   let userSearch = '';
+  let loadingUsers = false;
+  let userSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Assign project form
   let availableProjects: any[] = [];
@@ -50,21 +52,15 @@
   let projectStartDate = '';
   let projectEndDate = '';
   let assigningProject = false;
+  let projectSearch = '';
+  let loadingProjects = false;
+  let projectSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Edit project assignment
   let editingAssignment: any = null;
   let updatingProject = false;
 
-  $: filteredUsers = availableUsers.filter((u) => {
-    if (!userSearch.trim()) return true;
-    const search = userSearch.toLowerCase();
-    return (
-      u.firstName.toLowerCase().includes(search) ||
-      u.lastName.toLowerCase().includes(search) ||
-      u.email.toLowerCase().includes(search) ||
-      (u.jobTitle && u.jobTitle.toLowerCase().includes(search))
-    );
-  });
+  // Removed client-side filtering - now handled by SearchableSelect with server-side search
 
   // Filter out completed and cancelled projects from assignments
   $: activeProjectAssignments = (team?.projectAssignments || []).filter((a) => {
@@ -94,15 +90,30 @@
     }
   }
 
-  async function loadAvailableUsers() {
+  async function loadAvailableUsers(search = '') {
+    loadingUsers = true;
     try {
-      const response = await api.users.list({ limit: 100 });
+      const response = await api.users.list({ limit: 20, search: search || undefined, status: 'ACTIVE' });
       // Filter out users already in the team
       const memberIds = team?.members.map((m) => m.user.id) || [];
       availableUsers = (response.data || []).filter((u) => !memberIds.includes(u.id));
     } catch (err) {
       toast.error('Failed to load users');
+    } finally {
+      loadingUsers = false;
     }
+  }
+
+  function handleUserSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    if (userSearchTimeout) {
+      clearTimeout(userSearchTimeout);
+    }
+
+    userSearchTimeout = setTimeout(() => {
+      loadAvailableUsers(query);
+    }, 300);
   }
 
   onMount(loadTeam);
@@ -180,9 +191,10 @@
   }
 
   // Project assignment functions
-  async function loadAvailableProjects() {
+  async function loadAvailableProjects(search = '') {
+    loadingProjects = true;
     try {
-      const response = await api.projects.list({ limit: 100 });
+      const response = await api.projects.list({ limit: 20, search: search || undefined });
       // Filter out projects already assigned to this team (include all assignments, not just active)
       const assignedProjectIds = team?.projectAssignments.map((a) => a.project?.id) || [];
       // Also filter out completed and cancelled projects
@@ -193,11 +205,26 @@
       );
     } catch (err) {
       toast.error('Failed to load projects');
+    } finally {
+      loadingProjects = false;
     }
+  }
+
+  function handleProjectSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    if (projectSearchTimeout) {
+      clearTimeout(projectSearchTimeout);
+    }
+
+    projectSearchTimeout = setTimeout(() => {
+      loadAvailableProjects(query);
+    }, 300);
   }
 
   async function openAssignProjectModal() {
     selectedProjectId = '';
+    projectSearch = '';
     projectHours = 40;
     projectStartDate = '';
     projectEndDate = '';
@@ -591,72 +618,21 @@
   <!-- Add Member Modal -->
   <Modal bind:open={showAddMemberModal} title="Add Team Member" size="md">
     <div class="space-y-4">
-      <!-- Search Input -->
-      <div class="space-y-1.5">
-        <label for="userSearch" class="text-sm font-medium">Search Users</label>
-        <input
-          id="userSearch"
-          type="text"
-          placeholder="Search by name, email, or job title..."
-          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          bind:value={userSearch}
-        />
-      </div>
-
-      <!-- Selected User Display -->
-      {#if selectedUser}
-        <div class="flex items-center justify-between rounded-lg border border-primary bg-primary/5 p-3">
-          <div class="flex items-center gap-3">
-            <Avatar
-              firstName={selectedUser.firstName}
-              lastName={selectedUser.lastName}
-              src={selectedUser.avatarUrl}
-              size="sm"
-            />
-            <div>
-              <p class="font-medium">{selectedUser.firstName} {selectedUser.lastName}</p>
-              <p class="text-sm text-muted-foreground">{selectedUser.jobTitle || selectedUser.email}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" on:click={() => { selectedUserId = ''; selectedUser = null; }}>
-            <X class="h-4 w-4" />
-          </Button>
-        </div>
-      {/if}
-
-      <!-- User List -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium">
-          {selectedUser ? 'Change Selection' : 'Select User'}
-          <span class="text-muted-foreground font-normal">({filteredUsers.length} available)</span>
-        </label>
-        <div class="max-h-48 overflow-y-auto rounded-md border">
-          {#if filteredUsers.length === 0}
-            <div class="p-4 text-center text-sm text-muted-foreground">
-              {availableUsers.length === 0 ? 'No users available to add' : 'No users match your search'}
-            </div>
-          {:else}
-            {#each filteredUsers as user}
-              <button
-                type="button"
-                class="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/50 {selectedUserId === user.id ? 'bg-primary/10' : ''}"
-                on:click={() => selectUser(user)}
-              >
-                <Avatar
-                  firstName={user.firstName}
-                  lastName={user.lastName}
-                  src={user.avatarUrl}
-                  size="sm"
-                />
-                <div class="min-w-0 flex-1">
-                  <p class="truncate font-medium">{user.firstName} {user.lastName}</p>
-                  <p class="truncate text-sm text-muted-foreground">{user.jobTitle || user.email}</p>
-                </div>
-              </button>
-            {/each}
-          {/if}
-        </div>
-      </div>
+      <!-- User Selection -->
+      <SearchableSelect
+        bind:value={selectedUserId}
+        items={availableUsers.map(u => ({ ...u, displayName: `${u.firstName} ${u.lastName}` }))}
+        loading={loadingUsers}
+        label="User"
+        placeholder="Search by name or email..."
+        displayField="displayName"
+        valueField="id"
+        secondaryField="email"
+        required={true}
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handleUserSearch}
+      />
 
       <!-- Role Selection -->
       <div class="space-y-1.5">
@@ -687,19 +663,20 @@
   <Modal bind:open={showAssignProjectModal} title="Assign Team to Project" size="md">
     <div class="space-y-4">
       <!-- Project Selection -->
-      <div class="space-y-1.5">
-        <label for="project" class="text-sm font-medium">Project <span class="text-destructive">*</span></label>
-        <select
-          id="project"
-          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          bind:value={selectedProjectId}
-        >
-          <option value="">Select a project</option>
-          {#each availableProjects as project}
-            <option value={project.id}>{project.name}</option>
-          {/each}
-        </select>
-      </div>
+      <SearchableSelect
+        bind:value={selectedProjectId}
+        items={availableProjects}
+        loading={loadingProjects}
+        label="Project"
+        placeholder="Search projects..."
+        displayField="name"
+        valueField="id"
+        secondaryField="code"
+        required={true}
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handleProjectSearch}
+      />
 
       <!-- Allocated Hours -->
       <div class="space-y-1.5">

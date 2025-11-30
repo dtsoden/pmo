@@ -6,7 +6,8 @@ import { ProjectStatus, TaskStatus, AssignmentStatus } from '@prisma/client';
 // ============================================
 
 export async function getDashboard(userId: string, userRole: string) {
-  const isManager = ['SUPER_ADMIN', 'ADMIN', 'PMO_MANAGER', 'PROJECT_MANAGER', 'RESOURCE_MANAGER'].includes(userRole);
+  // Team stats only for true admin roles (not project/resource managers)
+  const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'PMO_MANAGER'].includes(userRole);
 
   // Get user's active timer
   const activeTimer = await db.activeTimeEntry.findUnique({
@@ -86,7 +87,7 @@ export async function getDashboard(userId: string, userRole: string) {
     where: {
       isCompleted: false,
       dueDate: { lte: thirtyDaysFromNow },
-      ...(isManager ? {} : {
+      ...(isAdmin ? {} : {
         project: {
           assignments: { some: { userId } },
         },
@@ -101,9 +102,9 @@ export async function getDashboard(userId: string, userRole: string) {
     take: 5,
   });
 
-  // Manager-only stats
+  // Admin-only stats
   let teamStats = null;
-  if (isManager) {
+  if (isAdmin) {
     const [
       totalProjects,
       activeProjects,

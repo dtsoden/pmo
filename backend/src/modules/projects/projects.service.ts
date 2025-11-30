@@ -598,6 +598,7 @@ export interface CreateTaskData {
   startDate?: Date;
   dueDate?: Date;
   tags?: string[];
+  assigneeIds?: string[]; // User IDs to assign to this task
 }
 
 export async function getProjectTasks(projectId: string, params: ListTasksParams = {}) {
@@ -745,11 +746,58 @@ export async function createTask(projectId: string, data: CreateTaskData) {
       startDate: data.startDate,
       dueDate: data.dueDate,
       tags: data.tags || [],
+      // Create task assignments if assigneeIds provided
+      assignments: data.assigneeIds && data.assigneeIds.length > 0 ? {
+        create: data.assigneeIds.map((userId, index) => ({
+          userId,
+          isPrimary: index === 0, // First assignee is primary
+        })),
+      } : undefined,
     },
     select: taskListSelect,
   });
 
-  logger.info(`Task created: ${task.title} for project ${projectId}`);
+  logger.info(`Task created: ${task.title} for project ${projectId} with ${data.assigneeIds?.length || 0} assignees`);
+
+  // Auto-create timer shortcuts for assigned users
+  if (data.assigneeIds && data.assigneeIds.length > 0) {
+    for (const userId of data.assigneeIds) {
+      try {
+        // Check if shortcut already exists for this user+task
+        const existingShortcut = await db.timerShortcut.findFirst({
+          where: { userId, taskId: task.id },
+        });
+
+        if (!existingShortcut) {
+          // Get the highest sortOrder for this user
+          const maxSortOrder = await db.timerShortcut.findFirst({
+            where: { userId },
+            select: { sortOrder: true },
+            orderBy: { sortOrder: 'desc' },
+          });
+
+          const sortOrder = (maxSortOrder?.sortOrder ?? -1) + 1;
+
+          await db.timerShortcut.create({
+            data: {
+              userId,
+              taskId: task.id,
+              label: task.title,
+              description: task.description || undefined,
+              groupName: 'Assigned Tasks',
+              sortOrder,
+              isPinned: false,
+            },
+          });
+
+          logger.info(`Auto-created timer shortcut for user ${userId} and task ${task.id}`);
+        }
+      } catch (err) {
+        // Don't fail task creation if shortcut creation fails
+        logger.error(`Failed to create timer shortcut for user ${userId}: ${(err as Error).message}`);
+      }
+    }
+  }
 
   return task;
 }
@@ -760,7 +808,64 @@ export async function updateTask(taskId: string, data: Partial<CreateTaskData> &
     throw new Error('Task not found');
   }
 
-  const updateData: Prisma.TaskUpdateInput = { ...data };
+  // Handle assignee updates if provided
+  if (data.assigneeIds !== undefined) {
+    // Delete existing assignments
+    await db.taskAssignment.deleteMany({ where: { taskId } });
+
+    // Create new assignments
+    if (data.assigneeIds.length > 0) {
+      await db.taskAssignment.createMany({
+        data: data.assigneeIds.map((userId, index) => ({
+          taskId,
+          userId,
+          isPrimary: index === 0,
+        })),
+      });
+
+      // Auto-create timer shortcuts for newly assigned users
+      for (const userId of data.assigneeIds) {
+        try {
+          // Check if shortcut already exists for this user+task
+          const existingShortcut = await db.timerShortcut.findFirst({
+            where: { userId, taskId },
+          });
+
+          if (!existingShortcut) {
+            // Get the highest sortOrder for this user
+            const maxSortOrder = await db.timerShortcut.findFirst({
+              where: { userId },
+              select: { sortOrder: true },
+              orderBy: { sortOrder: 'desc' },
+            });
+
+            const sortOrder = (maxSortOrder?.sortOrder ?? -1) + 1;
+
+            await db.timerShortcut.create({
+              data: {
+                userId,
+                taskId,
+                label: task.title,
+                description: task.description || undefined,
+                groupName: 'Assigned Tasks',
+                sortOrder,
+                isPinned: false,
+              },
+            });
+
+            logger.info(`Auto-created timer shortcut for user ${userId} and task ${taskId}`);
+          }
+        } catch (err) {
+          // Don't fail task update if shortcut creation fails
+          logger.error(`Failed to create timer shortcut for user ${userId}: ${(err as Error).message}`);
+        }
+      }
+    }
+  }
+
+  // Remove assigneeIds from update data as it's not a Task field
+  const { assigneeIds, ...taskData } = data;
+  const updateData: Prisma.TaskUpdateInput = { ...taskData };
 
   // Auto-set completedDate when status changes to COMPLETED
   if (data.status === TaskStatus.COMPLETED && task.status !== TaskStatus.COMPLETED) {

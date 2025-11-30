@@ -5,6 +5,8 @@
   import { Card, Button } from '$components/shared';
   import { toast } from 'svelte-sonner';
   import { Download, Link, Check, Chrome } from 'lucide-svelte';
+  import { page } from '$app/stores';
+  import { browser } from '$app/environment';
 
   // SvelteKit props - must be declared to avoid warnings
   export let data: unknown = null;
@@ -19,6 +21,12 @@
   let extensionAuthenticated = false;
   let connecting = false;
 
+  // Check if we should auto-connect (coming from extension reconnect button)
+  let shouldAutoConnect = false;
+  $: if (browser && $page.url.searchParams.has('autoconnect')) {
+    shouldAutoConnect = $page.url.searchParams.get('autoconnect') === 'true';
+  }
+
   // Check if extension is already authenticated on mount
   async function checkInitialStatus() {
     const status = await checkExtensionStatus();
@@ -32,6 +40,15 @@
       currentStep = 'connect';
       extensionDetected = true;
       console.log('Extension detected but not authenticated - ready to reconnect');
+
+      // Auto-trigger connection if coming from extension
+      if (shouldAutoConnect) {
+        console.log('Auto-connecting extension...');
+        // Small delay to show the UI before connecting
+        setTimeout(() => {
+          connectExtension();
+        }, 500);
+      }
     }
     // else: Extension not installed, stay on download step
   }
@@ -186,11 +203,11 @@
         <div class="flex items-center flex-1">
           <div class="flex flex-col items-center">
             <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 {
-              getStepIndex(currentStep) > i ? 'bg-green-600 border-green-600 text-white' :
+              getStepIndex(currentStep) > i || (currentStep === 'complete' && step.id === 'complete') ? 'bg-green-600 border-green-600 text-white' :
               getStepIndex(currentStep) === i ? 'bg-blue-600 border-blue-600 text-white' :
               'bg-muted border-border text-muted-foreground'
             }">
-              {#if getStepIndex(currentStep) > i}
+              {#if getStepIndex(currentStep) > i || (currentStep === 'complete' && step.id === 'complete')}
                 <Check class="h-5 w-5" />
               {:else}
                 <span class="text-sm font-semibold">{step.number}</span>
@@ -202,7 +219,7 @@
           </div>
           {#if i < steps.length - 1}
             <div class="flex-1 h-0.5 mx-4 {
-              getStepIndex(currentStep) > i ? 'bg-green-600' : 'bg-border'
+              getStepIndex(currentStep) > i || (currentStep === 'complete' && i === steps.length - 2) ? 'bg-green-600' : 'bg-border'
             }"></div>
           {/if}
         </div>

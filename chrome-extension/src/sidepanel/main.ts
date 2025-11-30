@@ -1,4 +1,4 @@
-import type { Message, MessageResponse, TimerShortcut, ActiveTimer } from '@shared/types';
+import type { Message, MessageResponse, TimerShortcut, ActiveTimer, AuthState } from '@shared/types';
 import { formatDuration, getTaskDisplayName } from '@shared/timer';
 import { initializeTheme } from '@shared/theme';
 
@@ -6,9 +6,11 @@ import { initializeTheme } from '@shared/theme';
 // STATE
 // ============================================
 
+let auth: AuthState | null = null;
 let shortcuts: TimerShortcut[] = [];
 let activeTimer: ActiveTimer | null = null;
 let timerInterval: number | null = null;
+let lastVisibilityCheck: number = 0;
 
 // ============================================
 // INITIALIZATION
@@ -23,10 +25,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initialize();
   setupEventListeners();
   startTimerInterval();
+  setupVisibilityCheck();
 });
 
 async function initialize() {
   try {
+    // Get auth state first
+    const authResponse = await sendMessage({ type: 'GET_AUTH' });
+    auth = authResponse.data;
+
+    if (!auth?.isAuthenticated) {
+      showDisconnected();
+      return;
+    }
+
+    hideDisconnected();
+
     const [shortcutsResponse, timerResponse] = await Promise.all([
       sendMessage({ type: 'GET_SHORTCUTS' }),
       sendMessage({ type: 'GET_ACTIVE_TIMER' }),
@@ -38,6 +52,7 @@ async function initialize() {
     renderUI();
   } catch (error) {
     console.error('Failed to initialize:', error);
+    showDisconnected();
   }
 }
 
@@ -162,26 +177,31 @@ function updateTimerStatus() {
 function setupEventListeners() {
   document.getElementById('manageBtn')?.addEventListener('click', handleManageClick);
   document.getElementById('manageBtn2')?.addEventListener('click', handleManageClick);
+  document.getElementById('reconnectBtn')?.addEventListener('click', handleReconnect);
 
   // Listen for background messages
   chrome.runtime.onMessage.addListener(async (message: Message) => {
     if (message.type === 'TIMER_UPDATED') {
       refreshTimer();
     } else if (message.type === 'SHORTCUTS_UPDATED') {
-      // Check if this is a reconnection event (no shortcuts in local state)
-      // If so, re-initialize to fetch fresh data
-      if (shortcuts.length === 0) {
+      // If we're not authenticated but receiving shortcuts update,
+      // it means user just reconnected - re-initialize
+      if (!auth?.isAuthenticated) {
+        console.log('Received shortcuts update while not authenticated - user reconnected, re-initializing');
+        await initialize();
+      } else if (shortcuts.length === 0) {
         console.log('Received shortcuts update with empty local state - user may have reconnected, re-initializing');
         await initialize();
       } else {
         refreshShortcuts();
       }
     } else if (message.type === 'AUTH_EXPIRED') {
-      // Session expired, clear state and show empty state
-      console.log('Auth expired, clearing sidepanel state');
+      // Session expired, show disconnected overlay
+      console.log('Auth expired, showing disconnected overlay');
+      auth = null;
       shortcuts = [];
       activeTimer = null;
-      renderUI();
+      showDisconnected();
     }
   });
 }
@@ -233,6 +253,15 @@ async function handleManageClick() {
   }
 }
 
+function handleReconnect() {
+  // Link to login with redirect parameter to extension settings
+  // This ensures that after login, user lands directly on extension settings page
+  const frontendUrl = import.meta.env.VITE_EXTENSION_FRONTEND_URL || 'http://localhost:7620';
+  const webUrl = `${frontendUrl}/login?redirect=/settings/extension&autoconnect=true`;
+
+  chrome.tabs.create({ url: webUrl });
+}
+
 // ============================================
 // DATA REFRESH
 // ============================================
@@ -272,6 +301,66 @@ function startTimerInterval() {
 }
 
 // ============================================
+// VISIBILITY CHECK
+// ============================================
+
+function setupVisibilityCheck() {
+  // Shared throttled check function to prevent cascade
+  const throttledConnectionCheck = async (source: string) => {
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastVisibilityCheck;
+
+    // Only check if it's been more than 5 seconds since last check (avoid cascading checks)
+    if (timeSinceLastCheck > 5000) {
+      console.log(`Connection check triggered by: ${source}`);
+      lastVisibilityCheck = now;
+      await checkConnection();
+    }
+  };
+
+  // FASTEST: Check as soon as mouse enters the sidebar area
+  document.body.addEventListener('mouseenter', () => throttledConnectionCheck('mouseenter'));
+
+  // Check when sidebar becomes visible (user switches back to tab)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      throttledConnectionCheck('visibilitychange');
+    }
+  });
+
+  // Check on window focus (user clicks into sidebar)
+  window.addEventListener('focus', () => throttledConnectionCheck('focus'));
+}
+
+async function checkConnection() {
+  try {
+    const authResponse = await sendMessage({ type: 'GET_AUTH' });
+    const currentAuth = authResponse.data;
+
+    // If auth state changed (was connected, now not), re-initialize
+    if (auth?.isAuthenticated && !currentAuth?.isAuthenticated) {
+      console.log('Connection lost, showing disconnected overlay');
+      auth = null;
+      shortcuts = [];
+      activeTimer = null;
+      showDisconnected();
+    } else if (!auth?.isAuthenticated && currentAuth?.isAuthenticated) {
+      console.log('Connection restored, re-initializing');
+      await initialize();
+    }
+  } catch (error) {
+    console.error('Connection check failed:', error);
+    // On error, assume disconnected
+    if (auth?.isAuthenticated) {
+      auth = null;
+      shortcuts = [];
+      activeTimer = null;
+      showDisconnected();
+    }
+  }
+}
+
+// ============================================
 // MESSAGING
 // ============================================
 
@@ -287,6 +376,24 @@ function sendMessage<T = any>(message: Message): Promise<MessageResponse<T>> {
       }
     });
   });
+}
+
+// ============================================
+// DISCONNECTED STATE
+// ============================================
+
+function showDisconnected() {
+  const overlay = document.getElementById('disconnectedOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+  }
+}
+
+function hideDisconnected() {
+  const overlay = document.getElementById('disconnectedOverlay');
+  if (overlay) {
+    overlay.classList.add('hidden');
+  }
 }
 
 // ============================================

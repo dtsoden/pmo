@@ -8,6 +8,7 @@ export { default as DateInput } from './DateInput.svelte';
 export { default as EmptyState } from './EmptyState.svelte';
 export { default as Input } from './Input.svelte';
 export { default as Modal } from './Modal.svelte';
+export { default as SearchableSelect } from './SearchableSelect.svelte';
 export { default as Select } from './Select.svelte';
 export { default as SessionTimeout } from './SessionTimeout.svelte';
 export { default as Spinner } from './Spinner.svelte';

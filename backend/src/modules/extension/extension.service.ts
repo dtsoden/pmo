@@ -113,6 +113,31 @@ export async function createShortcut(userId: string, data: CreateShortcutData) {
     if (!task) {
       throw new Error('Task not found');
     }
+
+    // Auto-assign user to task if not already assigned
+    const existingAssignment = await db.taskAssignment.findFirst({
+      where: {
+        taskId: data.taskId,
+        userId,
+      },
+    });
+
+    if (!existingAssignment) {
+      // Check if this is the first assignment to determine isPrimary
+      const assignmentCount = await db.taskAssignment.count({
+        where: { taskId: data.taskId },
+      });
+
+      await db.taskAssignment.create({
+        data: {
+          taskId: data.taskId,
+          userId,
+          isPrimary: assignmentCount === 0, // First person assigned becomes primary
+        },
+      });
+
+      logger.info(`Auto-assigned user ${userId} to task ${data.taskId} via shortcut creation`);
+    }
   }
 
   const shortcut = await db.timerShortcut.create({
@@ -167,6 +192,31 @@ export async function updateShortcut(id: string, userId: string, data: UpdateSho
 
       if (!task) {
         throw new Error('Task not found');
+      }
+
+      // Auto-assign user to task if not already assigned
+      const existingAssignment = await db.taskAssignment.findFirst({
+        where: {
+          taskId: data.taskId,
+          userId,
+        },
+      });
+
+      if (!existingAssignment) {
+        // Check if this is the first assignment to determine isPrimary
+        const assignmentCount = await db.taskAssignment.count({
+          where: { taskId: data.taskId },
+        });
+
+        await db.taskAssignment.create({
+          data: {
+            taskId: data.taskId,
+            userId,
+            isPrimary: assignmentCount === 0, // First person assigned becomes primary
+          },
+        });
+
+        logger.info(`Auto-assigned user ${userId} to task ${data.taskId} via shortcut update`);
       }
     }
   }

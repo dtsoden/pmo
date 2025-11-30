@@ -254,6 +254,50 @@
       .hidden {
         display: none !important;
       }
+
+      /* Disconnected Overlay */
+      .disconnected-overlay {
+        position: fixed;
+        top: 72px; /* Below header */
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--background);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+      }
+
+      .disconnected-content {
+        text-align: center;
+        padding: 48px 32px;
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        margin: 0 16px;
+      }
+
+      .disconnected-content h2 {
+        font-size: 24px;
+        margin-bottom: 16px;
+        color: var(--foreground);
+      }
+
+      .disconnected-content p {
+        color: var(--muted-foreground);
+        margin-bottom: 24px;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .disconnected-content .btn {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 15px;
+      }
     </style>
   </head>
   <body>
@@ -270,6 +314,16 @@
       <div class="timer-status" id="timerStatus">
         <div id="timerTime">00:00:00</div>
         <div class="timer-task" id="timerTask"></div>
+      </div>
+    </div>
+
+    <!-- Disconnected Overlay -->
+    <div id="disconnectedOverlay" class="disconnected-overlay hidden">
+      <div class="disconnected-content">
+        <h2>🔐 Not Connected</h2>
+        <p>Your session expired or the extension needs to be connected.</p>
+        <p style="margin-top: 8px; font-size: 13px;">Click below to reconnect - it only takes one click!</p>
+        <button class="btn btn-primary" id="reconnectBtn">Reconnect Extension</button>
       </div>
     </div>
 

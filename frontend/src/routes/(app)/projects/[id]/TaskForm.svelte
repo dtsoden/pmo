@@ -1,9 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { api, type Task, type Phase, type Milestone } from '$lib/api/client';
-  import { Modal, Button, Input, Select } from '$components/shared';
-  import { TASK_STATUS_LABELS, PRIORITY_LABELS } from '$lib/utils';
+  import { api, type Task, type Phase, type Milestone, type User } from '$lib/api/client';
+  import { Modal, Button, Input, Select, SearchableSelect, Badge } from '$components/shared';
+  import { TASK_STATUS_LABELS, PRIORITY_LABELS, fullName } from '$lib/utils';
   import { toast } from 'svelte-sonner';
+  import { X } from 'lucide-svelte';
 
   export let open = false;
   export let projectId: string;
@@ -25,6 +26,13 @@
   let estimatedHours = '';
   let startDate = '';
   let dueDate = '';
+  let assigneeIds: string[] = [];
+
+  // User assignment
+  let availableUsers: User[] = [];
+  let loadingUsers = false;
+  let userSearchTimeout: ReturnType<typeof setTimeout> | null = null;
+  let selectedUsers: User[] = [];
 
   let lastTaskId = '';
 
@@ -44,9 +52,13 @@
       estimatedHours = task.estimatedHours?.toString() || '';
       startDate = task.startDate?.split('T')[0] || '';
       dueDate = task.dueDate?.split('T')[0] || '';
+      assigneeIds = task.assignments?.map(a => a.user.id) || [];
+      selectedUsers = task.assignments?.map(a => a.user) || [];
     } else {
       resetForm();
     }
+    // Load users when modal opens
+    loadAvailableUsers();
   }
 
   function resetForm() {
@@ -59,11 +71,55 @@
     estimatedHours = '';
     startDate = '';
     dueDate = '';
+    assigneeIds = [];
+    selectedUsers = [];
+  }
+
+  async function loadAvailableUsers(search = '') {
+    loadingUsers = true;
+    try {
+      const response = await api.users.list({ limit: 20, search: search || undefined, status: 'ACTIVE' });
+      availableUsers = response.data || [];
+    } catch (err) {
+      toast.error('Failed to load users');
+    } finally {
+      loadingUsers = false;
+    }
+  }
+
+  function handleUserSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    if (userSearchTimeout) {
+      clearTimeout(userSearchTimeout);
+    }
+
+    userSearchTimeout = setTimeout(() => {
+      loadAvailableUsers(query);
+    }, 300);
+  }
+
+  function addAssignee(event: CustomEvent<{ value: string; item: any }>) {
+    const user = event.detail.item;
+    if (!assigneeIds.includes(user.id)) {
+      assigneeIds = [...assigneeIds, user.id];
+      selectedUsers = [...selectedUsers, user];
+    }
+  }
+
+  function removeAssignee(userId: string) {
+    assigneeIds = assigneeIds.filter(id => id !== userId);
+    selectedUsers = selectedUsers.filter(u => u.id !== userId);
   }
 
   async function handleSubmit() {
     if (!name) {
       toast.error('Please enter a task name');
+      return;
+    }
+
+    if (assigneeIds.length === 0) {
+      toast.error('Please assign at least one person to this task');
       return;
     }
 
@@ -80,6 +136,7 @@
         estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
         startDate: startDate || undefined,
         dueDate: dueDate || undefined,
+        assigneeIds: assigneeIds,
       };
 
       if (isEdit && task) {
@@ -139,6 +196,47 @@
         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         bind:value={description}
       />
+    </div>
+
+    <!-- Assignees (Required) -->
+    <div class="space-y-2">
+      <label class="text-sm font-medium">
+        Assigned To <span class="text-destructive">*</span>
+      </label>
+
+      <!-- Selected assignees -->
+      {#if selectedUsers.length > 0}
+        <div class="flex flex-wrap gap-2 mb-2">
+          {#each selectedUsers as user}
+            <Badge variant="secondary" class="flex items-center gap-1">
+              {fullName(user.firstName, user.lastName)}
+              <button
+                type="button"
+                on:click={() => removeAssignee(user.id)}
+                class="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+              >
+                <X class="h-3 w-3" />
+              </button>
+            </Badge>
+          {/each}
+        </div>
+      {/if}
+
+      <!-- Add assignee -->
+      <SearchableSelect
+        value=""
+        items={availableUsers.filter(u => !assigneeIds.includes(u.id)).map(u => ({ ...u, displayName: fullName(u.firstName, u.lastName) }))}
+        loading={loadingUsers}
+        placeholder="Search and add people..."
+        displayField="displayName"
+        valueField="id"
+        secondaryField="email"
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handleUserSearch}
+        on:select={addAssignee}
+      />
+      <p class="text-xs text-muted-foreground">At least one person must be assigned to this task</p>
     </div>
 
     <div class="grid gap-4 md:grid-cols-2">

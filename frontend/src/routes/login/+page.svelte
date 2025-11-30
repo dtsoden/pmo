@@ -3,6 +3,7 @@
   import { Button, Input, Card } from '$components/shared';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { page } from '$app/stores';
 
   // SvelteKit props - must be declared to avoid warnings
   export let data: unknown = null;
@@ -14,10 +15,21 @@
   let loading = false;
   let error = '';
 
+  // Get redirect parameter from URL
+  let redirectUrl = '/dashboard';
+  $: if (browser && $page.url.searchParams.has('redirect')) {
+    const redirect = $page.url.searchParams.get('redirect');
+    if (redirect) {
+      // Preserve all query parameters from the redirect URL
+      const autoconnect = $page.url.searchParams.get('autoconnect');
+      redirectUrl = autoconnect ? `${redirect}?autoconnect=${autoconnect}` : redirect;
+    }
+  }
+
   onMount(() => {
     // Redirect if already logged in
     if ($isAuthenticated && browser) {
-      window.location.href = '/dashboard';
+      window.location.href = redirectUrl;
     }
   });
 
@@ -29,8 +41,9 @@
 
     if (result.success) {
       // Use window.location for more reliable navigation
+      // Redirect to the URL specified in query params, or dashboard by default
       if (browser) {
-        window.location.href = '/dashboard';
+        window.location.href = redirectUrl;
       }
     } else {
       error = result.error || 'Login failed';

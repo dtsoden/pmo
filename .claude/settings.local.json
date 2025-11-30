@@ -63,7 +63,10 @@
       "Bash(Select-String -Pattern 'error|Error|ERROR' -Context 2,2\"\")",
       "Bash(nssm stop:*)",
       "Bash(npm run check:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(git rm:*)",
+      "Bash(del C:UsersDavidSodenCNX-PMObackendupdate-email.js)",
+      "Bash(docker ps:*)"
     ],
     "deny": [],
     "ask": []

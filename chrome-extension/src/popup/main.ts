@@ -268,9 +268,10 @@ async function handleOpenSidePanel() {
 }
 
 function handleOpenWebApp() {
-  // Link directly to extension settings for reconnection
+  // Link to login with redirect parameter to extension settings
+  // This ensures that after login, user lands directly on extension settings page
   const frontendUrl = import.meta.env.VITE_EXTENSION_FRONTEND_URL || 'http://localhost:7620';
-  const webUrl = `${frontendUrl}/settings/extension`;
+  const webUrl = `${frontendUrl}/login?redirect=/settings/extension&autoconnect=true`;
 
   chrome.tabs.create({ url: webUrl }, (tab) => {
     // Close popup after opening tab for better UX

@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { api, type ProjectDetail, type Task } from '$lib/api/client';
   import { ws } from '$lib/stores/websocket';
-  import { Card, Button, Badge, Avatar, Spinner, EmptyState, Modal } from '$components/shared';
+  import { Card, Button, Badge, Avatar, Spinner, EmptyState, Modal, SearchableSelect } from '$components/shared';
   import {
     cn,
     formatDate,
@@ -68,6 +68,8 @@
   let assigningTeam = false;
   let editingTeamAssignment: any = null;
   let updatingTeam = false;
+  let loadingTeams = false;
+  let teamSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Person assignment state
   let availablePeople: any[] = [];
@@ -79,6 +81,8 @@
   let assigningPerson = false;
   let editingPersonAssignment: any = null;
   let updatingPerson = false;
+  let loadingPeople = false;
+  let personSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Milestone and phase state
   let editingMilestone: any = null;
@@ -134,14 +138,31 @@
   }
 
   // Team assignment functions
-  async function loadAvailableTeams() {
+  async function loadAvailableTeams(search = '') {
+    loadingTeams = true;
     try {
-      const response = await api.teams.list({ limit: 100 });
+      const response = await api.teams.list({ limit: 20, search: search || undefined });
       const assignedTeamIds = project?.teamAssignments?.map((a) => a.team.id) || [];
       availableTeams = (response.data || []).filter((t) => !assignedTeamIds.includes(t.id));
     } catch (err) {
       toast.error('Failed to load teams');
+    } finally {
+      loadingTeams = false;
     }
+  }
+
+  function handleTeamSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    // Clear existing timeout
+    if (teamSearchTimeout) {
+      clearTimeout(teamSearchTimeout);
+    }
+
+    // Debounce search
+    teamSearchTimeout = setTimeout(() => {
+      loadAvailableTeams(query);
+    }, 300);
   }
 
   async function openAssignTeamModal() {
@@ -253,16 +274,31 @@
   }
 
   // Person assignment functions
-  async function loadAvailablePeople() {
+  async function loadAvailablePeople(search = '') {
+    loadingPeople = true;
     try {
-      const response = await api.users.list({ limit: 100 });
+      const response = await api.users.list({ limit: 20, search: search || undefined, status: 'ACTIVE' });
       const assignedUserIds = project?.assignments?.map((a) => a.user.id) || [];
-      availablePeople = (response.data || []).filter((u) =>
-        !assignedUserIds.includes(u.id) && u.status === 'ACTIVE'
-      );
+      availablePeople = (response.data || []).filter((u) => !assignedUserIds.includes(u.id));
     } catch (err) {
       toast.error('Failed to load people');
+    } finally {
+      loadingPeople = false;
     }
+  }
+
+  function handlePersonSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    // Clear existing timeout
+    if (personSearchTimeout) {
+      clearTimeout(personSearchTimeout);
+    }
+
+    // Debounce search
+    personSearchTimeout = setTimeout(() => {
+      loadAvailablePeople(query);
+    }, 300);
   }
 
   async function openAssignPersonModal() {
@@ -991,19 +1027,19 @@
   <Modal bind:open={showAssignTeamModal} title="Assign Team to Project" size="md">
     <div class="space-y-4">
       <!-- Team Selection -->
-      <div class="space-y-1.5">
-        <label for="teamSelect" class="text-sm font-medium">Team <span class="text-destructive">*</span></label>
-        <select
-          id="teamSelect"
-          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          bind:value={selectedTeamId}
-        >
-          <option value="">Select a team</option>
-          {#each availableTeams as team}
-            <option value={team.id}>{team.name}</option>
-          {/each}
-        </select>
-      </div>
+      <SearchableSelect
+        bind:value={selectedTeamId}
+        items={availableTeams}
+        loading={loadingTeams}
+        label="Team"
+        placeholder="Search teams..."
+        displayField="name"
+        valueField="id"
+        required={true}
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handleTeamSearch}
+      />
 
       <!-- Allocated Hours -->
       <div class="space-y-1.5">
@@ -1123,19 +1159,20 @@
   <Modal bind:open={showAssignPersonModal} title="Assign Person to Project" size="md">
     <div class="space-y-4">
       <!-- Person Selection -->
-      <div class="space-y-1.5">
-        <label for="personSelect" class="text-sm font-medium">Person <span class="text-destructive">*</span></label>
-        <select
-          id="personSelect"
-          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          bind:value={selectedPersonId}
-        >
-          <option value="">Select a person</option>
-          {#each availablePeople as person}
-            <option value={person.id}>{fullName(person.firstName, person.lastName)} ({person.email})</option>
-          {/each}
-        </select>
-      </div>
+      <SearchableSelect
+        bind:value={selectedPersonId}
+        items={availablePeople.map(p => ({ ...p, displayName: fullName(p.firstName, p.lastName) }))}
+        loading={loadingPeople}
+        label="Person"
+        placeholder="Search by name or email..."
+        displayField="displayName"
+        valueField="id"
+        secondaryField="email"
+        required={true}
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handlePersonSearch}
+      />
 
       <!-- Role -->
       <div class="space-y-1.5">

@@ -3,7 +3,7 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { api, type User, type ResourceAllocation, type Task, type TimeEntry, type TimeOffRequest } from '$lib/api/client';
-  import { Card, Button, Badge, Avatar, Spinner, Modal } from '$components/shared';
+  import { Card, Button, Badge, Avatar, Spinner, Modal, SearchableSelect } from '$components/shared';
   import { cn, fullName, formatDate, formatHours, ROLE_LABELS, TASK_STATUS_LABELS, getTaskStatusVariant, getTimezoneAbbreviation, TIME_OFF_STATUS_LABELS, TIME_OFF_TYPE_LABELS, getTimeOffStatusVariant } from '$lib/utils';
   import {
     ArrowLeft,
@@ -65,6 +65,8 @@
   let selectedTeamId = '';
   let selectedTeamRole: 'LEAD' | 'SENIOR' | 'MEMBER' = 'MEMBER';
   let assigningTeam = false;
+  let teamSearch = '';
+  let teamSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Project assignment form
   let availableProjects: any[] = [];
@@ -75,6 +77,8 @@
   let projectStartDate = '';
   let projectEndDate = '';
   let assigningProject = false;
+  let projectSearch = '';
+  let projectSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Edit project assignment
   let editingAssignment: any = null;
@@ -249,16 +253,28 @@
   }
 
   // Team membership management
-  async function loadAvailableTeams() {
+  async function loadAvailableTeams(search = '') {
     loadingTeams = true;
     try {
-      const response = await api.teams.list({ limit: 100 });
+      const response = await api.teams.list({ limit: 20, search: search || undefined });
       availableTeams = response.data || [];
     } catch (err) {
       toast.error('Failed to load teams');
     } finally {
       loadingTeams = false;
     }
+  }
+
+  function handleTeamSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    if (teamSearchTimeout) {
+      clearTimeout(teamSearchTimeout);
+    }
+
+    teamSearchTimeout = setTimeout(() => {
+      loadAvailableTeams(query);
+    }, 300);
   }
 
   async function assignToTeam() {
@@ -292,16 +308,28 @@
   }
 
   // Project assignment management
-  async function loadAvailableProjects() {
+  async function loadAvailableProjects(search = '') {
     loadingProjects = true;
     try {
-      const response = await api.projects.list({ limit: 100, status: 'ACTIVE' });
+      const response = await api.projects.list({ limit: 20, search: search || undefined, status: 'ACTIVE' });
       availableProjects = response.data || [];
     } catch (err) {
       toast.error('Failed to load projects');
     } finally {
       loadingProjects = false;
     }
+  }
+
+  function handleProjectSearch(event: CustomEvent<{ query: string }>) {
+    const query = event.detail.query;
+
+    if (projectSearchTimeout) {
+      clearTimeout(projectSearchTimeout);
+    }
+
+    projectSearchTimeout = setTimeout(() => {
+      loadAvailableProjects(query);
+    }, 300);
   }
 
   async function assignToProject() {
@@ -1207,44 +1235,36 @@
   <!-- Assign to Team Modal -->
   <Modal bind:open={showAssignTeamModal} title="Assign to Team" size="md">
     <div class="space-y-4">
-      {#if loadingTeams}
-        <div class="py-8 text-center">
-          <Spinner />
-        </div>
-      {:else}
-        <div>
-          <label for="team-select" class="mb-2 block text-sm font-medium">
-            Team <span class="text-destructive">*</span>
-          </label>
-          <select
-            id="team-select"
-            bind:value={selectedTeamId}
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          >
-            <option value="">Select a team...</option>
-            {#each availableTeams as team}
-              <option value={team.id}>{team.name}</option>
-            {/each}
-          </select>
-        </div>
+      <!-- Team Selection -->
+      <SearchableSelect
+        bind:value={selectedTeamId}
+        items={availableTeams}
+        loading={loadingTeams}
+        label="Team"
+        placeholder="Search teams..."
+        displayField="name"
+        valueField="id"
+        required={true}
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handleTeamSearch}
+      />
 
-        <div>
-          <label for="team-role" class="mb-2 block text-sm font-medium">
-            Role <span class="text-destructive">*</span>
-          </label>
-          <select
-            id="team-role"
-            bind:value={selectedTeamRole}
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          >
-            <option value="MEMBER">Member</option>
-            <option value="SENIOR">Senior</option>
-            <option value="LEAD">Lead</option>
-          </select>
-        </div>
-      {/if}
+      <div>
+        <label for="team-role" class="mb-2 block text-sm font-medium">
+          Role <span class="text-destructive">*</span>
+        </label>
+        <select
+          id="team-role"
+          bind:value={selectedTeamRole}
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          required
+        >
+          <option value="MEMBER">Member</option>
+          <option value="SENIOR">Senior</option>
+          <option value="LEAD">Lead</option>
+        </select>
+      </div>
     </div>
 
     <div slot="footer" class="flex justify-end gap-2">
@@ -1266,29 +1286,23 @@
   <!-- Assign to Project Modal -->
   <Modal bind:open={showAssignProjectModal} title="Assign to Project" size="lg">
     <div class="space-y-4">
-      {#if loadingProjects}
-        <div class="py-8 text-center">
-          <Spinner />
-        </div>
-      {:else}
-        <div>
-          <label for="project-select" class="mb-2 block text-sm font-medium">
-            Project <span class="text-destructive">*</span>
-          </label>
-          <select
-            id="project-select"
-            bind:value={selectedProjectId}
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          >
-            <option value="">Select a project...</option>
-            {#each availableProjects as project}
-              <option value={project.id}>{project.name} ({project.code})</option>
-            {/each}
-          </select>
-        </div>
+      <!-- Project Selection -->
+      <SearchableSelect
+        bind:value={selectedProjectId}
+        items={availableProjects}
+        loading={loadingProjects}
+        label="Project"
+        placeholder="Search projects..."
+        displayField="name"
+        valueField="id"
+        secondaryField="code"
+        required={true}
+        minSearchLength={0}
+        showSearchHint={false}
+        on:search={handleProjectSearch}
+      />
 
-        <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="project-role" class="mb-2 block text-sm font-medium">
               Role <span class="text-destructive">*</span>
@@ -1346,7 +1360,6 @@
             />
           </div>
         </div>
-      {/if}
     </div>
 
     <div slot="footer" class="flex justify-end gap-2">

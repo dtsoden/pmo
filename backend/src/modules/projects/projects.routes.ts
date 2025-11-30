@@ -127,6 +127,7 @@ const createTaskSchema = z.object({
   startDate: z.coerce.date().optional(),
   dueDate: z.coerce.date().optional(),
   tags: z.array(z.string()).optional(),
+  assigneeIds: z.array(z.string().uuid()).optional(),
 });
 
 const updateTaskSchema = createTaskSchema.partial().extend({
@@ -449,6 +450,19 @@ export async function projectRoutes(app: FastifyInstance) {
       const { id } = idParamSchema.parse(request.params);
       const data = createTaskSchema.parse(request.body) as CreateTaskData;
       const task = await createTask(id, data);
+
+      // Emit WebSocket event for shortcuts created for assigned users
+      const io = (app as any).io;
+      if (io && data.assigneeIds && data.assigneeIds.length > 0) {
+        for (const userId of data.assigneeIds) {
+          io.to(`user:${userId}`).emit('shortcuts:updated', {
+            action: 'created',
+            taskId: task.id,
+            taskTitle: task.title,
+          });
+        }
+      }
+
       return reply.code(201).send({ task });
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -467,6 +481,19 @@ export async function projectRoutes(app: FastifyInstance) {
       const { taskId } = taskIdParamSchema.parse(request.params);
       const data = updateTaskSchema.parse(request.body);
       const task = await updateTask(taskId, data);
+
+      // Emit WebSocket event for shortcuts created for assigned users
+      const io = (app as any).io;
+      if (io && data.assigneeIds && data.assigneeIds.length > 0) {
+        for (const userId of data.assigneeIds) {
+          io.to(`user:${userId}`).emit('shortcuts:updated', {
+            action: 'updated',
+            taskId: task.id,
+            taskTitle: task.title,
+          });
+        }
+      }
+
       return { task };
     } catch (error: any) {
       if (error.name === 'ZodError') {
