@@ -45,6 +45,12 @@
   let title = 'PMO Platform - Enterprise Project Management You Own';
   let year = new Date().getFullYear();
 
+  // Time tracking carousel images
+  const timeTrackingImages = [
+    { src: '/screenshots/time-tracking.png', alt: 'Chrome Extension Time Tracking - Active Timer' },
+    { src: '/screenshots/time-tracking-2.png', alt: 'Time Tracking Dashboard - Reports and History' }
+  ];
+
   // Analytics carousel images
   const analyticsImages = [
     { src: '/screenshots/analytics-dashboard.png', alt: 'Executive Analytics Dashboard - Financial KPIs and Project Health' },
@@ -282,18 +288,8 @@
                 </li>
               </ul>
             </div>
-            <div class="rounded-lg border-2 border-primary/20 overflow-hidden bg-muted">
-              <img
-                src="/screenshots/time-tracking.png"
-                alt="Chrome Extension Time Tracking"
-                class="w-full h-auto"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-              />
-              <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-primary/5 to-primary/20" style="aspect-ratio: 16/9">
-                <Timer class="h-32 w-32 text-primary mb-6" />
-                <p class="text-lg font-semibold mb-2">Chrome Extension Time Tracking</p>
-                <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
-              </div>
+            <div>
+              <ImageCarousel images={timeTrackingImages} autoPlayInterval={3000} />
             </div>
           </div>
         </div>
