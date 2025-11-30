@@ -44,6 +44,7 @@ import {
 } from './admin.service.js';
 
 import dropdownsRoutes from './dropdowns.routes.js';
+import { timecardAdminRoutes } from './timecard.routes.js';
 
 // Validation schemas
 const paginationSchema = z.object({
@@ -806,4 +807,9 @@ export async function adminRoutes(app: FastifyInstance) {
   // DROPDOWN LISTS
   // ============================================
   await app.register(dropdownsRoutes, { prefix: '/dropdowns' });
+
+  // ============================================
+  // TIME CARD API
+  // ============================================
+  await app.register(timecardAdminRoutes, { prefix: '/timecard' });
 }

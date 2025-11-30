@@ -19,6 +19,8 @@
     AlertCircle,
     Check,
     Database,
+    Key,
+    ExternalLink,
   } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -286,6 +288,34 @@
                           {/if}
                         </div>
                       {/if}
+                    </div>
+                  </div>
+                </div>
+              {/if}
+
+              <!-- Time Card API Link (Platform category only) -->
+              {#if activeCategory === 'platform'}
+                <div class="bg-muted/50 rounded-lg p-4 border-2 border-dashed border-muted-foreground/20">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                      <label class="text-sm font-medium flex items-center gap-2">
+                        <Key class="h-4 w-4" />
+                        Time Card API
+                      </label>
+                      <p class="text-xs text-muted-foreground mt-0.5">
+                        Manage API keys for external payroll integrations (Workday, PeopleSoft, etc.)
+                      </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        on:click={() => goto('/admin/timecard-api')}
+                      >
+                        <ExternalLink class="h-4 w-4 mr-1" />
+                        Manage API Keys
+                      </Button>
                     </div>
                   </div>
                 </div>

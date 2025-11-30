@@ -819,6 +819,22 @@ model UserSession {
   @@index([token])
 }
 
+// API key for external integrations (Workday, PeopleSoft, etc.)
+model ApiKey {
+  id          String    @id @default(uuid())
+  keyHash     String    @unique // SHA-256 hash of the actual key
+  description String?   // Optional note about what this key is for
+  isActive    Boolean   @default(true)
+
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
 // ============================================
 // CONFIGURATION
 // ============================================

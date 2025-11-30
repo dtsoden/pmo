@@ -34,6 +34,7 @@ import { notificationRoutes } from './modules/notifications/notifications.routes
 import { adminRoutes } from './modules/admin/admin.routes.js';
 import { teamRoutes } from './modules/teams/teams.routes.js';
 import { extensionRoutes } from './modules/extension/extension.routes.js';
+import { timecardExportRoutes } from './modules/timetracking/timecard-export.routes.js';
 
 const PORT = parseInt(process.env.PORT || '7600', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -153,6 +154,7 @@ async function start() {
     await app.register(adminRoutes, { prefix: '/api/admin' });
     await app.register(teamRoutes, { prefix: '/api/teams' });
     await app.register(extensionRoutes, { prefix: '/api/extension' });
+    await app.register(timecardExportRoutes, { prefix: '/api/timecard' });
 
     // Start server
     await app.ready();

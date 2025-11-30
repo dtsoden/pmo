@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Card API Documentation - PMO Platform</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #2563eb;
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      color: #1e40af;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    h3 {
+      color: #1e3a8a;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+
+    h4 {
+      color: #1e40af;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 15px;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      color: #dc2626;
+    }
+
+    pre {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 20px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: none;
+      color: #f9fafb;
+      padding: 0;
+    }
+
+    .note {
+      background: #dbeafe;
+      border-left: 4px solid #2563eb;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .success {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .method {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.85em;
+      margin-right: 10px;
+    }
+
+    .method.get {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .method.post {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    ul, ol {
+      margin-left: 30px;
+      margin-bottom: 15px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .endpoint {
+      background: #f3f4f6;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+      border-left: 4px solid #2563eb;
+    }
+
+    .json-key {
+      color: #7c3aed;
+    }
+
+    .json-string {
+      color: #10b981;
+    }
+
+    .json-number {
+      color: #f59e0b;
+    }
+
+    .json-boolean {
+      color: #dc2626;
+    }
+
+    .json-null {
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⏱️ Time Card API Documentation</h1>
+
+    <p><strong>Version:</strong> 1.0<br>
+    <strong>Last Updated:</strong> November 2025</p>
+
+    <div class="note">
+      <strong>📋 Purpose:</strong> This API allows external payroll systems (Workday, PeopleSoft, etc.) to export time card data from the PMO Platform for payroll processing.
+    </div>
+
+    <!-- GETTING STARTED -->
+    <h2>🚀 Getting Started</h2>
+
+    <h3>Step 1: Generate API Key</h3>
+    <ol>
+      <li>Log in to the PMO Platform as an administrator</li>
+      <li>Navigate to <strong>Admin &gt; Platform Settings</strong></li>
+      <li>Click on the <strong>Platform</strong> tab</li>
+      <li>Find the <strong>Time Card API</strong> section</li>
+      <li>Click <strong>Manage API Keys</strong></li>
+      <li>Click <strong>Create API Key</strong> and provide a description</li>
+      <li><strong>⚠️ IMPORTANT:</strong> Copy the API key immediately - it will only be shown once!</li>
+    </ol>
+
+    <div class="warning">
+      <strong>⚠️ Security Warning:</strong> Only one API key can exist at a time. Store it securely - you won't be able to retrieve it again. If you lose it, you'll need to regenerate a new key (which will invalidate the old one).
+    </div>
+
+    <h3>Step 2: Configure Your Integration</h3>
+    <p>Use the following base URL for all API requests:</p>
+    <pre><code>https://pmoservices.pmoplatform.com/api/timecard</code></pre>
+
+    <!-- AUTHENTICATION -->
+    <h2>🔐 Authentication</h2>
+
+    <p>All API requests must include the API key in the <code>Authorization</code> header:</p>
+
+    <pre><code>Authorization: Bearer pmo_live_[your_api_key_here]</code></pre>
+
+    <h4>Example Request with Authentication:</h4>
+    <pre><code>curl -X GET "https://pmoservices.pmoplatform.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31" \
+  -H "Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"</code></pre>
+
+    <div class="note">
+      <strong>💡 Tip:</strong> API key format is always <code>pmo_live_</code> followed by 40 random hexadecimal characters.
+    </div>
+
+    <!-- ENDPOINTS -->
+    <h2>📡 API Endpoints</h2>
+
+    <h3>Export Time Cards</h3>
+
+    <div class="endpoint">
+      <p><span class="method get">GET</span><code>/api/timecard/export</code></p>
+      <p>Export time card data for all users within a date range.</p>
+    </div>
+
+    <h4>Query Parameters:</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>startDate</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Start date in <code>YYYY-MM-DD</code> format (inclusive)</td>
+        </tr>
+        <tr>
+          <td><code>endDate</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>End date in <code>YYYY-MM-DD</code> format (inclusive)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Request Example:</h4>
+    <pre><code>GET /api/timecard/export?startDate=2025-01-01&endDate=2025-01-31
+Host: pmoservices.pmoplatform.com
+Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0</code></pre>
+
+    <h4>Response Format:</h4>
+    <p>The API returns a JSON array containing time card data for each user who has time entries in the specified date range.</p>
+
+    <h3>Response Structure</h3>
+
+    <p>Each user object in the response array contains:</p>
+    <ul>
+      <li><strong>user:</strong> User identification information</li>
+      <li><strong>summary:</strong> Array of daily totals (hours per day)</li>
+      <li><strong>details:</strong> Array of daily session details (granular breakdown)</li>
+    </ul>
+
+    <h4>Complete Response Example:</h4>
+    <pre><code>[
+  {
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john.doe@company.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "employeeId": "EMP-12345"
+    },
+    "summary": [
+      {
+        "date": "2025-01-15",
+        "totalHours": 8.5,
+        "billableHours": 8.0
+      },
+      {
+        "date": "2025-01-16",
+        "totalHours": 7.25,
+        "billableHours": 7.25
+      }
+    ],
+    "details": [
+      {
+        "date": "2025-01-15",
+        "sessions": [
+          {
+            "client": {
+              "id": "660e8400-e29b-41d4-a716-446655440001",
+              "name": "Acme Corporation",
+              "salesforceAccountId": "001D000000IqhSL"
+            },
+            "project": {
+              "id": "770e8400-e29b-41d4-a716-446655440002",
+              "name": "Website Redesign",
+              "code": "ACME-WEB-2025"
+            },
+            "task": {
+              "id": "880e8400-e29b-41d4-a716-446655440003",
+              "title": "Design homepage mockups"
+            },
+            "startTime": "2025-01-15T09:00:00.000Z",
+            "endTime": "2025-01-15T12:30:00.000Z",
+            "duration": 3.5,
+            "isBillable": true,
+            "description": "Created initial homepage design concepts"
+          },
+          {
+            "client": {
+              "id": "660e8400-e29b-41d4-a716-446655440001",
+              "name": "Acme Corporation",
+              "salesforceAccountId": "001D000000IqhSL"
+            },
+            "project": {
+              "id": "770e8400-e29b-41d4-a716-446655440002",
+              "name": "Website Redesign",
+              "code": "ACME-WEB-2025"
+            },
+            "task": {
+              "id": "880e8400-e29b-41d4-a716-446655440004",
+              "title": "Review feedback from stakeholders"
+            },
+            "startTime": "2025-01-15T13:30:00.000Z",
+            "endTime": "2025-01-15T17:30:00.000Z",
+            "duration": 4.0,
+            "isBillable": true,
+            "description": "Reviewed and incorporated stakeholder feedback"
+          },
+          {
+            "client": null,
+            "project": null,
+            "task": null,
+            "startTime": "2025-01-15T17:30:00.000Z",
+            "endTime": "2025-01-15T18:00:00.000Z",
+            "duration": 0.5,
+            "isBillable": false,
+            "description": "Team meeting - general discussion"
+          }
+        ]
+      },
+      {
+        "date": "2025-01-16",
+        "sessions": [
+          {
+            "client": {
+              "id": "660e8400-e29b-41d4-a716-446655440005",
+              "name": "TechStart Inc",
+              "salesforceAccountId": "001D000000IqhSM"
+            },
+            "project": {
+              "id": "770e8400-e29b-41d4-a716-446655440006",
+              "name": "Mobile App Development",
+              "code": "TECH-APP-2025"
+            },
+            "task": {
+              "id": "880e8400-e29b-41d4-a716-446655440007",
+              "title": "Implement user authentication"
+            },
+            "startTime": "2025-01-16T09:00:00.000Z",
+            "endTime": "2025-01-16T16:15:00.000Z",
+            "duration": 7.25,
+            "isBillable": true,
+            "description": "Built JWT authentication system"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440008",
+      "email": "jane.smith@company.com",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "employeeId": "EMP-67890"
+    },
+    "summary": [
+      {
+        "date": "2025-01-15",
+        "totalHours": 8.0,
+        "billableHours": 8.0
+      }
+    ],
+    "details": [
+      {
+        "date": "2025-01-15",
+        "sessions": [
+          {
+            "client": {
+              "id": "660e8400-e29b-41d4-a716-446655440001",
+              "name": "Acme Corporation",
+              "salesforceAccountId": "001D000000IqhSL"
+            },
+            "project": {
+              "id": "770e8400-e29b-41d4-a716-446655440002",
+              "name": "Website Redesign",
+              "code": "ACME-WEB-2025"
+            },
+            "task": {
+              "id": "880e8400-e29b-41d4-a716-446655440009",
+              "title": "Frontend development"
+            },
+            "startTime": "2025-01-15T09:00:00.000Z",
+            "endTime": "2025-01-15T17:00:00.000Z",
+            "duration": 8.0,
+            "isBillable": true,
+            "description": "Implemented responsive navigation component"
+          }
+        ]
+      }
+    ]
+  }
+]</code></pre>
+
+    <h3>Field Descriptions</h3>
+
+    <h4>User Object:</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>Unique user identifier (UUID)</td>
+        </tr>
+        <tr>
+          <td><code>email</code></td>
+          <td>string</td>
+          <td>User's email address</td>
+        </tr>
+        <tr>
+          <td><code>firstName</code></td>
+          <td>string</td>
+          <td>User's first name</td>
+        </tr>
+        <tr>
+          <td><code>lastName</code></td>
+          <td>string</td>
+          <td>User's last name</td>
+        </tr>
+        <tr>
+          <td><code>employeeId</code></td>
+          <td>string | null</td>
+          <td>Employee ID for payroll system integration</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Summary Object:</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>date</code></td>
+          <td>string</td>
+          <td>Date in YYYY-MM-DD format</td>
+        </tr>
+        <tr>
+          <td><code>totalHours</code></td>
+          <td>number</td>
+          <td>Total hours worked on this date (including non-billable)</td>
+        </tr>
+        <tr>
+          <td><code>billableHours</code></td>
+          <td>number</td>
+          <td>Billable hours worked on this date</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>Session Object:</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>client</code></td>
+          <td>object | null</td>
+          <td>Client information (null if no client assigned)</td>
+        </tr>
+        <tr>
+          <td><code>project</code></td>
+          <td>object | null</td>
+          <td>Project information (null if no project assigned)</td>
+        </tr>
+        <tr>
+          <td><code>task</code></td>
+          <td>object | null</td>
+          <td>Task information (null if no task assigned)</td>
+        </tr>
+        <tr>
+          <td><code>startTime</code></td>
+          <td>string</td>
+          <td>Session start time (ISO 8601 format)</td>
+        </tr>
+        <tr>
+          <td><code>endTime</code></td>
+          <td>string</td>
+          <td>Session end time (ISO 8601 format)</td>
+        </tr>
+        <tr>
+          <td><code>duration</code></td>
+          <td>number</td>
+          <td>Session duration in hours (decimal)</td>
+        </tr>
+        <tr>
+          <td><code>isBillable</code></td>
+          <td>boolean</td>
+          <td>Whether this session is billable to the client</td>
+        </tr>
+        <tr>
+          <td><code>description</code></td>
+          <td>string | null</td>
+          <td>Optional description of work performed</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ERROR HANDLING -->
+    <h2>⚠️ Error Handling</h2>
+
+    <h3>Common Error Responses</h3>
+
+    <h4>401 Unauthorized - Missing API Key</h4>
+    <pre><code>{
+  "error": "Missing Authorization header",
+  "message": "Please provide API key in Authorization header as: Bearer &lt;api_key&gt;"
+}</code></pre>
+
+    <h4>401 Unauthorized - Invalid API Key</h4>
+    <pre><code>{
+  "error": "Invalid API key",
+  "message": "The provided API key is invalid or has been revoked"
+}</code></pre>
+
+    <h4>400 Bad Request - Invalid Date Format</h4>
+    <pre><code>{
+  "error": "Invalid date format",
+  "message": "Dates must be in YYYY-MM-DD format"
+}</code></pre>
+
+    <h4>400 Bad Request - Invalid Date Range</h4>
+    <pre><code>{
+  "error": "Invalid date range",
+  "message": "startDate must be before or equal to endDate"
+}</code></pre>
+
+    <h4>500 Internal Server Error</h4>
+    <pre><code>{
+  "error": "Internal server error",
+  "message": "Failed to export time card data"
+}</code></pre>
+
+    <h3>HTTP Status Codes</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>200</code></td>
+          <td>Success - Time card data returned</td>
+        </tr>
+        <tr>
+          <td><code>400</code></td>
+          <td>Bad Request - Invalid parameters</td>
+        </tr>
+        <tr>
+          <td><code>401</code></td>
+          <td>Unauthorized - Missing or invalid API key</td>
+        </tr>
+        <tr>
+          <td><code>500</code></td>
+          <td>Internal Server Error - Server-side error</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- INTEGRATION EXAMPLES -->
+    <h2>💻 Integration Examples</h2>
+
+    <h3>JavaScript/Node.js Example</h3>
+    <pre><code>const fetch = require('node-fetch');
+
+const API_KEY = 'pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0';
+const BASE_URL = 'https://pmoservices.pmoplatform.com/api/timecard';
+
+async function exportTimeCards(startDate, endDate) {
+  const url = `${BASE_URL}/export?startDate=${startDate}&endDate=${endDate}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`API Error: ${error.message}`);
+  }
+
+  const timeCards = await response.json();
+  return timeCards;
+}
+
+// Usage
+exportTimeCards('2025-01-01', '2025-01-31')
+  .then(timeCards => {
+    console.log(`Retrieved time cards for ${timeCards.length} users`);
+    timeCards.forEach(userCard => {
+      console.log(`${userCard.user.firstName} ${userCard.user.lastName}: ${userCard.summary.length} days`);
+    });
+  })
+  .catch(error => {
+    console.error('Error:', error.message);
+  });</code></pre>
+
+    <h3>Python Example</h3>
+    <pre><code>import requests
+from datetime import datetime
+
+API_KEY = 'pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0'
+BASE_URL = 'https://pmoservices.pmoplatform.com/api/timecard'
+
+def export_time_cards(start_date, end_date):
+    """Export time cards for a date range."""
+    url = f'{BASE_URL}/export'
+    params = {
+        'startDate': start_date,
+        'endDate': end_date
+    }
+    headers = {
+        'Authorization': f'Bearer {API_KEY}'
+    }
+
+    response = requests.get(url, params=params, headers=headers)
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        error = response.json()
+        raise Exception(f"API Error: {error.get('message', 'Unknown error')}")
+
+# Usage
+try:
+    time_cards = export_time_cards('2025-01-01', '2025-01-31')
+    print(f"Retrieved time cards for {len(time_cards)} users")
+
+    for user_card in time_cards:
+        user = user_card['user']
+        summary = user_card['summary']
+        total_hours = sum(day['totalHours'] for day in summary)
+
+        print(f"{user['firstName']} {user['lastName']}: {total_hours} total hours")
+
+except Exception as e:
+    print(f"Error: {str(e)}")</code></pre>
+
+    <h3>cURL Example</h3>
+    <pre><code># Export time cards for January 2025
+curl -X GET \
+  "https://pmoservices.pmoplatform.com/api/timecard/export?startDate=2025-01-01&endDate=2025-01-31" \
+  -H "Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" \
+  | jq '.'
+
+# Export time cards for a single day
+curl -X GET \
+  "https://pmoservices.pmoplatform.com/api/timecard/export?startDate=2025-01-15&endDate=2025-01-15" \
+  -H "Authorization: Bearer pmo_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0" \
+  | jq '.'</code></pre>
+
+    <!-- BEST PRACTICES -->
+    <h2>✅ Best Practices</h2>
+
+    <h3>Security</h3>
+    <ul>
+      <li>Store API keys securely using environment variables or secret management systems</li>
+      <li>Never commit API keys to version control</li>
+      <li>Use HTTPS for all API requests</li>
+      <li>Rotate API keys periodically</li>
+      <li>Monitor API key usage through audit logs</li>
+    </ul>
+
+    <h3>Performance</h3>
+    <ul>
+      <li>Limit date ranges to reasonable periods (e.g., monthly exports)</li>
+      <li>Implement retry logic with exponential backoff for failed requests</li>
+      <li>Cache responses when appropriate to reduce API calls</li>
+      <li>Schedule exports during off-peak hours</li>
+    </ul>
+
+    <h3>Data Processing</h3>
+    <ul>
+      <li>Validate response data before importing into your payroll system</li>
+      <li>Handle null values appropriately (client, project, task can be null)</li>
+      <li>Use the <code>employeeId</code> field to match users to your payroll records</li>
+      <li>Cross-reference <code>salesforceAccountId</code> if using Salesforce integration</li>
+      <li>Store raw API responses for audit purposes</li>
+    </ul>
+
+    <!-- SUPPORT -->
+    <h2>📞 Support</h2>
+
+    <p>For API support, contact your PMO Platform administrator or reach out to:</p>
+    <ul>
+      <li><strong>Email:</strong> support@pmoplatform.com</li>
+      <li><strong>Documentation:</strong> <a href="https://pmoplatform.com/docs">https://pmoplatform.com/docs</a></li>
+    </ul>
+
+    <div class="success">
+      <strong>✨ You're all set!</strong> You now have everything needed to integrate the Time Card API with your payroll system.
+    </div>
+
+    <hr style="margin: 40px 0; border: none; border-top: 2px solid #e5e7eb;">
+
+    <p style="text-align: center; color: #6b7280; font-size: 0.9em;">
+      PMO Platform Time Card API v1.0 &bull; Last updated November 2025
+    </p>
+  </div>
+</body>
+</html>

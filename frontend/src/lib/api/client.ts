@@ -3,7 +3,7 @@
 
 // API base path from environment (defaults to /api for proxy mode)
 // Development: /api (proxied by Vite)
-// Production: /api (proxied by nginx/cloudflare) OR https://pmoservices.cnxlab.us/api (direct)
+// Production: /api (proxied by nginx/cloudflare) OR https://pmoservices.pmoplatform.com/api (direct)
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 interface ApiError {
@@ -54,10 +54,19 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        message: 'An error occurred',
-        statusCode: response.status,
-      }));
+      let error: ApiError;
+      try {
+        const errorData = await response.json();
+        error = {
+          message: errorData.message || errorData.error || 'An error occurred',
+          statusCode: response.status,
+        };
+      } catch {
+        error = {
+          message: 'An error occurred',
+          statusCode: response.status,
+        };
+      }
 
       // Handle session termination/expiration - force logout
       if (response.status === 401 && token) {
@@ -805,6 +814,61 @@ class ApiClient {
       this.request<void>(`/admin/deleted/tasks/${taskId}`, {
         method: 'DELETE',
       }),
+
+    // Time Card API key management
+    timecard: {
+      getApiKey: () =>
+        this.request<{
+          id: string;
+          keyHash: string;
+          description: string | null;
+          isActive: boolean;
+          createdBy: string;
+          createdAt: string;
+          lastUsedAt: string | null;
+          revokedAt: string | null;
+        }>('/admin/timecard/api-key'),
+
+      createApiKey: (description: string) =>
+        this.request<{
+          apiKey: string;
+          keyData: {
+            id: string;
+            keyHash: string;
+            description: string | null;
+            isActive: boolean;
+            createdBy: string;
+            createdAt: string;
+            lastUsedAt: string | null;
+            revokedAt: string | null;
+          };
+        }>('/admin/timecard/api-key', {
+          method: 'POST',
+          body: JSON.stringify({ description }),
+        }),
+
+      regenerateApiKey: () =>
+        this.request<{
+          apiKey: string;
+          keyData: {
+            id: string;
+            keyHash: string;
+            description: string | null;
+            isActive: boolean;
+            createdBy: string;
+            createdAt: string;
+            lastUsedAt: string | null;
+            revokedAt: string | null;
+          };
+        }>('/admin/timecard/api-key/regenerate', {
+          method: 'POST',
+        }),
+
+      revokeApiKey: () =>
+        this.request<{ success: boolean }>('/admin/timecard/api-key', {
+          method: 'DELETE',
+        }),
+    },
   };
 
   // Teams endpoints
