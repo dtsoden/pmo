@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, type ProjectsSummary, type TimeSummary, type CapacityAnalytics, type UtilizationReport, type SkillsGapAnalysis } from '$lib/api/client';
-  import { Card, Button, Badge, Spinner } from '$components/shared';
+  import { Card, Button, Badge, Spinner, Modal } from '$components/shared';
   import {
     formatCurrency,
     formatHours,
@@ -44,6 +44,10 @@
   let developmentPage = 1;
   let benchPage = 1;
   const pageSize = 5;
+
+  // Modal states
+  let showBurnoutModal = false;
+  let showCapacityModal = false;
 
   // Default to current month for time analytics
   const now = new Date();
@@ -132,6 +136,53 @@
 
   // Top skills in demand
   $: topSkillsGaps = (skillsGap?.skillsGap || []).slice(0, 10);
+
+  // Workload redistribution recommendations
+  $: overAllocatedUsers = (utilization?.users || [])
+    .filter(u => u?.utilization > 100)
+    .sort((a, b) => b.utilization - a.utilization);
+
+  $: underUtilizedUsers = (utilization?.users || [])
+    .filter(u => u?.utilization < 80)
+    .sort((a, b) => a.utilization - b.utilization);
+
+  // For each over-allocated user, find redistribution candidates
+  function getRedistributionCandidates(overAllocatedUser: any) {
+    if (!skillsGap || !utilization) return { candidates: [], needsHiring: [] };
+
+    // Get user's projects to understand required skills
+    // For demo, we'll use department matching + utilization
+    const candidates = underUtilizedUsers
+      .filter(u => u.user?.id !== overAllocatedUser.user?.id)
+      .filter(u => u.utilization < 80) // Has capacity
+      .map(u => {
+        const skillsGapUser = skillsGap.trainingRecommendations.find(rec => rec.userId === u.user?.id);
+        return {
+          ...u,
+          skills: skillsGapUser?.currentSkills || [],
+          availableHours: ((u.availableHours || 0) - (u.loggedHours || 0)),
+          canHelp: u.user?.department === overAllocatedUser.user?.department, // Same dept = likely compatible
+        };
+      })
+      .filter(u => u.availableHours > 0)
+      .sort((a, b) => {
+        // Prioritize same department with most capacity
+        if (a.canHelp && !b.canHelp) return -1;
+        if (!a.canHelp && b.canHelp) return 1;
+        return b.availableHours - a.availableHours;
+      })
+      .slice(0, 5);
+
+    // Check for critical skill gaps that need hiring
+    const criticalSkillGaps = (skillsGap.skillsGap || [])
+      .filter(gap => gap.severity === 'CRITICAL' || gap.severity === 'HIGH')
+      .filter(gap => gap.supply < 3); // Less than 3 people have this skill
+
+    return {
+      candidates,
+      needsHiring: criticalSkillGaps,
+    };
+  }
 
   // Project status for donut chart
   $: projectStatusData = Object.entries(PROJECT_STATUS_LABELS).map(([status, label]) => ({
@@ -442,27 +493,40 @@
           <!-- Insights -->
           <div class="mt-6 space-y-2">
             {#if overAllocated > 0}
-              <div class="flex items-start gap-2 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <button
+                class="w-full flex items-start gap-2 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer text-left"
+                on:click={() => showBurnoutModal = true}
+              >
                 <AlertTriangle class="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <div>
+                <div class="flex-1">
                   <span class="font-semibold text-red-900 dark:text-red-100">Burnout Risk: </span>
                   <span class="text-red-700 dark:text-red-300">
                     {overAllocated} team member{overAllocated > 1 ? 's are' : ' is'} over-allocated.
-                    Consider redistributing workload.
+                    Click for redistribution recommendations.
                   </span>
                 </div>
-              </div>
+                <svg class="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             {/if}
             {#if underUtilized > 3}
-              <div class="flex items-start gap-2 text-sm p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+              <button
+                class="w-full flex items-start gap-2 text-sm p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors cursor-pointer text-left"
+                on:click={() => showCapacityModal = true}
+              >
                 <Clock class="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                <div>
+                <div class="flex-1">
                   <span class="font-semibold text-amber-900 dark:text-amber-100">Available Capacity: </span>
                   <span class="text-amber-700 dark:text-amber-300">
                     {underUtilized} team members have capacity for additional work.
+                    Click for assignment opportunities.
                   </span>
                 </div>
-              </div>
+                <svg class="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             {/if}
           </div>
         </div>
@@ -842,3 +906,205 @@
     </Card>
   {/if}
 </div>
+
+<!-- Burnout Risk Modal - Workload Redistribution Recommendations -->
+<Modal bind:open={showBurnoutModal} title="Burnout Risk - Workload Redistribution Needed" size="xl">
+  <div class="space-y-6">
+    <p class="text-sm text-muted-foreground">
+      {overAllocatedUsers.length} team member{overAllocatedUsers.length > 1 ? 's are' : ' is'} over-allocated (&gt;100% utilization).
+      Below are specific redistribution recommendations based on team capacity and skills.
+    </p>
+
+    {#each overAllocatedUsers as user}
+      {@const redistribution = getRedistributionCandidates(user)}
+      <div class="border rounded-lg p-4 bg-red-50 dark:bg-red-900/10">
+        <!-- Over-allocated Team Member -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-semibold text-lg">{user.user?.firstName} {user.user?.lastName}</h3>
+            <p class="text-sm text-muted-foreground">{user.user?.department || 'Unassigned'}</p>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold text-red-600 dark:text-red-400">{user.utilization.toFixed(0)}%</div>
+            <p class="text-xs text-muted-foreground">
+              {user.loggedHours?.toFixed(0)}h / {user.availableHours?.toFixed(0)}h
+            </p>
+          </div>
+        </div>
+
+        <!-- Redistribution Options -->
+        <div class="space-y-4">
+          {#if redistribution.candidates.length > 0}
+            <div>
+              <h4 class="text-sm font-semibold mb-2 flex items-center gap-2">
+                <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recommended: Redistribute to Team Members with Capacity
+              </h4>
+              <div class="space-y-2">
+                {#each redistribution.candidates as candidate}
+                  <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded border">
+                    <div class="flex-1">
+                      <p class="font-medium text-sm">{candidate.user?.firstName} {candidate.user?.lastName}</p>
+                      <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-muted-foreground">{candidate.user?.department}</span>
+                        {#if candidate.canHelp}
+                          <Badge variant="success" class="text-xs">Same Department</Badge>
+                        {/if}
+                      </div>
+                      {#if candidate.skills && candidate.skills.length > 0}
+                        <div class="flex flex-wrap gap-1 mt-2">
+                          {#each candidate.skills.slice(0, 3) as skill}
+                            <span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-700">
+                              {skill}
+                            </span>
+                          {/each}
+                          {#if candidate.skills.length > 3}
+                            <span class="text-xs text-muted-foreground">+{candidate.skills.length - 3}</span>
+                          {/if}
+                        </div>
+                      {/if}
+                    </div>
+                    <div class="text-right ml-4">
+                      <div class="text-sm font-semibold" style="color: {getUtilizationColor(candidate.utilization)}">
+                        {candidate.utilization.toFixed(0)}%
+                      </div>
+                      <p class="text-xs text-green-600 dark:text-green-400 font-medium">
+                        {candidate.availableHours.toFixed(0)}h available
+                      </p>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {:else}
+            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-800">
+              <p class="text-sm text-amber-900 dark:text-amber-100">
+                <span class="font-semibold">⚠️ Limited Internal Capacity:</span> No team members available with matching skills and capacity.
+              </p>
+            </div>
+          {/if}
+
+          {#if redistribution.needsHiring && redistribution.needsHiring.length > 0}
+            <div>
+              <h4 class="text-sm font-semibold mb-2 flex items-center gap-2">
+                <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Consider Hiring: Critical Skill Gaps
+              </h4>
+              <div class="space-y-2">
+                {#each redistribution.needsHiring as skillGap}
+                  <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                    <div class="flex-1">
+                      <p class="font-medium text-sm">{skillGap.skill}</p>
+                      <p class="text-xs text-muted-foreground">
+                        High demand ({skillGap.demand} projects/tasks) • Low supply ({skillGap.supply} team members)
+                      </p>
+                    </div>
+                    <Badge variant={skillGap.severity === 'CRITICAL' ? 'destructive' : 'warning'} class="text-xs">
+                      {skillGap.severity}
+                    </Badge>
+                  </div>
+                {/each}
+              </div>
+              <div class="mt-3 p-3 bg-slate-100 dark:bg-slate-800 rounded">
+                <p class="text-sm font-semibold mb-1">💡 Recommendation:</p>
+                <p class="text-xs text-muted-foreground">
+                  Consider hiring specialists in these areas to prevent burnout and meet project demands. Less than 3 team members have these critical skills.
+                </p>
+              </div>
+            </div>
+          {/if}
+        </div>
+      </div>
+    {/each}
+  </div>
+</Modal>
+
+<!-- Available Capacity Modal - Assignment Opportunities -->
+<Modal bind:open={showCapacityModal} title="Available Capacity - Assignment Opportunities" size="xl">
+  <div class="space-y-6">
+    <p class="text-sm text-muted-foreground">
+      {underUtilizedUsers.length} team member{underUtilizedUsers.length > 1 ? 's have' : ' has'} capacity for additional work.
+      Below are assignment and training recommendations based on skills and project needs.
+    </p>
+
+    {#each underUtilizedUsers.slice(0, 10) as user}
+      {@const skillsGapUser = skillsGap?.trainingRecommendations?.find(rec => rec.userId === user.user?.id)}
+      <div class="border rounded-lg p-4 bg-green-50 dark:bg-green-900/10">
+        <!-- Available Team Member -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-semibold text-lg">{user.user?.firstName} {user.user?.lastName}</h3>
+            <p class="text-sm text-muted-foreground">{user.user?.department || 'Unassigned'}</p>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold" style="color: {getUtilizationColor(user.utilization)}">
+              {user.utilization.toFixed(0)}%
+            </div>
+            <p class="text-xs text-green-600 dark:text-green-400 font-medium">
+              {((user.availableHours || 0) - (user.loggedHours || 0)).toFixed(0)}h available
+            </p>
+          </div>
+        </div>
+
+        <!-- Current Skills -->
+        {#if skillsGapUser?.currentSkills && skillsGapUser.currentSkills.length > 0}
+          <div class="mb-3">
+            <p class="text-xs font-semibold mb-1">Current Skills:</p>
+            <div class="flex flex-wrap gap-1">
+              {#each skillsGapUser.currentSkills as skill}
+                <span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-700">
+                  {skill}
+                </span>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        <!-- Recommendations -->
+        <div class="space-y-3">
+          {#if skillsGapUser?.potentialProjectMatches && skillsGapUser.potentialProjectMatches > 0}
+            <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded">
+              <p class="text-sm font-semibold mb-1">✅ Assignment Opportunity:</p>
+              <p class="text-xs text-green-900 dark:text-green-100">
+                Can be assigned to {skillsGapUser.potentialProjectMatches} active project{skillsGapUser.potentialProjectMatches > 1 ? 's' : ''}
+                that need {skillsGapUser.currentSkills?.[0] || 'their skills'}.
+              </p>
+            </div>
+          {/if}
+
+          {#if skillsGapUser?.recommendedSkills && skillsGapUser.recommendedSkills.length > 0}
+            <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded">
+              <p class="text-sm font-semibold mb-1">📚 Training Recommendation:</p>
+              <p class="text-xs text-blue-900 dark:text-blue-100 mb-2">
+                Invest available hours in training for high-demand skills:
+              </p>
+              <div class="flex flex-wrap gap-1">
+                {#each skillsGapUser.recommendedSkills as skill}
+                  {@const skillDetail = skillsGapUser.skillsDetail?.find(s => s.skill === skill)}
+                  {@const severityClasses =
+                    skillDetail?.severity === 'CRITICAL' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                    skillDetail?.severity === 'HIGH' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                    'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  }
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-medium {severityClasses}">
+                    {skill}
+                  </span>
+                {/each}
+              </div>
+            </div>
+          {/if}
+        </div>
+      </div>
+    {/each}
+
+    {#if underUtilizedUsers.length > 10}
+      <p class="text-sm text-center text-muted-foreground">
+        +{underUtilizedUsers.length - 10} more team members with available capacity
+      </p>
+    {/if}
+  </div>
+</Modal>
