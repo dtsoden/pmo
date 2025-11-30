@@ -108,10 +108,7 @@
       {#each images as _, index}
         <button
           type="button"
-          class="h-2 w-2 rounded-full transition-all"
-          class:bg-primary={index === currentIndex}
-          class:w-8={index === currentIndex}
-          class:bg-muted-foreground/50={index !== currentIndex}
+          class="h-2 rounded-full transition-all {index === currentIndex ? 'bg-primary w-8' : 'w-2 bg-muted-foreground/50'}"
           on:click={() => goToSlide(index)}
           aria-label={`Go to slide ${index + 1}`}
         />
