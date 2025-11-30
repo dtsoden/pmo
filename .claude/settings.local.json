@@ -69,7 +69,8 @@
       "Bash(docker ps:*)",
       "Bash(npx tsx:*)",
       "Bash(npx ts-node scripts/enhance-capacity-data.ts)",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "Bash(del \"C:\\Users\\DavidSoden\\CNX-PMO\\backend\\scripts\\check-skills.ts\")"
     ],
     "deny": [],
     "ask": []

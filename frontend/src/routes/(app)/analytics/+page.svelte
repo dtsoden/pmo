@@ -600,21 +600,13 @@
                       <div class="flex flex-wrap gap-1">
                         {#each rec.recommendedSkills as skill}
                           {@const skillDetail = rec.skillsDetail.find(s => s.skill === skill)}
-                          <span
-                            class="inline-block px-2 py-0.5 rounded text-xs font-medium"
-                            class:bg-red-100={skillDetail?.severity === 'CRITICAL'}
-                            class:dark:bg-red-900/30={skillDetail?.severity === 'CRITICAL'}
-                            class:text-red-700={skillDetail?.severity === 'CRITICAL'}
-                            class:dark:text-red-300={skillDetail?.severity === 'CRITICAL'}
-                            class:bg-amber-100={skillDetail?.severity === 'HIGH'}
-                            class:dark:bg-amber-900/30={skillDetail?.severity === 'HIGH'}
-                            class:text-amber-700={skillDetail?.severity === 'HIGH'}
-                            class:dark:text-amber-300={skillDetail?.severity === 'HIGH'}
-                            class:bg-blue-100={skillDetail?.severity === 'MEDIUM'}
-                            class:dark:bg-blue-900/30={skillDetail?.severity === 'MEDIUM'}
-                            class:text-blue-700={skillDetail?.severity === 'MEDIUM'}
-                            class:dark:text-blue-300={skillDetail?.severity === 'MEDIUM'}
-                          >
+                          {@const severityClasses =
+                            skillDetail?.severity === 'CRITICAL' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                            skillDetail?.severity === 'HIGH' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                            skillDetail?.severity === 'MEDIUM' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                            'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          }
+                          <span class="inline-block px-2 py-0.5 rounded text-xs font-medium {severityClasses}">
                             {skill}
                           </span>
                         {/each}
@@ -713,17 +705,12 @@
                         <div class="flex flex-wrap gap-1 mt-1">
                           {#each rec.recommendedSkills as skill}
                             {@const skillDetail = rec.skillsDetail.find(s => s.skill === skill)}
-                            <span
-                              class="inline-block px-1.5 py-0.5 rounded text-xs font-medium"
-                              class:bg-red-100={skillDetail?.severity === 'CRITICAL'}
-                              class:dark:bg-red-900/30={skillDetail?.severity === 'CRITICAL'}
-                              class:text-red-700={skillDetail?.severity === 'CRITICAL'}
-                              class:dark:text-red-300={skillDetail?.severity === 'CRITICAL'}
-                              class:bg-amber-100={skillDetail?.severity === 'HIGH'}
-                              class:dark:bg-amber-900/30={skillDetail?.severity === 'HIGH'}
-                              class:text-amber-700={skillDetail?.severity === 'HIGH'}
-                              class:dark:text-amber-300={skillDetail?.severity === 'HIGH'}
-                            >
+                            {@const severityClasses =
+                              skillDetail?.severity === 'CRITICAL' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                              skillDetail?.severity === 'HIGH' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+                              'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                            }
+                            <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium {severityClasses}">
                               {skill}
                             </span>
                           {/each}
