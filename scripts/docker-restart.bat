@@ -1,7 +1,19 @@
 @echo off
 REM ============================================
 REM PMO Platform - Restart Docker Only (Windows)
-REM Restarts PostgreSQL and Redis without touching Node services
+REM ============================================
+REM
+REM Restarts PostgreSQL and Redis containers without touching
+REM Node.js services (backend + frontend).
+REM
+REM Use this when:
+REM   - Database connection issues
+REM   - PostgreSQL needs restart
+REM   - Redis cache needs clearing
+REM   - Docker containers are stuck
+REM
+REM NOTE: This does NOT affect backend/frontend services.
+REM To restart everything: scripts\restart.bat --docker
 REM ============================================
 
 setlocal

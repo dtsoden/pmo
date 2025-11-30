@@ -2,6 +2,28 @@
 REM ============================================
 REM PMO Platform - Restart All Services (Windows)
 REM ============================================
+REM
+REM This script:
+REM   1. Rebuilds Chrome extension (ensures latest config)
+REM   2. Restarts backend + frontend (NSSM services)
+REM   3. Optionally restarts Docker (use --docker flag)
+REM
+REM WHEN TO USE:
+REM   - After changing root .env (backend config)
+REM   - After pulling code updates
+REM   - After npm install
+REM   - When services are misbehaving
+REM
+REM IMPORTANT: If you changed frontend/.env or chrome-extension/.env,
+REM this will rebuild the extension but you also need to:
+REM   - Rebuild frontend: cd frontend && npm run build
+REM   - Reload extension in chrome://extensions
+REM
+REM OPTIONS:
+REM   --docker    Also restart PostgreSQL and Redis containers
+REM
+REM See docs/ENV-CONFIGURATION.md for configuration help.
+REM ============================================
 
 setlocal
 set "PROJECT_ROOT=%~dp0.."

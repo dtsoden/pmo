@@ -2,6 +2,18 @@
 # ============================================
 # PMO Platform - Stop All Services (Mac/Linux)
 # ============================================
+#
+# This script stops:
+#   - Node.js services (backend + frontend)
+#   - Docker containers (PostgreSQL + Redis)
+#
+# Use this when:
+#   - Shutting down for the day
+#   - Before system restart
+#   - Troubleshooting port conflicts
+#
+# To start again: ./scripts/start.sh
+# ============================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"

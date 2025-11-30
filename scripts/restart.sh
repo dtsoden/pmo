@@ -2,6 +2,29 @@
 # ============================================
 # PMO Platform - Restart All Services (Mac/Linux)
 # ============================================
+#
+# This script:
+#   1. Rebuilds Chrome extension (ensures latest config)
+#   2. Restarts Node.js services (backend + frontend)
+#   3. Optionally restarts Docker (use --docker flag)
+#
+# WHEN TO USE:
+#   - After changing root .env (backend config)
+#   - After pulling code updates
+#   - After npm install
+#   - When services are misbehaving
+#
+# IMPORTANT: If you changed frontend/.env or chrome-extension/.env,
+# this will rebuild the extension but you also need to:
+#   - Rebuild frontend: cd frontend && npm run build
+#   - Reload extension in chrome://extensions
+#
+# OPTIONS:
+#   --docker    Also restart PostgreSQL and Redis containers
+#
+# For systemd service setup (production), see: docs/DEPLOY-LINUX.md
+# For environment config help, see: docs/ENV-CONFIGURATION.md
+# ============================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"

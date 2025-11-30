@@ -1,7 +1,19 @@
 #!/bin/bash
 # ============================================
 # PMO Platform - Restart Docker Only (Mac/Linux)
-# Restarts PostgreSQL and Redis without touching Node services
+# ============================================
+#
+# Restarts PostgreSQL and Redis containers without touching
+# Node.js services (backend + frontend).
+#
+# Use this when:
+#   - Database connection issues
+#   - PostgreSQL needs restart
+#   - Redis cache needs clearing
+#   - Docker containers are stuck
+#
+# NOTE: This does NOT affect backend/frontend services.
+# To restart everything: ./scripts/restart.sh --docker
 # ============================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

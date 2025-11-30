@@ -2,6 +2,18 @@
 REM ============================================
 REM PMO Platform - Stop All Services (Windows)
 REM ============================================
+REM
+REM This script stops:
+REM   - NSSM services (backend + frontend)
+REM   - Docker containers (PostgreSQL + Redis)
+REM
+REM Use this when:
+REM   - Shutting down for the day
+REM   - Before system restart
+REM   - Troubleshooting port conflicts
+REM
+REM To start again: scripts\start.bat
+REM ============================================
 
 setlocal
 set "PROJECT_ROOT=%~dp0.."

@@ -2,6 +2,27 @@
 # ============================================
 # PMO Platform - Start All Services (Mac/Linux)
 # ============================================
+#
+# This script starts:
+#   - Docker containers (PostgreSQL + Redis)
+#   - Node.js services (backend + frontend)
+#
+# PREREQUISITES:
+#   1. Docker installed and running
+#   2. Node.js 20+ installed
+#   3. Environment files configured:
+#      - .env (root) - Backend runtime config
+#      - frontend/.env - Frontend build-time config
+#      - chrome-extension/.env - Extension build-time config
+#
+# IMPORTANT: If you changed any .env files:
+#   - Root .env: Just restart backend (this script)
+#   - frontend/.env: Run "cd frontend && npm run build"
+#   - chrome-extension/.env: Run "cd chrome-extension && npm run build"
+#
+# For systemd service setup (production), see: docs/DEPLOY-LINUX.md
+# For environment config help, see: docs/ENV-CONFIGURATION.md
+# ============================================
 
 set -e
 
@@ -11,6 +32,8 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 echo ""
 echo "Starting PMO Platform..."
+echo ""
+echo "For configuration help, see: docs/ENV-CONFIGURATION.md"
 echo ""
 
 # Start Docker containers (PostgreSQL + Redis)

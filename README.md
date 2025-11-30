@@ -1,7 +1,9 @@
 ![](https://raw.githubusercontent.com/dtsoden/pmo/main/frontend/static/ReverseLogo.png)
 # PMO Platform
 
-A comprehensive PMO tracking platform with project management, capacity planning, and real-time time tracking. Built as a modular monolith with Node.js/TypeScript backend and SvelteKit frontend, deployed to Azure Container Apps.
+A comprehensive PMO tracking platform with project management, capacity planning, and real-time time tracking. Built as a modular monolith with Node.js/TypeScript backend and SvelteKit frontend.
+
+**Open source** under AGPL-3.0 license - free for internal use, see [LICENSE](LICENSE) for details.
 
 ## 🎯 Features
 
@@ -42,140 +44,178 @@ A comprehensive PMO tracking platform with project management, capacity planning
 
 - **Backend**: Node.js 20+ • TypeScript • Fastify • Socket.IO • Prisma ORM
 - **Frontend**: SvelteKit • TailwindCSS • TypeScript
-- **Database**: PostgreSQL 16+ (Docker)
-- **Cache**: Redis (configured, not currently used)
+- **Database**: PostgreSQL 16+
+- **Cache**: Redis (optional, for multi-instance deployments)
 - **Real-time**: Socket.IO with WebSocket transport
-- **Platform**: Windows (NSSM service management)
-- **Deployment**: Azure Container Apps with Cloudflare Tunnel
+
+---
+
+## 📚 Documentation
+
+### Deployment Guides
+
+Choose your deployment platform:
+
+- **[Windows Deployment](docs/DEPLOY-WINDOWS.md)** - Deploy on Windows Server or Windows 10/11
+  - Single-instance setup with NSSM services
+  - Enterprise-scale with load balancing
+  - Cloudflare Tunnel integration
+
+- **[Linux Deployment](docs/DEPLOY-LINUX.md)** - Deploy on Ubuntu, Debian, CentOS, RHEL
+  - systemd service configuration
+  - nginx reverse proxy setup
+  - Let's Encrypt SSL certificates
+
+- **[Cloud Deployment](docs/DEPLOY-CLOUD.md)** - Deploy to cloud providers
+  - AWS (EC2, ECS, RDS, ElastiCache)
+  - Azure (VMs, Container Apps, Database for PostgreSQL)
+  - Vultr, DigitalOcean, Hostinger VPS
+  - Cost estimates and provider comparisons
+
+### Configuration
+
+- **[Environment Variables Guide](docs/ENV-CONFIGURATION.md)** - Complete `.env` configuration reference
+  - Root `.env` (backend runtime)
+  - Frontend `.env` (build-time)
+  - Chrome extension `.env` (build-time)
+  - Production deployment scenarios
+
+### Architecture & Scaling
+
+**Single-Instance Deployment** (1-500 concurrent users):
+```
+[Users] → [Frontend:7620] → [Backend:7600] → [PostgreSQL:7640]
+```
+- No Redis needed
+- Socket.IO uses in-memory rooms
+- Perfect for small teams and development
+
+**Multi-Instance Deployment** (500+ concurrent users):
+```
+[Load Balancer]
+    ├── Backend Instance 1
+    ├── Backend Instance 2
+    └── Backend Instance 3
+         ↓
+   [Redis] (syncs Socket.IO rooms)
+         ↓
+   [PostgreSQL]
+```
+- Redis adapter enabled automatically when `REDIS_URL` is set
+- Stateless backend allows horizontal scaling
+- JWT-based auth (no server-side sessions)
+
+**What's included:**
+- ✅ Redis adapter for Socket.IO (ready to use)
+- ✅ Stateless backend architecture
+- ✅ WebSocket room sync via Redis pubsub
+
+**What you need to implement:**
+- Load balancer (HAProxy, nginx, AWS ALB, Azure App Gateway)
+- Managed database and Redis (or self-hosted HA clusters)
+- Container orchestration (optional: Docker Swarm, Kubernetes)
+
+---
 
 ## 📋 Prerequisites
 
-- **Windows 10/11** (NSSM service manager)
 - **Node.js 20+** and npm 10+
-- **PostgreSQL 16+** (via Docker)
-- **Docker Desktop** (for PostgreSQL + Redis)
+- **Docker** and Docker Compose
+- **PostgreSQL 16+** (via Docker or managed service)
+- **Git** (optional, for cloning repository)
 
-## 🚀 Quick Start
+**Platform-specific requirements:**
+- See [Windows Deployment](docs/DEPLOY-WINDOWS.md) for NSSM service manager setup
+- See [Linux Deployment](docs/DEPLOY-LINUX.md) for systemd configuration
+- See [Cloud Deployment](docs/DEPLOY-CLOUD.md) for cloud provider requirements
+
+---
+
+## 🚀 Quick Start (Development)
+
+**For production deployment, see the [deployment guides](#deployment-guides) above.**
 
 ### 1. Clone and Install
 
 ```bash
-# Navigate to the project directory
-cd CNX-PMO
+# Clone repository
+git clone https://github.com/yourusername/pmo-platform.git
+cd pmo-platform
 
-# Install all workspace dependencies
+# Install dependencies
 npm install
 ```
 
-### 2. Environment Setup
+### 2. Configure Environment
 
 ```bash
-# Windows
-copy .env.example .env
+# Copy example files
+cp .env.example .env
+cp frontend/.env.example frontend/.env
+cp chrome-extension/.env.example chrome-extension/.env
 
-# Edit .env with your configuration
-# Required:
+# Edit root .env (see docs/ENV-CONFIGURATION.md for details)
+# Minimum required:
 # - DATABASE_URL=postgresql://pmouser:pmopass@localhost:7640/pmodb
-# - JWT_SECRET=<minimum-32-character-secret>
+# - JWT_SECRET=<generate-with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))">
 # - CORS_ORIGIN=http://localhost:7620
-# - PORT=7600
 ```
 
-**Domain Configuration** (for production deployment):
+**For detailed configuration, see [Environment Variables Guide](docs/ENV-CONFIGURATION.md).**
 
-1. **Root `.env`**: Update backend and frontend URLs
-   ```bash
-   BACKEND_URL=https://api.yourdomain.com
-   BACKEND_WS_URL=wss://api.yourdomain.com
-   FRONTEND_URL=https://yourdomain.com
-   CORS_ORIGIN=http://localhost:7620,https://yourdomain.com
-   ```
+### 3. Initialize Database
 
-2. **Frontend** (`frontend/.env`): Update extension connection URLs
-   ```bash
-   VITE_EXTENSION_BACKEND_URL=https://api.yourdomain.com
-   VITE_EXTENSION_FRONTEND_URL=https://yourdomain.com
-   ```
-
-3. **Chrome Extension** (`chrome-extension/.env`): Update extension URLs
-   ```bash
-   VITE_EXTENSION_BACKEND_URL=https://api.yourdomain.com
-   VITE_EXTENSION_FRONTEND_URL=https://yourdomain.com
-   ```
-
-4. **Rebuild frontend** after changing domain:
-   ```bash
-   cd frontend
-   npm run build
-   cd ..
-   ```
-
-5. **Restart services** to apply changes:
-   ```bash
-   scripts\restart.bat
-   ```
-
-> **CRITICAL**: Both `frontend/.env` and `chrome-extension/.env` must have matching URLs! The web app uses `frontend/.env` to tell the extension where to connect. Frontend uses build-time variables (VITE_*), so you must rebuild after changing domains.
-
-### 3. Database Setup
-
-**Option A: Fresh Installation** (recommended for new setups)
 ```bash
-# Start PostgreSQL
+# Start database
 docker-compose up -d postgres
 
-# Set up database (fast - single SQL script)
+# Initialize schema
 cd backend
 npm run setup:fresh
 
 # (Optional) Load demo data
 npm run seed:test
 
-# (Optional) View database
-npm run studio -- --port 7680
-```
-
-**Option B: Existing Database** (preserves data)
-```bash
-cd backend
-npm run migrate
+cd ..
 ```
 
 ### 4. Start Services
 
-**Windows Service Management (Recommended)**
-
-One-time setup (run as administrator):
+**Windows:**
 ```cmd
-scripts\setup-nssm.bat
+scripts\start.bat
 ```
 
-Then use desktop shortcuts (auto-elevate):
-- `restart.bat.lnk` - Restart backend + frontend
-- `start.bat.lnk` - Start all services
-- `stop.bat.lnk` - Stop everything
+**Linux/Mac:**
+```bash
+./scripts/start.sh
+```
 
-**Manual Start**
+**Or manually (two terminals):**
 ```bash
 # Terminal 1: Backend
-cd backend
-set PORT=7600
-npm run dev
+cd backend && npm run dev
 
 # Terminal 2: Frontend
-cd frontend
-npm run dev -- --port 7620
+cd frontend && npm run dev -- --port 7620
 ```
 
-### 5. Access the Application
+### 5. Access the Application & Login
+
+**Default Login Credentials:**
+- **Email**: `admin@pmoplatform.com`
+- **Password**: `Admin123!`
+- **Role**: SUPER_ADMIN
+
+**⚠️ IMPORTANT:** Change the default password after first login!
+
+**Optional Test Data:**
+- To add 50 test users for development: `cd backend && npm run seed:test`
+- Test users: `firstname.lastname@testdata.pmo.local` / `TestPass123!`
 
 - **Frontend**: http://localhost:7620
 - **Backend API**: http://localhost:7600/health
 - **PostgreSQL**: localhost:7640
-- **Redis**: localhost:7660
-- **Prisma Studio**: http://localhost:7680
-
-**Default Login**: Your configured admin account
 
 ## 🗄️ Database
 
@@ -312,44 +352,19 @@ npm run dev      # Build in watch mode
 
 After building, load unpacked extension from `chrome-extension/dist` in Chrome.
 
-## 🪟 Windows Service Management
+---
 
-### NSSM (Non-Sucking Service Manager)
+## 💡 Development Tips
 
-Services run in the background, preventing accidental window closure.
+### Service Management
 
-**Setup** (one-time, run as admin):
-```cmd
-scripts\setup-nssm.bat
-```
+**Windows (NSSM services):**
+- See [Windows Deployment Guide](docs/DEPLOY-WINDOWS.md) for NSSM setup
+- Quick commands: `scripts\start.bat`, `scripts\stop.bat`, `scripts\restart.bat`
 
-**Desktop Shortcuts** (auto-elevate to admin):
-- `restart.bat.lnk` - Most commonly used
-- `start.bat.lnk` - Start all services + Docker
-- `stop.bat.lnk` - Stop everything
-
-**Manual Commands**:
-```cmd
-# Restart services (most common)
-scripts\restart.bat
-
-# Restart everything including Docker
-scripts\restart.bat --docker
-
-# Start all services
-scripts\start.bat
-
-# Stop all services
-scripts\stop.bat
-
-# Individual service control
-nssm start pmo-backend
-nssm stop pmo-frontend
-nssm restart pmo-backend
-nssm status pmo-backend
-```
-
-**Service Logs**: `logs/backend.log`, `logs/frontend.log`
+**Linux/Mac (systemd or manual):**
+- See [Linux Deployment Guide](docs/DEPLOY-LINUX.md) for systemd setup
+- Quick commands: `./scripts/start.sh`, `./scripts/stop.sh`, `./scripts/restart.sh`
 
 ## 🌐 Port Assignments
 
@@ -473,42 +488,27 @@ docker exec -i pmo-postgres psql -U pmouser -d pmodb < script.sql
 - Shortcuts point to specific task UUIDs (regenerated on re-seed)
 - Script detects and cleans orphaned shortcuts automatically
 
-## 📊 Production Deployment
+---
 
-### Azure Container Apps
+## 📦 Production Deployment
 
-**Prerequisites**:
-- Azure CLI installed and authenticated
-- Container Registry (ACR) set up
-- Azure PostgreSQL Flexible Server
+**For production deployment, see the comprehensive deployment guides:**
 
-**Environment Variables** (required):
-```bash
-DATABASE_URL=postgresql://user:pass@host:5432/pmodb
-JWT_SECRET=<32-char-minimum-secret>
-CORS_ORIGIN=https://yourdomain.com
-PORT=7600
-NODE_ENV=production
-```
+- **[Windows Deployment](docs/DEPLOY-WINDOWS.md)** - NSSM services, IIS, Cloudflare Tunnel
+- **[Linux Deployment](docs/DEPLOY-LINUX.md)** - systemd, nginx, Let's Encrypt SSL
+- **[Cloud Deployment](docs/DEPLOY-CLOUD.md)** - AWS, Azure, Vultr, DigitalOcean
 
-**Deployment**:
-```bash
-# Build and push images
-docker build -t <registry>/pmo-backend:latest ./backend
-docker build -t <registry>/pmo-frontend:latest ./frontend
-docker push <registry>/pmo-backend:latest
-docker push <registry>/pmo-frontend:latest
+**Production checklist:**
+- ✅ Use managed PostgreSQL (not Docker)
+- ✅ Enable Redis if deploying multiple backend instances
+- ✅ Setup SSL/TLS certificates
+- ✅ Configure firewall rules
+- ✅ Use strong JWT_SECRET (64+ characters)
+- ✅ Restrict CORS_ORIGIN to your actual domains
+- ✅ Setup automated database backups
+- ✅ Configure logging and monitoring
 
-# Deploy via Azure CLI or CI/CD pipeline
-```
-
-### Cloudflare Tunnel (or any reverse proxy)
-
-Configure your tunnel/proxy to route:
-- **Frontend** (port 7620): `https://yourdomain.com` → `http://localhost:7620`
-- **Backend API** (port 7600): `https://api.yourdomain.com` → `http://localhost:7600`
-
-After configuring DNS and tunnel, update your `.env` files (see "Domain Configuration" above) and rebuild the frontend.
+---
 
 ## 🧪 Testing
 
@@ -564,10 +564,52 @@ npm test
 - Verify shortcuts were created via web app (not database)
 - Reload extension in `chrome://extensions`
 
-## 📞 Support
+---
 
-For issues and questions, contact the development team.
+## 📄 License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+**What this means:**
+- ✅ Free to use for internal business operations
+- ✅ Free to modify and customize
+- ✅ Must share source code if you distribute modified versions
+- ✅ Must share source code if you offer it as a SaaS product
+- ❌ Cannot resell as commercial SaaS without releasing your source code under AGPL-3.0
+
+**Need a commercial license?** Contact us for pricing on commercial licensing that allows:
+- Using this as part of a proprietary SaaS offering
+- Integrating into closed-source products
+- Commercial support and dedicated features
+
+See [LICENSE](LICENSE) for full terms.
 
 ---
 
-Built with Node.js, TypeScript, SvelteKit, and PostgreSQL
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+**Before contributing:**
+- Read the [code conventions](#code-conventions) section
+- Ensure tests pass: `cd backend && npm test`
+- Follow existing code style (TypeScript, ESLint)
+- Update documentation if needed
+
+---
+
+## 📞 Support
+
+- **Issues**: Open an issue on GitHub
+- **Documentation**: See `docs/` folder
+- **Discussions**: GitHub Discussions
+
+---
+
+**Built with Node.js, TypeScript, SvelteKit, Fastify, Socket.IO, and PostgreSQL**

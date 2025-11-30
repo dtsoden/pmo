@@ -17,6 +17,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -76,13 +77,38 @@ async function setupFreshDatabase() {
 
     console.log(`✓ Marked ${migrationFolders.length} migrations as applied\n`);
 
+    // Create default admin user
+    console.log('Creating default admin user...');
+    const defaultPassword = 'Admin123!';
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+    await prisma.user.create({
+      data: {
+        email: 'admin@pmoplatform.com',
+        passwordHash,
+        firstName: 'System',
+        lastName: 'Administrator',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+        timezone: 'America/New_York',
+      },
+    });
+
+    console.log('✓ Default admin user created\n');
+
     console.log('========================================');
     console.log('FRESH DATABASE SETUP COMPLETE!');
     console.log('========================================');
-    console.log('Database is ready to use.');
+    console.log('Database is ready to use.\n');
+    console.log('DEFAULT LOGIN CREDENTIALS:');
+    console.log('  Email:    admin@pmoplatform.com');
+    console.log('  Password: Admin123!');
+    console.log('  Role:     SUPER_ADMIN\n');
+    console.log('IMPORTANT: Change the default password after first login!\n');
     console.log('Next steps:');
-    console.log('  1. Run: npm run seed:test (optional - adds demo data)');
-    console.log('  2. Run: npm run dev (start the application)');
+    console.log('  1. Run: npm run dev (start the application)');
+    console.log('  2. Login with credentials above');
+    console.log('  3. OPTIONAL: Run "npm run seed:test" for demo data (50 test users)');
     console.log('========================================\n');
 
   } catch (error) {
