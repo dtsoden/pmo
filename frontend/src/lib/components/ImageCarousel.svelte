@@ -86,7 +86,7 @@
   {#if showControls && images.length > 1}
     <button
       type="button"
-      class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-lg transition-all hover:bg-background hover:scale-110"
+      class="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-lg transition-all hover:bg-background hover:scale-110"
       on:click={prevSlide}
       aria-label="Previous image"
     >
@@ -94,7 +94,7 @@
     </button>
     <button
       type="button"
-      class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-lg transition-all hover:bg-background hover:scale-110"
+      class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-lg transition-all hover:bg-background hover:scale-110"
       on:click={nextSlide}
       aria-label="Next image"
     >
