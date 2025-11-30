@@ -610,3 +610,196 @@ export async function getUsersUtilization(params: UserUtilizationParams) {
     users: utilization,
   };
 }
+
+// ============================================
+// SKILLS GAP ANALYSIS
+// ============================================
+
+export async function getSkillsGapAnalysis() {
+  // Get all active projects and their tags
+  const projects = await db.project.findMany({
+    where: {
+      status: { in: [ProjectStatus.ACTIVE, ProjectStatus.PLANNING] }
+    },
+    select: {
+      id: true,
+      name: true,
+      tags: true,
+    }
+  });
+
+  // Get all active tasks and their tags
+  const tasks = await db.task.findMany({
+    where: {
+      status: { in: [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW] }
+    },
+    select: {
+      id: true,
+      projectId: true,
+      tags: true,
+    }
+  });
+
+  // Count demand per skill (from tags)
+  const skillDemandMap = new Map<string, { projectCount: number; taskCount: number; projectIds: Set<string> }>();
+
+  projects.forEach(project => {
+    project.tags.forEach(tag => {
+      if (!skillDemandMap.has(tag)) {
+        skillDemandMap.set(tag, { projectCount: 0, taskCount: 0, projectIds: new Set() });
+      }
+      const demand = skillDemandMap.get(tag)!;
+      demand.projectCount++;
+      demand.projectIds.add(project.id);
+    });
+  });
+
+  tasks.forEach(task => {
+    task.tags.forEach(tag => {
+      if (!skillDemandMap.has(tag)) {
+        skillDemandMap.set(tag, { projectCount: 0, taskCount: 0, projectIds: new Set() });
+      }
+      const demand = skillDemandMap.get(tag)!;
+      demand.taskCount++;
+    });
+  });
+
+  // Get all active users and their skills
+  const users = await db.user.findMany({
+    where: { status: 'ACTIVE' },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      department: true,
+      skills: true,
+      defaultWeeklyHours: true,
+    }
+  });
+
+  // Count supply per skill
+  const skillSupplyMap = new Map<string, number>();
+  const userSkillsMap = new Map<string, string[]>();
+
+  users.forEach(user => {
+    userSkillsMap.set(user.id, user.skills);
+    user.skills.forEach(skill => {
+      skillSupplyMap.set(skill, (skillSupplyMap.get(skill) || 0) + 1);
+    });
+  });
+
+  // Calculate skills demand array
+  const skillsDemand = Array.from(skillDemandMap.entries())
+    .map(([skill, data]) => ({
+      skill,
+      projectCount: data.projectCount,
+      taskCount: data.taskCount,
+      totalDemand: data.projectCount + data.taskCount,
+      projectIds: Array.from(data.projectIds),
+    }))
+    .sort((a, b) => b.totalDemand - a.totalDemand);
+
+  // Calculate skills supply array
+  const skillsSupply = Array.from(skillSupplyMap.entries())
+    .map(([skill, userCount]) => ({ skill, userCount }))
+    .sort((a, b) => b.userCount - a.userCount);
+
+  // Calculate skills gap
+  const skillsGap = skillsDemand
+    .map(demand => {
+      const supply = skillSupplyMap.get(demand.skill) || 0;
+      const gap = demand.totalDemand - supply;
+      let severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'LOW';
+
+      if (gap > 20) severity = 'CRITICAL';
+      else if (gap > 10) severity = 'HIGH';
+      else if (gap > 5) severity = 'MEDIUM';
+
+      return {
+        skill: demand.skill,
+        demand: demand.totalDemand,
+        supply,
+        gap,
+        severity,
+      };
+    })
+    .filter(s => s.gap > 0)
+    .sort((a, b) => b.gap - a.gap);
+
+  // Get utilization data for training recommendations
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const timeEntries = await db.timeEntry.groupBy({
+    by: ['userId'],
+    where: {
+      date: { gte: monthStart, lte: monthEnd }
+    },
+    _sum: { hours: true }
+  });
+
+  const userHoursMap = new Map<string, number>();
+  timeEntries.forEach(entry => {
+    userHoursMap.set(entry.userId, entry._sum.hours || 0);
+  });
+
+  // Calculate training recommendations for underutilized staff
+  const workDays = Array.from({ length: monthEnd.getDate() }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), i + 1);
+    return d.getDay() !== 0 && d.getDay() !== 6 ? 1 : 0;
+  }).reduce((a, b) => a + b, 0);
+
+  const trainingRecommendations = users
+    .map(user => {
+      const weeklyHours = user.defaultWeeklyHours || 40;
+      const monthCapacity = (weeklyHours / 5) * workDays;
+      const loggedHours = userHoursMap.get(user.id) || 0;
+      const utilization = monthCapacity > 0 ? (loggedHours / monthCapacity) * 100 : 0;
+
+      if (utilization >= 65) return null; // Only recommend for underutilized
+
+      // Find top 3 skills gaps this user doesn't have
+      const userSkills = new Set(user.skills.map(s => s.toLowerCase()));
+      const recommendedSkills = skillsGap
+        .filter(gap => !userSkills.has(gap.skill.toLowerCase()) && gap.severity !== 'LOW')
+        .slice(0, 3)
+        .map(gap => ({
+          skill: gap.skill,
+          gap: gap.gap,
+          severity: gap.severity,
+        }));
+
+      if (recommendedSkills.length === 0) return null;
+
+      // Find projects that need these skills
+      const projectMatches = new Set<string>();
+      recommendedSkills.forEach(rec => {
+        const demand = skillDemandMap.get(rec.skill);
+        if (demand) {
+          demand.projectIds.forEach(pid => projectMatches.add(pid));
+        }
+      });
+
+      return {
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        department: user.department,
+        currentUtilization: Math.round(utilization),
+        currentSkills: user.skills,
+        recommendedSkills: recommendedSkills.map(r => r.skill),
+        skillsDetail: recommendedSkills,
+        potentialProjectMatches: projectMatches.size,
+        availableHours: Math.round(monthCapacity - loggedHours),
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .sort((a, b) => a.currentUtilization - b.currentUtilization);
+
+  return {
+    skillsDemand: skillsDemand.slice(0, 15), // Top 15 in-demand skills
+    skillsSupply: skillsSupply.slice(0, 15), // Top 15 available skills
+    skillsGap: skillsGap.slice(0, 10), // Top 10 critical gaps
+    trainingRecommendations,
+  };
+}

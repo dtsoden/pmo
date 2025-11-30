@@ -6,6 +6,7 @@ import {
   getCapacityOverview,
   getTimeSummary,
   getUsersUtilization,
+  getSkillsGapAnalysis,
 } from './analytics.service.js';
 
 // Validation schemas
@@ -88,6 +89,16 @@ export async function analyticsRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'Invalid query parameters', details: error.errors });
       }
       return reply.code(500).send({ error: error.message || 'Failed to get users utilization' });
+    }
+  });
+
+  // Get skills gap analysis
+  app.get('/skills-gap', async (request, reply) => {
+    try {
+      const analysis = await getSkillsGapAnalysis();
+      return { analysis };
+    } catch (error: any) {
+      return reply.code(500).send({ error: error.message || 'Failed to get skills gap analysis' });
     }
   });
 }

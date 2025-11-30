@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { api, type ProjectsSummary, type TimeSummary, type CapacityAnalytics, type UtilizationReport } from '$lib/api/client';
+  import { api, type ProjectsSummary, type TimeSummary, type CapacityAnalytics, type UtilizationReport, type SkillsGapAnalysis } from '$lib/api/client';
   import { Card, Button, Badge, Spinner } from '$components/shared';
   import {
     formatCurrency,
@@ -36,6 +36,7 @@
   let timeSummary: TimeSummary | null = null;
   let capacityAnalytics: CapacityAnalytics | null = null;
   let utilization: UtilizationReport | null = null;
+  let skillsGap: SkillsGapAnalysis | null = null;
   let loading = true;
   let error = '';
 
@@ -49,7 +50,7 @@
     error = '';
 
     try {
-      const [projectsRes, timeRes, capacityRes, utilizationRes] = await Promise.all([
+      const [projectsRes, timeRes, capacityRes, utilizationRes, skillsGapRes] = await Promise.all([
         api.analytics.projectsSummary(),
         api.analytics.timeSummary({ startDate: defaultStartDate, endDate: defaultEndDate }),
         api.analytics.capacityOverview(),
@@ -57,12 +58,14 @@
           startDate: defaultStartDate,
           endDate: defaultEndDate,
         }),
+        api.analytics.skillsGap(),
       ]);
 
       projectsSummary = projectsRes;
       timeSummary = timeRes;
       capacityAnalytics = capacityRes;
       utilization = utilizationRes;
+      skillsGap = skillsGapRes;
     } catch (err) {
       error = (err as { message?: string })?.message || 'Failed to load analytics';
     } finally {
@@ -107,16 +110,16 @@
     .sort((a, b) => b.hours - a.hours)
     .slice(0, 5);
 
-  // Talent optimization - chronically underutilized staff
-  $: developmentCandidates = (utilization?.users || [])
-    .filter(u => u?.utilization < 40) // Below 40% is concerning
-    .sort((a, b) => a.utilization - b.utilization) // Worst first
-    .slice(0, 10);
+  // Talent optimization - use skills gap analysis data
+  $: developmentCandidates = (skillsGap?.trainingRecommendations || [])
+    .filter(rec => rec.currentUtilization < 40) // Below 40% is concerning
+    .sort((a, b) => a.currentUtilization - b.currentUtilization); // Worst first
 
-  $: skillsInvestmentNeeded = (utilization?.users || [])
-    .filter(u => u?.utilization >= 40 && u?.utilization < 65) // 40-65% could be improved
-    .sort((a, b) => a.utilization - b.utilization)
-    .slice(0, 10);
+  $: skillsInvestmentNeeded = (skillsGap?.trainingRecommendations || [])
+    .filter(rec => rec.currentUtilization >= 40 && rec.currentUtilization < 65); // 40-65% could be improved
+
+  // Top skills in demand
+  $: topSkillsGaps = (skillsGap?.skillsGap || []).slice(0, 10);
 
   // Project status for donut chart
   $: projectStatusData = Object.entries(PROJECT_STATUS_LABELS).map(([status, label]) => ({
@@ -566,16 +569,16 @@
             </div>
           {:else}
             <div class="space-y-3">
-              {#each skillsInvestmentNeeded.slice(0, 5) as user}
-                {@const utilPercent = user?.utilization || 0}
+              {#each skillsInvestmentNeeded.slice(0, 5) as rec}
+                {@const utilPercent = rec.currentUtilization}
                 <div class="p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
                   <div class="flex items-center justify-between mb-2">
                     <div class="flex-1">
                       <p class="font-medium text-sm">
-                        {user.user?.firstName} {user.user?.lastName}
+                        {rec.userName}
                       </p>
                       <p class="text-xs text-muted-foreground">
-                        {user.user?.department || 'Unassigned'}
+                        {rec.department || 'Unassigned'}
                       </p>
                     </div>
                     <div class="text-right">
@@ -586,15 +589,48 @@
                         {utilPercent.toFixed(0)}%
                       </div>
                       <p class="text-xs text-muted-foreground mt-1">
-                        {((user.availableHours || 0) - (user.loggedHours || 0)).toFixed(0)}h available
+                        {rec.availableHours.toFixed(0)}h available
                       </p>
                     </div>
                   </div>
+
+                  {#if rec.recommendedSkills.length > 0}
+                    <div class="mb-2">
+                      <p class="text-xs font-semibold mb-1">Recommended Skills:</p>
+                      <div class="flex flex-wrap gap-1">
+                        {#each rec.recommendedSkills as skill}
+                          {@const skillDetail = rec.skillsDetail.find(s => s.skill === skill)}
+                          <span
+                            class="inline-block px-2 py-0.5 rounded text-xs font-medium"
+                            class:bg-red-100={skillDetail?.severity === 'CRITICAL'}
+                            class:dark:bg-red-900/30={skillDetail?.severity === 'CRITICAL'}
+                            class:text-red-700={skillDetail?.severity === 'CRITICAL'}
+                            class:dark:text-red-300={skillDetail?.severity === 'CRITICAL'}
+                            class:bg-amber-100={skillDetail?.severity === 'HIGH'}
+                            class:dark:bg-amber-900/30={skillDetail?.severity === 'HIGH'}
+                            class:text-amber-700={skillDetail?.severity === 'HIGH'}
+                            class:dark:text-amber-300={skillDetail?.severity === 'HIGH'}
+                            class:bg-blue-100={skillDetail?.severity === 'MEDIUM'}
+                            class:dark:bg-blue-900/30={skillDetail?.severity === 'MEDIUM'}
+                            class:text-blue-700={skillDetail?.severity === 'MEDIUM'}
+                            class:dark:text-blue-300={skillDetail?.severity === 'MEDIUM'}
+                          >
+                            {skill}
+                          </span>
+                        {/each}
+                      </div>
+                    </div>
+                  {/if}
+
                   <div class="flex items-start gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
                     <Target class="h-3 w-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                     <p class="text-blue-700 dark:text-blue-300">
-                      <span class="font-semibold">Action:</span> Skill development opportunity.
-                      Review project pipeline for skills training alignment.
+                      <span class="font-semibold">Action:</span>
+                      {#if rec.potentialProjectMatches > 0}
+                        Train in recommended skills for {rec.potentialProjectMatches} active project{rec.potentialProjectMatches > 1 ? 's' : ''}.
+                      {:else}
+                        Consider skills training for future project opportunities.
+                      {/if}
                     </p>
                   </div>
                 </div>
@@ -628,19 +664,18 @@
             </div>
           {:else}
             <div class="space-y-3">
-              {#each developmentCandidates.slice(0, 5) as user}
-                {@const utilPercent = user?.utilization || 0}
-                {@const monthlyCapacity = user?.availableHours || 0}
-                {@const unusedCapacity = monthlyCapacity - (user?.loggedHours || 0)}
+              {#each developmentCandidates.slice(0, 5) as rec}
+                {@const utilPercent = rec.currentUtilization}
+                {@const unusedCapacity = rec.availableHours}
                 {@const costImpact = unusedCapacity * AVERAGE_RATE}
                 <div class="p-3 border border-amber-200 dark:border-amber-800 rounded-lg bg-amber-50/50 dark:bg-amber-900/10">
                   <div class="flex items-center justify-between mb-2">
                     <div class="flex-1">
                       <p class="font-medium text-sm">
-                        {user.user?.firstName} {user.user?.lastName}
+                        {rec.userName}
                       </p>
                       <p class="text-xs text-muted-foreground">
-                        {user.user?.department || 'Unassigned'}
+                        {rec.department || 'Unassigned'}
                       </p>
                     </div>
                     <div class="text-right">
@@ -656,15 +691,62 @@
                     </div>
                   </div>
                   <div class="space-y-1.5">
+                    {#if rec.currentSkills.length > 0}
+                      <div class="text-xs">
+                        <span class="text-muted-foreground">Current Skills:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          {#each rec.currentSkills.slice(0, 4) as skill}
+                            <span class="inline-block px-1.5 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              {skill}
+                            </span>
+                          {/each}
+                          {#if rec.currentSkills.length > 4}
+                            <span class="text-xs text-muted-foreground">+{rec.currentSkills.length - 4} more</span>
+                          {/if}
+                        </div>
+                      </div>
+                    {/if}
+
+                    {#if rec.recommendedSkills.length > 0}
+                      <div class="text-xs">
+                        <span class="text-muted-foreground">Recommended Training:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          {#each rec.recommendedSkills as skill}
+                            {@const skillDetail = rec.skillsDetail.find(s => s.skill === skill)}
+                            <span
+                              class="inline-block px-1.5 py-0.5 rounded text-xs font-medium"
+                              class:bg-red-100={skillDetail?.severity === 'CRITICAL'}
+                              class:dark:bg-red-900/30={skillDetail?.severity === 'CRITICAL'}
+                              class:text-red-700={skillDetail?.severity === 'CRITICAL'}
+                              class:dark:text-red-300={skillDetail?.severity === 'CRITICAL'}
+                              class:bg-amber-100={skillDetail?.severity === 'HIGH'}
+                              class:dark:bg-amber-900/30={skillDetail?.severity === 'HIGH'}
+                              class:text-amber-700={skillDetail?.severity === 'HIGH'}
+                              class:dark:text-amber-300={skillDetail?.severity === 'HIGH'}
+                            >
+                              {skill}
+                            </span>
+                          {/each}
+                        </div>
+                      </div>
+                    {/if}
+
                     <div class="flex items-center justify-between text-xs">
                       <span class="text-muted-foreground">Unused capacity:</span>
                       <span class="font-medium">{unusedCapacity.toFixed(0)}h this month</span>
                     </div>
+
                     <div class="flex items-start gap-2 text-xs bg-amber-100 dark:bg-amber-900/30 p-2 rounded border border-amber-300 dark:border-amber-700">
                       <AlertTriangle class="h-3 w-3 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                       <p class="text-amber-800 dark:text-amber-300">
                         <span class="font-semibold">Strategic Options:</span>
-                        (1) Skills training for active project needs,
+                        {#if rec.recommendedSkills.length > 0 && rec.potentialProjectMatches > 0}
+                          (1) Train in {rec.recommendedSkills[0]} for {rec.potentialProjectMatches} active project{rec.potentialProjectMatches > 1 ? 's' : ''},
+                        {:else if rec.recommendedSkills.length > 0}
+                          (1) Skills training for future projects,
+                        {:else}
+                          (1) Skills assessment needed,
+                        {/if}
                         (2) Project reassignment,
                         (3) Bench release consideration
                       </p>
@@ -681,10 +763,13 @@
 
             <!-- Summary Impact -->
             {#if developmentCandidates.length > 0}
-              {@const totalUnusedHours = developmentCandidates.reduce((sum, u) =>
-                sum + ((u.availableHours || 0) - (u.loggedHours || 0)), 0
+              {@const totalUnusedHours = developmentCandidates.reduce((sum, rec) =>
+                sum + rec.availableHours, 0
               )}
               {@const totalCostImpact = totalUnusedHours * AVERAGE_RATE}
+              {@const totalProjectMatches = developmentCandidates.reduce((sum, rec) =>
+                sum + rec.potentialProjectMatches, 0
+              )}
               <div class="mt-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-600">
                 <div class="flex items-center justify-between mb-2">
                   <span class="text-sm font-semibold">Monthly Cost Impact</span>
@@ -698,8 +783,11 @@
                 <div class="mt-3 pt-3 border-t border-slate-300 dark:border-slate-600">
                   <p class="text-xs font-medium mb-2">Recommended Actions:</p>
                   <ul class="text-xs space-y-1 text-muted-foreground">
-                    <li>• Review current project pipeline for skills alignment</li>
-                    <li>• Identify training opportunities based on in-demand project skills</li>
+                    {#if totalProjectMatches > 0}
+                      <li>• {totalProjectMatches} active projects need recommended skills</li>
+                    {/if}
+                    <li>• Prioritize training in high-demand skills (marked in red/amber)</li>
+                    <li>• Assign underutilized staff to projects matching their training</li>
                     <li>• Consider strategic workforce adjustments for optimal resource allocation</li>
                   </ul>
                 </div>

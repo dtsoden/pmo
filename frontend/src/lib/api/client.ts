@@ -608,6 +608,11 @@ class ApiClient {
       const res = await this.request<{ utilization: UtilizationAnalytics }>(`/analytics/users/utilization${buildQuery(params)}`);
       return res.utilization;
     },
+
+    skillsGap: async () => {
+      const res = await this.request<{ analysis: SkillsGapAnalysis }>('/analytics/skills-gap');
+      return res.analysis;
+    },
   };
 
   // Notifications endpoints
@@ -1606,6 +1611,46 @@ export interface UtilizationAnalytics {
     period: string;
     utilization: number;
   }[];
+}
+
+export interface SkillsDemand {
+  skill: string;
+  projectCount: number;
+  taskCount: number;
+  totalDemand: number;
+  projectIds: string[];
+}
+
+export interface SkillsSupply {
+  skill: string;
+  userCount: number;
+}
+
+export interface SkillGap {
+  skill: string;
+  demand: number;
+  supply: number;
+  gap: number;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export interface TrainingRecommendation {
+  userId: string;
+  userName: string;
+  department: string | null;
+  currentUtilization: number;
+  currentSkills: string[];
+  recommendedSkills: string[];
+  skillsDetail: SkillGap[];
+  potentialProjectMatches: number;
+  availableHours: number;
+}
+
+export interface SkillsGapAnalysis {
+  skillsDemand: SkillsDemand[];
+  skillsSupply: SkillsSupply[];
+  skillsGap: SkillGap[];
+  trainingRecommendations: TrainingRecommendation[];
 }
 
 export interface Notification {
