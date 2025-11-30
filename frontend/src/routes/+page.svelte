@@ -228,6 +228,222 @@
       </div>
     </section>
 
+    <!-- Advanced Features Showcase -->
+    <section class="border-b bg-background">
+      <div class="container mx-auto px-4 py-16 sm:py-24">
+        <div class="mx-auto mb-12 max-w-3xl text-center">
+          <h2 class="mb-4 text-3xl font-bold sm:text-4xl">Advanced Features That Set Us Apart</h2>
+          <p class="text-lg text-muted-foreground">
+            Not just another project tracker. PMO Platform delivers McKinsey-level insights with actionable intelligence for strategic workforce planning.
+          </p>
+        </div>
+
+        <!-- Feature 1: Executive Analytics Dashboard -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div class="order-2 lg:order-1">
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                <TrendingUp class="h-4 w-4" />
+                Executive Analytics
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Real-Time Financial & Capacity Intelligence
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Track billable revenue, non-billable opportunity, and team utilization in real-time.
+                Interactive donut charts show project portfolio health at a glance. Color-coded capacity
+                visualization instantly identifies over-allocated teams and available resources.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Financial KPIs with billability rate tracking</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Project portfolio health with status breakdown</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Top contributors leaderboard and department performance</span>
+                </li>
+              </ul>
+            </div>
+            <div class="order-1 lg:order-2">
+              <!-- IMAGE PLACEHOLDER #1 -->
+              <div class="relative rounded-lg border-2 border-primary/20 bg-muted overflow-hidden">
+                <img
+                  src="/screenshots/analytics-dashboard.png"
+                  alt="Executive Analytics Dashboard"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-primary/5 to-primary/20" style="aspect-ratio: 16/10">
+                  <div class="text-6xl font-bold text-primary mb-4">#1</div>
+                  <p class="text-lg font-semibold text-center">Executive Analytics Dashboard</p>
+                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 2: Clickable Burnout Risk - Workload Redistribution -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div>
+              <!-- IMAGE PLACEHOLDER #2 -->
+              <div class="relative rounded-lg border-2 border-red-500/20 bg-muted overflow-hidden">
+                <img
+                  src="/screenshots/burnout-risk-modal.png"
+                  alt="Burnout Risk Modal with Redistribution Recommendations"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-red-500/5 to-red-500/20" style="aspect-ratio: 16/10">
+                  <div class="text-6xl font-bold text-red-600 mb-4">#2</div>
+                  <p class="text-lg font-semibold text-center">Burnout Risk Modal</p>
+                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400">
+                <AlertTriangle class="h-4 w-4" />
+                Actionable Intelligence
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Click for Solutions, Not Just Problems
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                When the dashboard shows burnout risk, click it. A modal appears with specific people who can help,
+                their available hours, matching skills, and even hiring recommendations if no one internally has capacity.
+                This is decision-making intelligence, not passive alerts.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Shows WHO is over-allocated with utilization percentage</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Recommends WHO can help with capacity + skill matching</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Hiring recommendations for critical skill gaps (&lt;3 people have skill)</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 3: Skills Gap Analysis -->
+        <div class="mb-16">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div class="order-2 lg:order-1">
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400">
+                <Users class="h-4 w-4" />
+                Talent Optimization
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Skills Gap Analysis with Training Recommendations
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Real-time matching of project demand vs. team supply. The system analyzes active projects and tasks
+                to identify which skills are critically needed, then matches underutilized staff to training opportunities.
+                No more guessing—get specific recommendations backed by project data.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Calculates skills demand from 746+ active tasks across 40 projects</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Matches underutilized staff (&lt;65%) to high-demand skills they don't have</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Shows specific project opportunities: "Train in React for 3 active projects"</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Financial impact: unused capacity × $150/hr average rate</span>
+                </li>
+              </ul>
+            </div>
+            <div class="order-1 lg:order-2">
+              <!-- IMAGE PLACEHOLDER #3 -->
+              <div class="relative rounded-lg border-2 border-blue-500/20 bg-muted overflow-hidden">
+                <img
+                  src="/screenshots/skills-gap-analysis.png"
+                  alt="Skills Gap Analysis with Training Recommendations"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-blue-500/5 to-blue-500/20" style="aspect-ratio: 16/10">
+                  <div class="text-6xl font-bold text-blue-600 mb-4">#3</div>
+                  <p class="text-lg font-semibold text-center">Skills Gap Analysis</p>
+                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature 4: Visual Capacity Planning -->
+        <div>
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div>
+              <!-- IMAGE PLACEHOLDER #4 -->
+              <div class="relative rounded-lg border-2 border-green-500/20 bg-muted overflow-hidden">
+                <img
+                  src="/screenshots/capacity-planning.png"
+                  alt="Visual Capacity Planning with Gradient Colors"
+                  class="w-full h-auto"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+                />
+                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-green-500/5 to-green-500/20" style="aspect-ratio: 16/10">
+                  <div class="text-6xl font-bold text-green-600 mb-4">#4</div>
+                  <p class="text-lg font-semibold text-center">Capacity Planning</p>
+                  <p class="text-sm text-muted-foreground text-center mt-2">Screenshot placeholder</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400">
+                <CalendarClock class="h-4 w-4" />
+                Resource Management
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Visual Capacity with Gradient Color-Coding
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Instantly see team capacity with gradient visualization: orange (critical), yellow (low),
+                blue (moderate), green (optimal), red (over-allocated). Filter by category, paginate through
+                large teams, and view summary totals with average utilization.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Gradient color system with smooth RGB interpolation</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>One-click filters: Critical, Low, Moderate, Optimal, Over-allocated</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span>Department-level capacity analysis with summary metrics</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Core Features -->
     <section class="border-b bg-sky-50 dark:bg-sky-900/20">
       <div class="container mx-auto px-4 py-16 sm:py-24">

@@ -16,19 +16,40 @@ A comprehensive PMO tracking platform with project management, capacity planning
   - Task dependencies and hierarchy
   - Project assignments and resource allocation
 - **Capacity Planning**:
-  - User availability tracking
-  - Time-off request workflow with approval/rejection
-  - Rejection reasons visible to employees
-  - Prominent time-off alerts on people pages
+  - **Visual team utilization** with gradient color-coding (orange→yellow→blue→green→red)
+  - Real-time utilization tracking with filters (Critical, Low, Moderate, Optimal, Over-allocated)
+  - **Paginated views** (5-10 per page) with summary totals
+  - Department-level capacity analysis with color-coded visualization
+  - Time-off request workflow with approval/rejection and rejection reasons
+  - Prominent time-off alerts with upcoming absences
+  - Average utilization metrics across teams and departments
 - **Time Tracking**:
   - Task-based time entries with sessions
   - Real-time timer with WebSocket sync across all pages
   - Daily/weekly/monthly reports
   - Timer shortcuts for quick start
-- **Analytics & Dashboards**:
-  - Personal dashboard with active timer
-  - Team utilization reports
-  - Project summaries and capacity overviews
+- **Executive Analytics Dashboard**:
+  - **Financial KPIs**: Billable revenue, non-billable opportunity, billability rate
+  - **Project Portfolio Health**: Interactive donut chart with status breakdown
+  - **Team Capacity Health**: Visual distribution with actionable insights
+  - **Skills Gap Analysis**: Real-time demand vs. supply matching
+  - **Clickable Burnout Risk Modal**:
+    - Shows over-allocated team members (>100% utilization)
+    - Recommends who can help (team members with capacity + matching skills)
+    - Hiring recommendations for critical skill shortages (<3 people with skill)
+    - Department-aware redistribution suggestions
+  - **Clickable Available Capacity Modal**:
+    - Shows under-utilized team members with available hours
+    - Assignment opportunities to active projects needing their skills
+    - Training recommendations for high-demand skills
+    - Skills color-coded by severity (CRITICAL, HIGH, MEDIUM)
+  - **Talent Optimization**:
+    - Skills Development Opportunities (40-65% utilization) with project matching
+    - Resource Optimization Review (<40% utilization) with strategic options
+    - Financial impact analysis (unused capacity × $150/hr average rate)
+    - Pagination for large teams (5 per page)
+  - Top Contributors leaderboard
+  - Department Performance tracking
 - **Real-time Updates**:
   - WebSocket-powered live sync for timers, notifications, and shortcuts
   - Instant updates across web app and Chrome extension
