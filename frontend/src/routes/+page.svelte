@@ -4,6 +4,7 @@
   import { isAuthenticated, isInitialized } from '$lib/stores/auth';
   import { Button, Card, Spinner } from '$components/shared';
   import ImageCarousel from '$lib/components/ImageCarousel.svelte';
+  import Modal from '$lib/components/shared/Modal.svelte';
   import {
     FolderKanban,
     Users,
@@ -34,7 +35,9 @@
     ChevronRight,
     MousePointerClick,
     BrainCircuit,
-    Sparkles
+    Sparkles,
+    FileJson,
+    ExternalLink
   } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
@@ -44,6 +47,7 @@
 
   let title = 'PMO Platform - Enterprise Project Management You Own';
   let year = new Date().getFullYear();
+  let showPayloadModal = false;
 
   // Time tracking carousel images
   const timeTrackingImages = [
@@ -511,7 +515,7 @@
         </div>
 
         <!-- Feature 6: Leave Request Approval Workflow -->
-        <div class="rounded-lg border border-indigo-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
+        <div class="mb-16 rounded-lg border border-indigo-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
               <div>
@@ -556,8 +560,178 @@
             </div>
           </div>
         </div>
+
+        <!-- Feature 7: Time Card API Export -->
+        <div class="rounded-lg border border-emerald-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+            <div>
+              <div class="mb-6 flex items-center gap-3 rounded-lg bg-emerald-600 p-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-800 dark:bg-gray-700">
+                  <FileJson class="h-6 w-6 text-white" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-white">Enterprise Integration</h4>
+              </div>
+              <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
+                Time Card API Export for Payroll Systems
+              </h3>
+              <p class="mb-6 text-muted-foreground">
+                Export time card data directly to Workday, PeopleSoft, or any payroll system via secure REST API.
+                Get everything from high-level summaries to granular session details—all the data you need for
+                accurate payroll processing and financial reporting. International-ready with proper timezone handling
+                and UTC timestamps.
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Comprehensive data export</strong> with summary totals AND detailed session breakdowns</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Secure API key authentication</strong> with SHA-256 hashing and audit logging</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>International timezone support</strong> with employee timezone metadata included</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <span><strong>Billable vs. non-billable tracking</strong> with client, project, and task details</span>
+                </li>
+              </ul>
+              <div class="mt-6">
+                <Button
+                  variant="outline"
+                  on:click={() => showPayloadModal = true}
+                  class="w-full sm:w-auto"
+                >
+                  <FileJson class="mr-2 h-4 w-4" />
+                  View Sample Payload
+                </Button>
+              </div>
+            </div>
+            <div class="rounded-lg border-2 border-emerald-500/20 overflow-hidden bg-gradient-to-br from-emerald-500/5 to-emerald-500/20 p-12">
+              <div class="flex flex-col items-center justify-center text-center">
+                <FileJson class="h-32 w-32 text-emerald-600 mb-6" />
+                <h4 class="text-2xl font-bold mb-3">Complete Data Export</h4>
+                <p class="text-muted-foreground mb-6">
+                  From executive summaries to session-level details—everything your payroll system needs.
+                </p>
+                <div class="grid grid-cols-2 gap-4 w-full max-w-sm">
+                  <div class="rounded-lg bg-white dark:bg-gray-800 p-4">
+                    <div class="text-3xl font-bold text-emerald-600 mb-1">Summary</div>
+                    <div class="text-sm text-muted-foreground">Daily totals</div>
+                  </div>
+                  <div class="rounded-lg bg-white dark:bg-gray-800 p-4">
+                    <div class="text-3xl font-bold text-emerald-600 mb-1">Details</div>
+                    <div class="text-sm text-muted-foreground">Session logs</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- Time Card API Payload Modal -->
+    <Modal bind:open={showPayloadModal} title="Time Card API Response Example" size="lg">
+      <div class="space-y-4">
+        <div class="flex items-start gap-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800">
+          <AlertTriangle class="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+          <div class="text-sm">
+            <p class="font-medium text-amber-900 dark:text-amber-100 mb-1">For Enterprise Integrations Only</p>
+            <p class="text-amber-800 dark:text-amber-200">
+              This is technical data for integrating with external payroll systems like Workday or PeopleSoft.
+              Regular users don't need to worry about this—your time tracking "just works."
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-semibold">What You Get:</h4>
+            <a
+              href="https://github.com/dtsoden/pmo/blob/main/docs/TIME-CARD-API.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-primary hover:underline inline-flex items-center gap-1"
+            >
+              Full API Documentation
+              <ExternalLink class="h-3 w-3" />
+            </a>
+          </div>
+          <ul class="space-y-1 text-sm text-muted-foreground mb-4">
+            <li class="flex items-center gap-2">
+              <CheckCircle2 class="h-4 w-4 text-primary" />
+              <strong>User information</strong> with employee ID and timezone
+            </li>
+            <li class="flex items-center gap-2">
+              <CheckCircle2 class="h-4 w-4 text-primary" />
+              <strong>Daily summaries</strong> showing total and billable hours
+            </li>
+            <li class="flex items-center gap-2">
+              <CheckCircle2 class="h-4 w-4 text-primary" />
+              <strong>Session details</strong> with client, project, task, timestamps, and descriptions
+            </li>
+          </ul>
+        </div>
+
+        <div class="rounded-lg bg-gray-900 p-4 overflow-x-auto">
+          <pre class="text-xs text-green-400 font-mono"><code>{`[
+  {
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john.doe@company.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "employeeId": "EMP-12345",
+      "timezone": "America/New_York"
+    },
+    "summary": [
+      {
+        "date": "2025-11-24",
+        "totalHours": 8.5,
+        "billableHours": 7.0
+      }
+    ],
+    "details": [
+      {
+        "date": "2025-11-24",
+        "sessions": [
+          {
+            "client": {
+              "id": "client-uuid",
+              "name": "Acme Corp",
+              "salesforceAccountId": "SF-12345"
+            },
+            "project": {
+              "id": "project-uuid",
+              "name": "Website Redesign",
+              "code": "WEB-001"
+            },
+            "task": {
+              "id": "task-uuid",
+              "title": "Build homepage"
+            },
+            "startTime": "2025-11-24T14:00:00.000Z",
+            "endTime": "2025-11-24T17:30:00.000Z",
+            "duration": 3.5,
+            "isBillable": true,
+            "description": "Implemented responsive design"
+          }
+        ]
+      }
+    ]
+  }
+]`}</code></pre>
+        </div>
+
+        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <Database class="h-4 w-4" />
+          <span>All timestamps in UTC. Employee timezone included for accurate conversion.</span>
+        </div>
+      </div>
+    </Modal>
 
     <!-- Value Proposition -->
     <section class="border-b bg-sky-50 dark:bg-sky-900/20">
