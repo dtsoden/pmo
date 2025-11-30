@@ -569,7 +569,7 @@
             </div>
           {:else}
             <div class="space-y-3">
-              {#each skillsInvestmentNeeded.slice(0, 5) as rec}
+              {#each skillsInvestmentNeeded as rec}
                 {@const utilPercent = rec.currentUtilization}
                 <div class="p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
                   <div class="flex items-center justify-between mb-2">
@@ -627,11 +627,6 @@
                   </div>
                 </div>
               {/each}
-              {#if skillsInvestmentNeeded.length > 5}
-                <p class="text-xs text-center text-muted-foreground">
-                  +{skillsInvestmentNeeded.length - 5} more team members with development potential
-                </p>
-              {/if}
             </div>
           {/if}
         </div>
@@ -656,7 +651,7 @@
             </div>
           {:else}
             <div class="space-y-3">
-              {#each developmentCandidates.slice(0, 5) as rec}
+              {#each developmentCandidates as rec}
                 {@const utilPercent = rec.currentUtilization}
                 {@const unusedCapacity = rec.availableHours}
                 {@const costImpact = unusedCapacity * AVERAGE_RATE}
@@ -741,11 +736,6 @@
                   </div>
                 </div>
               {/each}
-              {#if developmentCandidates.length > 5}
-                <p class="text-xs text-center text-muted-foreground">
-                  +{developmentCandidates.length - 5} more resources requiring review
-                </p>
-              {/if}
             </div>
 
             <!-- Summary Impact -->
