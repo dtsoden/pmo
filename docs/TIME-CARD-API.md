@@ -180,18 +180,27 @@ The API returns a JSON array containing time card data for each user who has tim
 
 **CRITICAL FOR INTERNATIONAL DEPLOYMENTS**
 
-### All Timestamps are UTC
+### All Timestamps are UTC (Critical!)
+
+**IMPORTANT:** All timestamps are stored and exported in **UTC only**, regardless of the user's timezone setting.
 
 All timestamps in API responses use **ISO 8601 format in UTC timezone** (indicated by `Z` suffix):
 
 ```json
 {
-  "startTime": "2025-11-24T09:35:00.000Z",  // 9:35 AM UTC
-  "endTime": "2025-11-24T11:56:00.000Z"     // 11:56 AM UTC
+  "user": {
+    "timezone": "Europe/Paris"  // Where employee works (metadata)
+  },
+  "sessions": [{
+    "startTime": "2025-11-24T09:35:00.000Z",  // 9:35 AM UTC (NOT Paris time!)
+    "endTime": "2025-11-24T11:56:00.000Z"     // 11:56 AM UTC (NOT Paris time!)
+  }]
 }
 ```
 
-The `Z` suffix means **Zulu time** (UTC+0). Your integration **MUST** convert these to your local timezone.
+The `Z` suffix means **Zulu time** (UTC+0).
+
+**The `user.timezone` field tells you where the employee works**, but the timestamps are **always UTC**. Your integration **MUST** convert these to the user's local timezone using the timezone field.
 
 ### Query Parameters are UTC Calendar Dates
 

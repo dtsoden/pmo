@@ -12,7 +12,18 @@ The PMO Platform handles timezones in a **simplified UTC-centric architecture**:
 - **All timestamps are stored as UTC** in the database
 - **All API responses return UTC timestamps** in ISO 8601 format
 - **Frontend displays times in the user's browser timezone**
-- **The `User.timezone` field exists but is currently unused**
+- **The `User.timezone` field is METADATA ONLY** - it does NOT affect storage or conversion
+
+### ⚠️ Critical Understanding for Admins
+
+**The `User.timezone` field does NOT control how time is stored!**
+
+- When a user in Paris logs time, it's stored as UTC
+- When a user in Tokyo logs time, it's stored as UTC
+- The timezone field tells external systems "where this employee works" but doesn't change database storage
+- Changing a user's timezone does NOT recalculate their past time entries
+
+**See ADMIN-TIMEZONE-GUIDE.md for administrator documentation.**
 
 ---
 
@@ -156,7 +167,7 @@ A user in Tokyo working Monday 9 AM JST is actually working Sunday 12 AM UTC. We
 
 ---
 
-## 🔧 User.timezone Field (Included in API Exports)
+## 🔧 User.timezone Field (Metadata Only - Does NOT Affect Storage)
 
 The database schema includes a `timezone` field on the `User` model:
 
@@ -167,43 +178,91 @@ model User {
 }
 ```
 
-**Current Status:** Field is populated with IANA timezones (e.g., `"America/New_York"`, `"Europe/London"`, `"Asia/Tokyo"`) and is **included in Time Card API exports**.
+### What This Field IS
 
-**Usage:**
-- ✅ **Time Card API:** User timezone is included in export responses for payroll integration
-- ⚠️ **Internal Reports:** Not currently used for date range conversion or display
-- ⚠️ **Frontend Display:** Browser timezone used instead of user preference
+**✅ Metadata for External Systems:**
+- Included in Time Card API exports
+- Tells payroll systems (Workday, PeopleSoft) which timezone the employee works in
+- Helps external integrations understand date boundaries for international teams
+- Set by administrators via Admin → People → [User] → Edit
 
-**Example Database Values:**
+**✅ User Profile Information:**
+- Stored with each user record
+- Can be changed at any time
+- Defaults to "UTC" for new users (configurable via Admin Settings)
+
+### What This Field IS NOT
+
+**❌ Storage Controller:**
+- Does NOT change how time entries are stored (always UTC)
+- Does NOT convert times when user starts/stops timer
+- Does NOT affect database timestamp values
+
+**❌ Display Controller:**
+- Does NOT change how times are shown in the UI
+- Frontend uses browser timezone, not user profile timezone
+- User traveling sees times adjusted to their current location automatically
+
+**❌ Retroactive Converter:**
+- Changing a user's timezone does NOT recalculate past time entries
+- Historical data remains unchanged
+- Only affects future API exports
+
+### Example: User in Paris
+
 ```sql
-SELECT "firstName", "lastName", timezone FROM "User" LIMIT 5;
+-- Database
+User: James Smith
+  timezone: "Europe/Paris"
 
- firstName | lastName |      timezone
------------+----------+---------------------
- James     | Smith    | Europe/Paris
- Mary      | Johnson  | Australia/Melbourne
- Robert    | Williams | America/Sao_Paulo
+TimeEntrySession:
+  startTime: 2025-11-24 09:35:00  ← This is UTC, NOT Paris time!
+  endTime:   2025-11-24 11:56:00  ← This is UTC, NOT Paris time!
 ```
 
-**API Export Format:**
+**What Happened:**
+1. James started timer at 10:35 AM Paris time
+2. Browser sent: `2025-11-24T09:35:00.000Z` (UTC)
+3. Backend stored: `2025-11-24 09:35:00` (UTC)
+4. His timezone field (`Europe/Paris`) was NOT consulted
+
+**When Displayed:**
+- Paris user sees: 10:35 AM (browser converts UTC → Paris)
+- New York user sees: 4:35 AM (browser converts UTC → EST)
+- Tokyo user sees: 6:35 PM (browser converts UTC → JST)
+
+**When Exported via API:**
 ```json
 {
   "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "firstName": "John",
-    "lastName": "Doe",
-    "employeeId": "EMP-12345",
-    "timezone": "America/New_York"
-  }
+    "timezone": "Europe/Paris"  ← Tells payroll system where he works
+  },
+  "sessions": [{
+    "startTime": "2025-11-24T09:35:00.000Z"  ← UTC timestamp
+  }]
 }
 ```
 
-**Future Enhancement Opportunity:**
+### Current Usage
+
+**✅ Used:**
+- Time Card API exports (included in user object)
+- User profile display
+
+**❌ NOT Used:**
+- Time entry storage (always UTC)
+- Internal report generation (uses UTC dates)
+- Frontend time display (uses browser timezone)
+- Timer start/stop calculations
+
+### Future Enhancement Opportunity
+
 - Could be used to convert report date ranges to user's local timezone
 - Could adjust "week start" for weekly reports based on user location
 - Could provide timezone-aware calendar date filtering in frontend
 - Could override browser timezone for consistent cross-device experience
+
+**See ADMIN-TIMEZONE-GUIDE.md for detailed administrator guidance.**
 
 ---
 
