@@ -60,6 +60,12 @@
     { src: '/screenshots/analytics-dashboard-5.png', alt: 'Project Portfolio Overview and Department Performance' }
   ];
 
+  // Leave request carousel images
+  const leaveRequestImages = [
+    { src: '/screenshots/leave-requests.png', alt: 'Leave Request Management - Personal Dashboard' },
+    { src: '/screenshots/leave-requests-2.png', alt: 'Leave Request Approval Workflow - Manager View' }
+  ];
+
   onMount(() => {
     const unsubscribe = isInitialized.subscribe((initialized) => {
       if (initialized && $isAuthenticated && browser) {
@@ -493,53 +499,45 @@
           </div>
         </div>
 
-        <!-- Feature 6: Client Management -->
+        <!-- Feature 6: Leave Request Approval Workflow -->
         <div>
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
-              <div class="rounded-lg border-2 border-indigo-500/20 overflow-hidden bg-muted">
-                <img
-                  src="/screenshots/client-management.png"
-                  alt="Client Management"
-                  class="w-full h-auto"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
-                />
-                <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-indigo-500/5 to-indigo-500/20" style="aspect-ratio: 16/9">
-                  <Building2 class="h-32 w-32 text-indigo-600 mb-6" />
-                  <p class="text-lg font-semibold mb-2">Client Management</p>
-                  <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
-                </div>
+              <div>
+                <ImageCarousel images={leaveRequestImages} autoPlayInterval={3000} />
               </div>
             </div>
             <div class="order-1 lg:order-2">
               <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                <Building2 class="h-4 w-4" />
-                CRM Integration
+                <CalendarClock class="h-4 w-4" />
+                Capacity Planning
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-                Client & Opportunity Pipeline Tracking
+                Leave Request Approval - Avoid Blind Spots in Capacity Planning
               </h3>
               <p class="mb-6 text-muted-foreground">
-                Manage clients, contacts, and sales opportunities from prospect to delivery. Salesforce
-                integration placeholders ready for live sync. Track opportunity pipeline, client health,
-                and project assignments all in one place. Perfect for professional services firms.
+                Stop being blindsided by surprise time-off requests. Integrated leave management with manager
+                approval workflows ensures every vacation, sick day, and personal appointment is visible in your
+                capacity planning. When you know who's out and when, you can staff projects proactively instead
+                of scrambling to backfill at the last minute. Regional compliance built-in for different leave
+                policies across locations.
               </p>
               <ul class="space-y-3">
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Full client and contact management</strong> with notes and history</span>
+                  <span><strong>Manager approval workflows</strong> with hierarchical routing and notifications</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Opportunity pipeline</strong> with stage and probability tracking</span>
+                  <span><strong>Automatic capacity adjustments</strong> when leave is approved—no manual updates</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Salesforce sync placeholders</strong> ready for API integration</span>
+                  <span><strong>Regional compliance</strong> with different leave types and policies per location</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Client → Project linkage</strong> for complete visibility</span>
+                  <span><strong>Calendar integration</strong> shows time-off alongside project deadlines and workload</span>
                 </li>
               </ul>
             </div>
