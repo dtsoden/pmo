@@ -261,7 +261,7 @@
         </div>
 
         <!-- Feature 1: Real-Time Time Tracking with Chrome Extension -->
-        <div class="mb-16 rounded-lg border-2 border-primary/20 bg-background p-6 shadow-sm">
+        <div class="mb-16 rounded-lg border border-primary/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
               <div class="mb-6 flex items-center gap-3 rounded-lg bg-primary p-4">
@@ -304,7 +304,7 @@
         </div>
 
         <!-- Feature 2: Automated Task Shortcuts -->
-        <div class="mb-16 rounded-lg border-2 border-purple-500/20 bg-background p-6 shadow-sm">
+        <div class="mb-16 rounded-lg border border-purple-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
               <div class="rounded-lg border-2 border-purple-500/20 overflow-hidden bg-muted">
@@ -359,7 +359,7 @@
         </div>
 
         <!-- Feature 3: Executive Analytics Dashboard (with carousel) -->
-        <div class="mb-16 rounded-lg border-2 border-blue-500/20 bg-background p-6 shadow-sm">
+        <div class="mb-16 rounded-lg border border-blue-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
               <div class="mb-6 flex items-center gap-3 rounded-lg bg-blue-600 p-4">
@@ -402,7 +402,7 @@
         </div>
 
         <!-- Feature 4: Visual Capacity Planning -->
-        <div class="mb-16 rounded-lg border-2 border-green-500/20 bg-background p-6 shadow-sm">
+        <div class="mb-16 rounded-lg border border-green-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
               <div class="rounded-lg border-2 border-green-500/20 overflow-hidden bg-muted">
@@ -457,7 +457,7 @@
         </div>
 
         <!-- Feature 5: Customizable Dropdown Lists -->
-        <div class="mb-16 rounded-lg border-2 border-orange-500/20 bg-background p-6 shadow-sm">
+        <div class="mb-16 rounded-lg border border-orange-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
               <div class="mb-6 flex items-center gap-3 rounded-lg bg-orange-600 p-4">
@@ -511,7 +511,7 @@
         </div>
 
         <!-- Feature 6: Leave Request Approval Workflow -->
-        <div class="rounded-lg border-2 border-indigo-500/20 bg-background p-6 shadow-sm">
+        <div class="rounded-lg border border-indigo-500/10 bg-white dark:bg-gray-900 p-6 shadow-lg">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div class="order-2 lg:order-1">
               <div>
