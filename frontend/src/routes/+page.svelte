@@ -441,51 +441,52 @@
           </div>
         </div>
 
-        <!-- Feature 5: Complete Project Management -->
+        <!-- Feature 5: Customizable Dropdown Lists -->
         <div class="mb-16">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
               <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-orange-500/10 px-3 py-1 text-sm font-medium text-orange-600 dark:text-orange-400">
-                <FolderKanban class="h-4 w-4" />
-                Project Management
+                <Layers class="h-4 w-4" />
+                Configuration
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
-                Full Project Hierarchy with Dependencies
+                Customizable Dropdown Lists - No Hardcoding Required
               </h3>
               <p class="mb-6 text-muted-foreground">
-                Multi-phase projects with milestones, tasks, and dependencies. Budget tracking with variance
-                analysis. Task assignments at both project and task level. Status workflows, blockers, and
-                progress tracking. Everything you need to manage complex enterprise projects.
+                Stop begging developers to add dropdown options. Admins can manage all dropdown lists directly
+                from the UI—industries, project types, skill categories, departments, and more. Add, edit,
+                reorder, or remove options instantly without touching code. Your platform adapts to your
+                organization's needs, not the other way around.
               </p>
               <ul class="space-y-3">
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Project → Phase → Milestone → Task</strong> hierarchy</span>
+                  <span><strong>Admin-managed dropdowns</strong> for industries, project types, skills, departments</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Task dependencies</strong> to prevent blockers and conflicts</span>
+                  <span><strong>Drag-and-drop reordering</strong> to prioritize options as needed</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Budget hours and cost tracking</strong> with variance analysis</span>
+                  <span><strong>Instant updates</strong> across the entire platform with no code changes</span>
                 </li>
                 <li class="flex items-start gap-3">
                   <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span><strong>Multi-level assignments</strong> at project and task levels</span>
+                  <span><strong>Self-service configuration</strong> means faster changes and less IT dependency</span>
                 </li>
               </ul>
             </div>
             <div class="rounded-lg border-2 border-orange-500/20 overflow-hidden bg-muted">
               <img
-                src="/screenshots/project-management.png"
-                alt="Complete Project Management"
+                src="/screenshots/dropdown-management.png"
+                alt="Customizable Dropdown Lists Management"
                 class="w-full h-auto"
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
               />
               <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-orange-500/5 to-orange-500/20" style="aspect-ratio: 16/9">
-                <FolderKanban class="h-32 w-32 text-orange-600 mb-6" />
-                <p class="text-lg font-semibold mb-2">Project Management</p>
+                <Layers class="h-32 w-32 text-orange-600 mb-6" />
+                <p class="text-lg font-semibold mb-2">Dropdown Lists Management</p>
                 <p class="text-sm text-muted-foreground">Screenshot coming soon</p>
               </div>
             </div>
