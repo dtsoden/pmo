@@ -273,7 +273,7 @@
         <p class="text-sm text-muted-foreground mb-4">
           Learn how to integrate with the Time Card API to export time card data for payroll processing.
         </p>
-        <Button variant="outline" href="/docs/timecard-api.html" target="_blank">
+        <Button variant="outline" href="https://github.com/dtsoden/pmo/blob/main/docs/TIME-CARD-API.md" target="_blank">
           View API Documentation
         </Button>
       </div>
