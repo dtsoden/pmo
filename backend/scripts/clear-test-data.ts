@@ -21,7 +21,7 @@ dotenv.config({ path: join(__dirname, '..', '..', '.env') }); // Go up 2 levels:
 const prisma = new PrismaClient();
 
 // Your personal admin account - will be preserved
-const PRESERVE_EMAIL = 'davidtsoden@gmail.com';
+const PRESERVE_EMAIL = 'sysadmin@pmoplatform.com';
 
 async function clearTestData() {
   console.log('Starting data cleanup...\n');

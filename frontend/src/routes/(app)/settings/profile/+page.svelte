@@ -18,6 +18,9 @@
   let timezone = $user?.timezone || 'UTC';
   let saving = false;
 
+  // Track user ID to detect when user changes (e.g., after auth refresh)
+  let lastUserId = '';
+
   // Common timezones with UTC offsets
   const timezones = [
     // UTC
@@ -99,8 +102,9 @@
     { value: 'Pacific/Fiji', label: 'Fiji', offset: 12 },
   ];
 
-  // Update form when user changes
-  $: if ($user) {
+  // Only update form when user ID changes (not on every keystroke!)
+  $: if ($user && $user.id !== lastUserId) {
+    lastUserId = $user.id;
     firstName = $user.firstName;
     lastName = $user.lastName;
     jobTitle = $user.jobTitle || '';

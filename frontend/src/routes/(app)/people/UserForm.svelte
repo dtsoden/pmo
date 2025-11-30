@@ -45,13 +45,15 @@
   $: isEdit = !!user;
   $: modalTitle = isEdit && user ? `Edit ${user.firstName} ${user.lastName}` : 'Add Team Member';
 
-  // Track modal state to only initialize form when first opened
+  // Track modal state and user ID to only initialize when modal opens or user changes
   let previousOpenState = false;
+  let lastUserId = '';
 
   $: if (open && !previousOpenState) {
     // Modal just opened - initialize form
     previousOpenState = true;
     if (user) {
+      lastUserId = user.id;
       email = user.email;
       password = '';
       firstName = user.firstName;
@@ -77,6 +79,28 @@
   } else if (!open && previousOpenState) {
     // Modal just closed - reset state
     previousOpenState = false;
+    lastUserId = '';
+  } else if (open && user && user.id !== lastUserId) {
+    // Modal is open but user changed - re-initialize with new user
+    lastUserId = user.id;
+    email = user.email;
+    password = '';
+    firstName = user.firstName;
+    lastName = user.lastName;
+    role = user.role;
+    jobTitle = user.jobTitle || '';
+    department = user.department || '';
+    phone = user.phone || '';
+    managerId = user.managerId || '';
+    country = user.country || '';
+    region = user.region || '';
+    employmentType = user.employmentType || 'FULL_TIME';
+    defaultWeeklyHours = user.defaultWeeklyHours || 40;
+    maxWeeklyHours = user.maxWeeklyHours || 40;
+    timezone = user.timezone || 'UTC';
+    skills = [...(user.skills || [])];
+    hourlyRate = user.hourlyRate ?? undefined;
+    billableRate = user.billableRate ?? undefined;
   }
 
   async function loadManagers() {
