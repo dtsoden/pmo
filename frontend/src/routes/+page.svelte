@@ -4,7 +4,7 @@
   import { isAuthenticated, isInitialized } from '$lib/stores/auth';
   import { Button, Card, Spinner } from '$components/shared';
   import ImageCarousel from '$lib/components/ImageCarousel.svelte';
-  import Modal from '$lib/components/shared/Modal.svelte';
+  import Modal from '$components/shared/Modal.svelte';
   import {
     FolderKanban,
     Users,
@@ -600,9 +600,8 @@
               </ul>
               <div class="mt-6">
                 <Button
-                  variant="outline"
                   on:click={() => showPayloadModal = true}
-                  class="w-full sm:w-auto"
+                  class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   <FileJson class="mr-2 h-4 w-4" />
                   View Sample Payload
