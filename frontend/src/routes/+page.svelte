@@ -264,9 +264,11 @@
         <div class="mb-16">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                <Timer class="h-4 w-4" />
-                Time Tracking
+              <div class="mb-6 flex items-center gap-3 border-b pb-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Timer class="h-6 w-6 text-primary" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-primary">Time Tracking</h4>
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
                 Real-Time Timer with Chrome Extension
@@ -320,9 +322,11 @@
               </div>
             </div>
             <div class="order-1 lg:order-2">
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-purple-500/10 px-3 py-1 text-sm font-medium text-purple-600 dark:text-purple-400">
-                <BrainCircuit class="h-4 w-4" />
-                Smart Automation
+              <div class="mb-6 flex items-center gap-3 border-b pb-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                  <BrainCircuit class="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-400">Smart Automation</h4>
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
                 Automated Task Shortcuts for Assignments
@@ -358,9 +362,11 @@
         <div class="mb-16">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400">
-                <TrendingUp class="h-4 w-4" />
-                Executive Analytics
+              <div class="mb-6 flex items-center gap-3 border-b pb-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                  <TrendingUp class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">Executive Analytics</h4>
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
                 Actionable Intelligence, Not Just Dashboards
@@ -414,9 +420,11 @@
               </div>
             </div>
             <div class="order-1 lg:order-2">
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400">
-                <CalendarClock class="h-4 w-4" />
-                Resource Management
+              <div class="mb-6 flex items-center gap-3 border-b pb-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                  <CalendarClock class="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">Resource Management</h4>
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
                 Gradient Color-Coded Capacity Visualization
@@ -452,9 +460,11 @@
         <div class="mb-16">
           <div class="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-orange-500/10 px-3 py-1 text-sm font-medium text-orange-600 dark:text-orange-400">
-                <Layers class="h-4 w-4" />
-                Configuration
+              <div class="mb-6 flex items-center gap-3 border-b pb-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
+                  <Layers class="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Configuration</h4>
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
                 Customizable Dropdown Lists - No Hardcoding Required
@@ -509,9 +519,11 @@
               </div>
             </div>
             <div class="order-1 lg:order-2">
-              <div class="mb-4 inline-flex items-center gap-2 rounded-lg border bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                <CalendarClock class="h-4 w-4" />
-                Capacity Planning
+              <div class="mb-6 flex items-center gap-3 border-b pb-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10">
+                  <CalendarClock class="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <h4 class="text-lg font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">Capacity Planning</h4>
               </div>
               <h3 class="mb-4 text-2xl font-bold sm:text-3xl">
                 Leave Request Approval - Avoid Blind Spots in Capacity Planning
