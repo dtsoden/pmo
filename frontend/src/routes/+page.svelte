@@ -27,7 +27,8 @@
     Lock,
     GitBranch,
     Github,
-    Download
+    Download,
+    AlertTriangle
   } from 'lucide-svelte';
 
   // SvelteKit props - must be declared to avoid warnings
