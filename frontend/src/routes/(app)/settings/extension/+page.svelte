@@ -7,6 +7,7 @@
   import { Download, Link, Check, Chrome } from 'lucide-svelte';
   import { page } from '$app/stores';
   import { browser } from '$app/environment';
+  import { replaceState } from '$app/navigation';
 
   // SvelteKit props - must be declared to avoid warnings
   export let data: unknown = null;
@@ -96,27 +97,18 @@
   }
 
   async function connectExtension() {
+    // If we're not in autoconnect mode, redirect to trigger it
+    // This ensures fresh session state and consistent behavior
+    if (browser && !$page.url.searchParams.has('autoconnect')) {
+      window.location.href = '/settings/extension?autoconnect=true';
+      return;
+    }
+
+    // We're in autoconnect mode - do the actual connection
     connecting = true;
 
     try {
-      // First, check if extension is installed
-      const status = await checkExtensionStatus();
-
-      if (!status.detected) {
-        toast.error('Extension not detected. Please install it first.');
-        connecting = false;
-        return;
-      }
-
-      if (status.authenticated) {
-        // Already authenticated!
-        currentStep = 'complete';
-        toast.success('Extension already connected!');
-        connecting = false;
-        return;
-      }
-
-      // Extension is installed but not authenticated - connect it
+      // Get current token and validate it
       const token = api.getToken();
       if (!token) {
         toast.error('Not authenticated - please refresh the page');
@@ -124,12 +116,10 @@
         return;
       }
 
-      // Validate token with backend
-      await api.extension.install();
-
       // Send auth message to extension
       const apiUrl = import.meta.env.VITE_EXTENSION_BACKEND_URL || 'http://localhost:7600';
 
+      console.log('Sending auth message to extension...');
       window.postMessage(
         {
           type: 'PMO_EXTENSION_AUTH',
@@ -142,6 +132,7 @@
       // Wait for response from extension
       const response = await new Promise<{ success: boolean; error?: string }>((resolve) => {
         const timeout = setTimeout(() => {
+          console.log('Extension did not respond in 5 seconds');
           resolve({ success: false, error: 'Extension did not respond. Please try again.' });
         }, 5000);
 
@@ -149,6 +140,7 @@
           if (event.origin !== window.location.origin) return;
 
           if (event.data?.type === 'PMO_EXTENSION_AUTH_RESPONSE') {
+            console.log('Received auth response:', event.data);
             clearTimeout(timeout);
             window.removeEventListener('message', handler);
             resolve({
@@ -164,10 +156,14 @@
       if (response.success) {
         toast.success('Extension connected successfully!');
         currentStep = 'complete';
+        // Remove autoconnect parameter from URL to prevent re-triggering
+        replaceState('/settings/extension', {})
       } else {
+        console.error('Connection failed:', response.error);
         toast.error(response.error || 'Failed to connect extension');
       }
     } catch (err) {
+      console.error('Connection error:', err);
       toast.error((err as { message?: string })?.message || 'Failed to connect extension');
     } finally {
       connecting = false;
