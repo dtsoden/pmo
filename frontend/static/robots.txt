@@ -1,0 +1,40 @@
+# robots.txt for PMO Platform
+# https://pmo.cnxlab.us
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+# Block access to API endpoints (not for search indexing)
+Disallow: /api/
+
+# Block access to private/authenticated routes
+Disallow: /dashboard
+Disallow: /projects
+Disallow: /clients
+Disallow: /people
+Disallow: /time
+Disallow: /capacity
+Disallow: /analytics
+Disallow: /settings
+
+# Allow public pages
+Allow: /$
+Allow: /login$
+Allow: /register$
+
+# Sitemap location
+Sitemap: https://pmo.cnxlab.us/sitemap.xml

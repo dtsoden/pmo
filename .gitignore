@@ -105,6 +105,7 @@ credentials.json
 # Backup files
 *.bak
 *.backup
+backup/
 
 # Windows reserved names (artifacts)
 nul

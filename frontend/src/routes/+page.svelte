@@ -84,10 +84,147 @@
 
 <svelte:head>
   <title>{title}</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta
     name="description"
     content="Free, enterprise-grade PMO platform with real-time time tracking, Chrome extension, automated task shortcuts, capacity planning, and executive analytics. Own your platform. Own your data."
   />
+
+  <!-- SEO Meta Tags -->
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="author" content="David Soden" />
+  <meta name="keywords" content="free project management software, open source PMO platform, enterprise project management, resource allocation tool, team capacity planning software, time tracking software, billable hours tracking, project portfolio management, workforce planning tool, Asana alternative, Monday.com alternative, Jira alternative, free resource management, project management office software, real-time time tracking, Chrome extension time tracker, WebSocket project management, capacity planning software, burnout detection, skills gap analysis, utilization analytics, project budget tracking, task dependency management, approval workflows, self-hosted project management" />
+  <link rel="canonical" href="https://pmo.cnxlab.us/" />
+
+  <!-- Preload Critical Assets -->
+  <link rel="preload" href="/logo.png" as="image" />
+  <link rel="dns-prefetch" href="https://github.com" />
+
+  <!-- Sitemap -->
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://pmo.cnxlab.us/" />
+  <meta property="og:title" content="PMO Platform - Enterprise Project Management You Own" />
+  <meta property="og:description" content="Free, enterprise-grade PMO platform with real-time time tracking, Chrome extension, automated task shortcuts, capacity planning, and executive analytics. Own your platform. Own your data." />
+  <meta name="image" property="og:image" content="https://www.pmo.cnxlab.us/socal/social.png" />
+  <meta property="og:image:secure_url" content="https://www.pmo.cnxlab.us/socal/social.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="PMO Platform - Enterprise Project Management You Own" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:site_name" content="PMO Platform" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://pmo.cnxlab.us/" />
+  <meta name="twitter:title" content="PMO Platform - Enterprise Project Management You Own" />
+  <meta name="twitter:description" content="Free, enterprise-grade PMO platform with real-time time tracking, Chrome extension, automated task shortcuts, capacity planning, and executive analytics. Own your platform. Own your data." />
+  <meta name="twitter:image" content="https://www.pmo.cnxlab.us/socal/social.png" />
+  <meta name="twitter:image:alt" content="PMO Platform - Enterprise Project Management You Own" />
+
+  <!-- Schema.org Structured Data (JSON-LD) -->
+  {@html `<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "PMO Platform",
+        "url": "https://pmo.cnxlab.us",
+        "logo": "https://pmo.cnxlab.us/logo.png",
+        "description": "Free, enterprise-grade PMO platform with real-time time tracking, Chrome extension, and capacity planning.",
+        "founder": {
+          "@type": "Person",
+          "name": "David Soden",
+          "url": "https://davidsoden.com"
+        },
+        "sameAs": [
+          "https://github.com/dtsoden/pmo"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "PMO Platform",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "Project Management Software",
+        "operatingSystem": "Web, Windows, macOS, Linux",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "description": "Free for in-house use. Commercial licensing available for resale."
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "5",
+          "ratingCount": "1",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "softwareVersion": "1.0",
+        "description": "Enterprise-grade project management office platform with real-time time tracking, Chrome extension, automated task shortcuts, capacity planning, and executive analytics. Open source and free for internal use.",
+        "url": "https://pmo.cnxlab.us",
+        "screenshot": "https://pmo.cnxlab.us/screenshots/analytics-dashboard.png",
+        "featureList": [
+          "Real-time time tracking with Chrome extension",
+          "Automated task shortcuts for assignments",
+          "Executive analytics with burnout detection",
+          "Visual capacity planning with gradient visualization",
+          "Customizable dropdown lists",
+          "Leave request approval workflows",
+          "Time card API export for payroll systems",
+          "WebSocket real-time sync",
+          "7-tier role-based access control",
+          "Multi-region timezone support",
+          "Project budget and variance tracking",
+          "Skills gap analysis and training recommendations"
+        ],
+        "softwareRequirements": "Node.js, PostgreSQL, Redis (optional)",
+        "releaseNotes": "Open source release with full features",
+        "codeRepository": "https://github.com/dtsoden/pmo",
+        "license": "https://github.com/dtsoden/pmo/blob/main/LICENSE"
+      },
+      {
+        "@type": "WebSite",
+        "name": "PMO Platform",
+        "url": "https://pmo.cnxlab.us",
+        "description": "Free, enterprise-grade PMO platform with real-time time tracking, Chrome extension, automated task shortcuts, capacity planning, and executive analytics.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://pmo.cnxlab.us/?s={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Product",
+        "name": "PMO Platform",
+        "description": "Enterprise project management office software with real-time time tracking, capacity planning, and executive analytics. Free and open source for in-house use.",
+        "brand": {
+          "@type": "Brand",
+          "name": "PMO Platform"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://pmo.cnxlab.us"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "5",
+          "ratingCount": "1"
+        },
+        "category": "Project Management Software"
+      }
+    ]
+  }
+  </script>`}
 </svelte:head>
 
 {#if !$isInitialized}
@@ -316,6 +453,7 @@
                   src="/screenshots/task-shortcuts.png"
                   alt="Automated Task Shortcuts"
                   class="w-full h-auto"
+                  loading="lazy"
                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                 />
                 <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-purple-500/5 to-purple-500/20" style="aspect-ratio: 16/9">
@@ -414,6 +552,7 @@
                   src="/screenshots/capacity-planning.png"
                   alt="Visual Capacity Planning"
                   class="w-full h-auto"
+                  loading="lazy"
                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
                 />
                 <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-green-500/5 to-green-500/20" style="aspect-ratio: 16/9">
@@ -503,6 +642,7 @@
                 src="/screenshots/dropdown-management.png"
                 alt="Customizable Dropdown Lists Management"
                 class="w-full h-auto"
+                loading="lazy"
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
               />
               <div class="hidden flex-col items-center justify-center p-12 bg-gradient-to-br from-orange-500/5 to-orange-500/20" style="aspect-ratio: 16/9">
@@ -1244,6 +1384,7 @@
             src="/logo.png"
             alt="PMO Platform Logo"
             class="h-12 w-auto opacity-80"
+            loading="lazy"
           />
 
           <div class="flex items-center gap-4">
