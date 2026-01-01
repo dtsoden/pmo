@@ -378,8 +378,8 @@ hasAnyRole('ADMIN', 'SUPER_ADMIN')  // Exact match check
 ## Default Admin Account
 
 **Created on fresh install**:
-- Email: `admin@pmoplatform.com`
-- Password: `Admin123!`
+- Email: `sysadmin@pmoplatform.com`
+- Password: `U$m93YGb0BjT2dbj`
 - Role: `SUPER_ADMIN`
 
 **⚠️ CRITICAL**: Change the default password immediately after first login!

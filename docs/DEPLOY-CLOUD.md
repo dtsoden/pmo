@@ -608,8 +608,8 @@ Follow [Linux Deployment Guide](DEPLOY-LINUX.md).
 10. **First-Time Login:**
 
 **Default Login Credentials:**
-- **Email**: `admin@pmoplatform.com`
-- **Password**: `Admin123!`
+- **Email**: `sysadmin@pmoplatform.com`
+- **Password**: `U$m93YGb0BjT2dbj`
 - **Role**: SUPER_ADMIN
 
 **⚠️ IMPORTANT:** Change the default password after first login!

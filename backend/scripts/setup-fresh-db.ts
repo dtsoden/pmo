@@ -79,12 +79,12 @@ async function setupFreshDatabase() {
 
     // Create default admin user
     console.log('Creating default admin user...');
-    const defaultPassword = 'Admin123!';
+    const defaultPassword = 'U$m93YGb0BjT2dbj';
     const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
     await prisma.user.create({
       data: {
-        email: 'admin@pmoplatform.com',
+        email: 'sysadmin@pmoplatform.com',
         passwordHash,
         firstName: 'System',
         lastName: 'Administrator',
@@ -101,8 +101,8 @@ async function setupFreshDatabase() {
     console.log('========================================');
     console.log('Database is ready to use.\n');
     console.log('DEFAULT LOGIN CREDENTIALS:');
-    console.log('  Email:    admin@pmoplatform.com');
-    console.log('  Password: Admin123!');
+    console.log('  Email:    sysadmin@pmoplatform.com');
+    console.log('  Password: U$m93YGb0BjT2dbj');
     console.log('  Role:     SUPER_ADMIN\n');
     console.log('IMPORTANT: Change the default password after first login!\n');
     console.log('Next steps:');
