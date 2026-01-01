@@ -50,9 +50,16 @@ function createWebSocketStore() {
       // Connect to WebSocket - URL from environment variable, defaults to same-origin
       // Vite proxy handles /socket.io routing in development
       const wsBase = import.meta.env.VITE_WS_BASE || '/';
+
+      // Determine transport based on whether we're using a direct URL or proxy
+      // Direct cross-origin (like Cloudflare tunnels) works better with polling first
+      const isDirectUrl = wsBase.startsWith('http://') || wsBase.startsWith('https://');
+
       socket = io(wsBase, {
         auth: { token },
-        transports: ['websocket', 'polling'],
+        // Use polling-first for cross-origin connections (Cloudflare tunnels)
+        // Use websocket-first for same-origin (Vite proxy in development)
+        transports: isDirectUrl ? ['polling', 'websocket'] : ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,

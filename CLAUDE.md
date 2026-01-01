@@ -444,7 +444,7 @@ const io = new Server(httpServer, {
 
 3. **Check backend logs:**
    ```bash
-   powershell -Command "Get-Content C:\Users\DavidSoden\CNX-PMO\logs\backend.log | Select-String 'Socket.IO connection attempt' -Context 0,5"
+   powershell -Command "Get-Content C:\Users\DavidSoden\pmo\logs\backend.log | Select-String 'Socket.IO connection attempt' -Context 0,5"
    ```
    Should show connection attempts with origin `chrome-extension://...`
 
