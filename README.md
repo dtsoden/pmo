@@ -168,8 +168,8 @@ Choose your deployment platform:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/pmo-platform.git
-cd pmo-platform
+git clone https://github.com/dtsoden/pmo.git
+cd pmo
 
 # Install dependencies
 npm install
