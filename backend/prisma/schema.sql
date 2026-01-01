@@ -1,3 +1,8 @@
+-- PMO Platform Database Schema
+-- This is a consolidated schema for fresh installs
+-- Includes all migrations up to date
+-- Last updated: 2025-01-01
+
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'PMO_MANAGER', 'PROJECT_MANAGER', 'RESOURCE_MANAGER', 'TEAM_MEMBER', 'VIEWER');
 
@@ -238,12 +243,12 @@ CREATE TABLE "Task" (
     "id" TEXT NOT NULL,
     "projectId" TEXT NOT NULL,
     "phaseId" TEXT,
+    "milestoneId" TEXT,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "status" "TaskStatus" NOT NULL DEFAULT 'TODO',
     "priority" "TaskPriority" NOT NULL DEFAULT 'MEDIUM',
     "parentTaskId" TEXT,
-    "milestoneId" TEXT,
     "estimatedHours" DOUBLE PRECISION,
     "actualHours" DOUBLE PRECISION,
     "startDate" TIMESTAMP(3),
@@ -468,6 +473,20 @@ CREATE TABLE "UserSession" (
 );
 
 -- CreateTable
+CREATE TABLE "ApiKey" (
+    "id" TEXT NOT NULL,
+    "keyHash" TEXT NOT NULL,
+    "description" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdBy" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastUsedAt" TIMESTAMP(3),
+    "revokedAt" TIMESTAMP(3),
+
+    CONSTRAINT "ApiKey_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "DropdownLists" (
     "id" TEXT NOT NULL DEFAULT 'default',
     "industries" TEXT NOT NULL DEFAULT '[]',
@@ -599,13 +618,13 @@ CREATE INDEX "Task_projectId_idx" ON "Task"("projectId");
 CREATE INDEX "Task_phaseId_idx" ON "Task"("phaseId");
 
 -- CreateIndex
+CREATE INDEX "Task_milestoneId_idx" ON "Task"("milestoneId");
+
+-- CreateIndex
 CREATE INDEX "Task_status_idx" ON "Task"("status");
 
 -- CreateIndex
 CREATE INDEX "Task_parentTaskId_idx" ON "Task"("parentTaskId");
-
--- CreateIndex
-CREATE INDEX "Task_milestoneId_idx" ON "Task"("milestoneId");
 
 -- CreateIndex
 CREATE INDEX "Task_deletedAt_idx" ON "Task"("deletedAt");
@@ -754,6 +773,15 @@ CREATE INDEX "UserSession_expiresAt_idx" ON "UserSession"("expiresAt");
 -- CreateIndex
 CREATE INDEX "UserSession_token_idx" ON "UserSession"("token");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "ApiKey_keyHash_key" ON "ApiKey"("keyHash");
+
+-- CreateIndex
+CREATE INDEX "ApiKey_isActive_idx" ON "ApiKey"("isActive");
+
+-- CreateIndex
+CREATE INDEX "ApiKey_createdAt_idx" ON "ApiKey"("createdAt");
+
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -794,10 +822,10 @@ ALTER TABLE "Task" ADD CONSTRAINT "Task_projectId_fkey" FOREIGN KEY ("projectId"
 ALTER TABLE "Task" ADD CONSTRAINT "Task_phaseId_fkey" FOREIGN KEY ("phaseId") REFERENCES "ProjectPhase"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Task" ADD CONSTRAINT "Task_parentTaskId_fkey" FOREIGN KEY ("parentTaskId") REFERENCES "Task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Task" ADD CONSTRAINT "Task_milestoneId_fkey" FOREIGN KEY ("milestoneId") REFERENCES "Milestone"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Task" ADD CONSTRAINT "Task_milestoneId_fkey" FOREIGN KEY ("milestoneId") REFERENCES "Milestone"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Task" ADD CONSTRAINT "Task_parentTaskId_fkey" FOREIGN KEY ("parentTaskId") REFERENCES "Task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TaskDependency" ADD CONSTRAINT "TaskDependency_blockingTaskId_fkey" FOREIGN KEY ("blockingTaskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -849,4 +877,3 @@ ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userI
 
 -- AddForeignKey
 ALTER TABLE "UserSession" ADD CONSTRAINT "UserSession_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
