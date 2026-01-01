@@ -89,11 +89,18 @@ async function start() {
     await setupWebSocket(io);
 
     // Create Fastify app with custom server factory
+    // IMPORTANT: Skip Socket.IO requests to prevent double-handling
     const app = Fastify({
       logger: logger as any,
       trustProxy: true,
       serverFactory: (handler) => {
-        httpServer.on('request', handler);
+        httpServer.on('request', (req, res) => {
+          // Let Socket.IO handle its own requests - don't pass to Fastify
+          if (req.url?.startsWith('/socket.io/')) {
+            return;
+          }
+          handler(req, res);
+        });
         return httpServer;
       },
     });

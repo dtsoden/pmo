@@ -24,7 +24,7 @@
 
   // Check if we should auto-connect (coming from extension reconnect button)
   let shouldAutoConnect = false;
-  $: if (browser && $page.url.searchParams.has('autoconnect')) {
+  $: if (browser && $page?.url?.searchParams?.has('autoconnect')) {
     shouldAutoConnect = $page.url.searchParams.get('autoconnect') === 'true';
   }
 
@@ -99,7 +99,7 @@
   async function connectExtension() {
     // If we're not in autoconnect mode, redirect to trigger it
     // This ensures fresh session state and consistent behavior
-    if (browser && !$page.url.searchParams.has('autoconnect')) {
+    if (browser && !$page?.url?.searchParams?.has('autoconnect')) {
       window.location.href = '/settings/extension?autoconnect=true';
       return;
     }

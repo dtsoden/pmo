@@ -17,7 +17,7 @@
 
   // Get redirect parameter from URL
   let redirectUrl = '/dashboard';
-  $: if (browser && $page.url.searchParams.has('redirect')) {
+  $: if (browser && $page?.url?.searchParams?.has('redirect')) {
     const redirect = $page.url.searchParams.get('redirect');
     if (redirect) {
       // Preserve all query parameters from the redirect URL

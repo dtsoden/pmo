@@ -1,5 +1,5 @@
 {
-  "name": "cnx-pmo-platform",
+  "name": "pmo-platform",
   "version": "1.0.0",
   "description": "Custom streamlined PMO tracking platform with capacity planning and time tracking",
   "private": true,

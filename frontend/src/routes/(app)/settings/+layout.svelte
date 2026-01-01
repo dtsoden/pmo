@@ -35,7 +35,7 @@
             href={item.href}
             class={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              $page.url.pathname === item.href
+              $page?.url?.pathname === item.href
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
