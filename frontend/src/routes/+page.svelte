@@ -152,12 +152,50 @@
         "applicationCategory": "BusinessApplication",
         "applicationSubCategory": "Project Management Software",
         "operatingSystem": "Web, Windows, macOS, Linux",
+        "image": "https://pmoplatform.com/logo.png",
         "offers": {
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
-          "description": "Free for in-house use. Commercial licensing available for resale."
+          "url": "https://pmoplatform.com",
+          "priceValidUntil": "2026-12-31",
+          "description": "Free for in-house use. Commercial licensing available for resale.",
+          "hasMerchantReturnPolicy": {
+            "@type": "MerchantReturnPolicy",
+            "applicableCountry": "US",
+            "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+            "merchantReturnDays": 0,
+            "returnMethod": "https://schema.org/ReturnByMail",
+            "returnFees": "https://schema.org/FreeReturn"
+          },
+          "shippingDetails": {
+            "@type": "OfferShippingDetails",
+            "shippingRate": {
+              "@type": "MonetaryAmount",
+              "value": "0",
+              "currency": "USD"
+            },
+            "shippingDestination": {
+              "@type": "DefinedRegion",
+              "addressCountry": "US"
+            },
+            "deliveryTime": {
+              "@type": "ShippingDeliveryTime",
+              "handlingTime": {
+                "@type": "QuantitativeValue",
+                "minValue": 0,
+                "maxValue": 0,
+                "unitCode": "DAY"
+              },
+              "transitTime": {
+                "@type": "QuantitativeValue",
+                "minValue": 0,
+                "maxValue": 0,
+                "unitCode": "DAY"
+              }
+            }
+          }
         },
         "aggregateRating": {
           "@type": "AggregateRating",
@@ -204,6 +242,7 @@
         "@type": "Product",
         "name": "PMO Platform",
         "description": "Enterprise project management office software with real-time time tracking, capacity planning, and executive analytics. Free and open source for in-house use.",
+        "image": "https://pmoplatform.com/logo.png",
         "brand": {
           "@type": "Brand",
           "name": "PMO Platform"
@@ -213,7 +252,43 @@
           "price": "0",
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
-          "url": "https://pmo.cnxlab.us"
+          "url": "https://pmoplatform.com",
+          "priceValidUntil": "2026-12-31",
+          "hasMerchantReturnPolicy": {
+            "@type": "MerchantReturnPolicy",
+            "applicableCountry": "US",
+            "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+            "merchantReturnDays": 0,
+            "returnMethod": "https://schema.org/ReturnByMail",
+            "returnFees": "https://schema.org/FreeReturn"
+          },
+          "shippingDetails": {
+            "@type": "OfferShippingDetails",
+            "shippingRate": {
+              "@type": "MonetaryAmount",
+              "value": "0",
+              "currency": "USD"
+            },
+            "shippingDestination": {
+              "@type": "DefinedRegion",
+              "addressCountry": "US"
+            },
+            "deliveryTime": {
+              "@type": "ShippingDeliveryTime",
+              "handlingTime": {
+                "@type": "QuantitativeValue",
+                "minValue": 0,
+                "maxValue": 0,
+                "unitCode": "DAY"
+              },
+              "transitTime": {
+                "@type": "QuantitativeValue",
+                "minValue": 0,
+                "maxValue": 0,
+                "unitCode": "DAY"
+              }
+            }
+          }
         },
         "aggregateRating": {
           "@type": "AggregateRating",
