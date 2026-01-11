@@ -1,5 +1,5 @@
 # robots.txt for PMO Platform
-# https://pmo.cnxlab.us
+# https://pmoplatform.com
 
 # Allow all search engines
 User-agent: *
@@ -37,4 +37,4 @@ Allow: /login$
 Allow: /register$
 
 # Sitemap location
-Sitemap: https://pmo.cnxlab.us/sitemap.xml
+Sitemap: https://pmoplatform.com/sitemap.xml

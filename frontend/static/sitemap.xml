@@ -3,30 +3,30 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <!-- Home / Landing Page -->
   <url>
-    <loc>https://pmo.cnxlab.us/</loc>
+    <loc>https://pmoplatform.com/</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://pmo.cnxlab.us/logo.png</image:loc>
+      <image:loc>https://pmoplatform.com/logo.png</image:loc>
       <image:title>PMO Platform Logo</image:title>
     </image:image>
     <image:image>
-      <image:loc>https://pmo.cnxlab.us/socal/social.png</image:loc>
+      <image:loc>https://pmoplatform.com/socal/social.png</image:loc>
       <image:title>PMO Platform Social Share Image</image:title>
     </image:image>
   </url>
 
   <!-- Authentication Pages -->
   <url>
-    <loc>https://pmo.cnxlab.us/login</loc>
+    <loc>https://pmoplatform.com/login</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/register</loc>
+    <loc>https://pmoplatform.com/register</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -34,49 +34,49 @@
 
   <!-- Main Application Pages -->
   <url>
-    <loc>https://pmo.cnxlab.us/dashboard</loc>
+    <loc>https://pmoplatform.com/dashboard</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/projects</loc>
+    <loc>https://pmoplatform.com/projects</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/clients</loc>
+    <loc>https://pmoplatform.com/clients</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/people</loc>
+    <loc>https://pmoplatform.com/people</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/time</loc>
+    <loc>https://pmoplatform.com/time</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/capacity</loc>
+    <loc>https://pmoplatform.com/capacity</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/analytics</loc>
+    <loc>https://pmoplatform.com/analytics</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -84,35 +84,35 @@
 
   <!-- Settings Pages -->
   <url>
-    <loc>https://pmo.cnxlab.us/settings/profile</loc>
+    <loc>https://pmoplatform.com/settings/profile</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/settings/appearance</loc>
+    <loc>https://pmoplatform.com/settings/appearance</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/settings/notifications</loc>
+    <loc>https://pmoplatform.com/settings/notifications</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/settings/security</loc>
+    <loc>https://pmoplatform.com/settings/security</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://pmo.cnxlab.us/settings/dropdowns</loc>
+    <loc>https://pmoplatform.com/settings/dropdowns</loc>
     <lastmod>2025-12-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
