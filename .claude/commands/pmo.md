@@ -9,8 +9,8 @@ All services use port 7600 as base, incrementing by 20:
 
 | Service | Port | Development URL | Production URL |
 |---------|------|----------------|----------------|
-| Backend API | **7600** | http://localhost:7600 | https://pmoservices.cnxlab.us |
-| Frontend | **7620** | http://localhost:7620 | https://pmo.cnxlab.us |
+| Backend API | **7600** | http://localhost:7600 | https://pmoservices.pmoplatform.com |
+| Frontend | **7620** | http://localhost:7620 | https://pmoplatform.com |
 | PostgreSQL | **7640** | localhost:7640 | localhost:7640 |
 | Redis | **7660** | localhost:7660 | localhost:7660 |
 | Prisma Studio | **7680** | http://localhost:7680 | N/A |
@@ -18,7 +18,7 @@ All services use port 7600 as base, incrementing by 20:
 **NEVER use ports 3000, 5173, 5432, 6379, or any other default ports.**
 
 ### Testing Protocol (CRITICAL)
-**ALWAYS test using fully qualified domain names (pmo.cnxlab.us, pmoservices.cnxlab.us), NEVER localhost.**
+**ALWAYS test using fully qualified domain names (pmoplatform.com, pmoservices.pmoplatform.com), NEVER localhost.**
 
 Why: The application runs in a hybrid dev/production environment with Cloudflare tunnels pointing to local services. Testing with localhost bypasses the tunnel and doesn't match the real user experience.
 
@@ -142,7 +142,7 @@ All pages located in `frontend/src/routes/(app)/`:
 - Timer shortcuts sync in real-time with web app via WebSocket
 - Start/stop timer from popup or sidepanel
 - Chrome notifications for timer events
-- Connects to `https://pmoservices.cnxlab.us` (backend)
+- Connects to `https://pmoservices.pmoplatform.com` (backend)
 
 **Build**:
 ```bash
@@ -315,12 +315,12 @@ REDIS_PORT=7660
 # Backend
 PORT=7600
 HOST=0.0.0.0
-BACKEND_URL=https://pmoservices.cnxlab.us
-BACKEND_WS_URL=wss://pmoservices.cnxlab.us
+BACKEND_URL=https://pmoservices.pmoplatform.com
+BACKEND_WS_URL=wss://pmoservices.pmoplatform.com
 
 # Frontend
 FRONTEND_PORT=7620
-FRONTEND_URL=https://pmo.cnxlab.us
+FRONTEND_URL=https://pmoplatform.com
 
 # Security
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
@@ -328,7 +328,7 @@ JWT_EXPIRES_IN=7d
 EXTENSION_API_KEY=a8725686271b051da973dc37cfa5155304ecd9980a12d4b6ee09bd836adeefaa
 
 # CORS - Web app origins only (extensions handled separately)
-CORS_ORIGIN=http://localhost:7620,https://pmo.cnxlab.us
+CORS_ORIGIN=http://localhost:7620,https://pmoplatform.com
 
 # Environment
 NODE_ENV=development
@@ -339,8 +339,8 @@ LOG_LEVEL=info
 ```bash
 VITE_API_BASE=/api
 VITE_WS_BASE=/
-VITE_EXTENSION_BACKEND_URL=https://pmoservices.cnxlab.us
-VITE_EXTENSION_FRONTEND_URL=https://pmo.cnxlab.us
+VITE_EXTENSION_BACKEND_URL=https://pmoservices.pmoplatform.com
+VITE_EXTENSION_FRONTEND_URL=https://pmoplatform.com
 ```
 
 ## 📝 Code Conventions
@@ -398,7 +398,7 @@ $components -> src/components
 2. Use Zod for all request validation
 3. Add WebSocket events for real-time features
 4. Ensure proper role-based access control
-5. Test with production URLs (pmo.cnxlab.us, pmoservices.cnxlab.us), NOT localhost
+5. Test with production URLs (pmoplatform.com, pmoservices.pmoplatform.com), NOT localhost
 6. Use NSSM services (`scripts\restart.bat`) to restart after changes
 
 ### When debugging:
@@ -407,7 +407,7 @@ $components -> src/components
 3. Confirm database connection: `docker exec pmo-postgres psql -U pmouser -d pmodb -c "SELECT 1"`
 4. Check service logs: `logs/backend.log`, `logs/frontend.log`
 5. Verify services are running: `nssm status pmo-backend`, `nssm status pmo-frontend`
-6. Test backend health: `curl https://pmoservices.cnxlab.us/health`
+6. Test backend health: `curl https://pmoservices.pmoplatform.com/health`
 7. Check WebSocket connection in browser console (may show polling fallback - normal)
 
 ### Common Issues
@@ -451,4 +451,4 @@ $components -> src/components
 
 ---
 
-**Remember**: This is a hybrid dev/production environment. Always test with production URLs (pmo.cnxlab.us, pmoservices.cnxlab.us), use NSSM to manage services, and never use localhost for testing.
+**Remember**: This is a hybrid dev/production environment. Always test with production URLs (pmoplatform.com, pmoservices.pmoplatform.com), use NSSM to manage services, and never use localhost for testing.

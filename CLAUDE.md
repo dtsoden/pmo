@@ -433,7 +433,7 @@ const io = new Server(httpServer, {
 
 1. **Test Socket.IO endpoint is reachable:**
    ```bash
-   curl -i "https://pmoservices.cnxlab.us/socket.io/?EIO=4&transport=polling"
+   curl -i "https://pmoservices.pmoplatform.com/socket.io/?EIO=4&transport=polling"
    ```
    Should return: `HTTP/1.1 200 OK` with session ID JSON
 
@@ -455,7 +455,7 @@ If extension shows `xhr poll error`:
 1. ✅ **Verify backend is running:** Check `logs/backend.log` has recent entries
 2. ✅ **Test Socket.IO endpoint:** Run curl command above - should get 200 OK
 3. ✅ **Check CORS configuration:** Verify `corsOriginChecker` function exists in `backend/src/index.ts`
-4. ✅ **Check extension is using correct URL:** Extension logs should show `https://pmoservices.cnxlab.us` (NOT `pmo.cnxlab.us`)
+4. ✅ **Check extension is using correct URL:** Extension logs should show `https://pmoservices.pmoplatform.com` (NOT `pmoplatform.com`)
 5. ✅ **Restart backend:** After any CORS changes, MUST restart backend
 6. ✅ **Reload extension:** After backend restart, remove and reload extension
 7. ✅ **Check for CORS warnings in backend logs:** Look for "CORS blocked origin" messages
@@ -482,7 +482,7 @@ If extension shows `xhr poll error`:
 
 ### CLOUDFLARE TUNNEL NOTE
 
-Cloudflare tunnel (`pmoservices.cnxlab.us`) works perfectly with Socket.IO:
+Cloudflare tunnel (`pmoservices.pmoplatform.com`) works perfectly with Socket.IO:
 - ✅ WebSocket connections work (wss://)
 - ✅ HTTP polling works (for web app)
 - ✅ The tunnel correctly routes `/socket.io/` requests

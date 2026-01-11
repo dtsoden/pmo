@@ -45,8 +45,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     const tabs = await chrome.tabs.query({});
     const pmoUrlPatterns = [
       /^http:\/\/localhost:7620\//,
-      /^https:\/\/pmo\.cnxlab\.us\//,
-      /^https:\/\/pmoservices\.cnxlab\.us\//,
+      /^https:\/\/pmoplatform\.com\//,
+      /^https:\/\/pmoservices\.pmoplatform\.com\//,
       /^https:\/\/.*\.azurecontainerapps\.io\//,
     ];
 
