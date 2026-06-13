@@ -7,7 +7,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Load .env from project root (parent directory)
 // From dist/index.js -> ../.. gets to project root
-dotenv.config({ path: resolve(__dirname, '../../.env') });
+// In development the .env file is the single source of truth, so override any
+// stray machine-level vars (e.g. a global PORT) that dotenv would otherwise keep.
+// In production the platform injects env vars, so those must win over any .env file.
+dotenv.config({
+  path: resolve(__dirname, '../../.env'),
+  override: process.env.NODE_ENV !== 'production',
+});
 import './shared/types.js'; // Type augmentation
 import { createServer } from 'http';
 import Fastify from 'fastify';

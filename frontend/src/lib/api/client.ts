@@ -131,9 +131,6 @@ class ApiClient {
       return res.user;
     },
 
-    delete: (id: string) =>
-      this.request<void>(`/users/${id}`, { method: 'DELETE' }),
-
     getByRole: (role: string) =>
       this.request<User[]>(`/users/role/${role}`),
 
