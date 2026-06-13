@@ -198,8 +198,11 @@ cp chrome-extension/.env.example chrome-extension/.env
 # Start database
 docker-compose up -d postgres
 
-# Initialize schema
+# Generate the Prisma client (required before any DB script runs)
 cd backend
+npm run generate
+
+# Initialize schema
 npm run setup:fresh
 
 # (Optional) Load demo data

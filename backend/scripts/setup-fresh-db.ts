@@ -34,10 +34,23 @@ async function setupFreshDatabase() {
 
     console.log('Executing schema.sql...');
 
-    // Execute the entire schema in one transaction
-    await prisma.$executeRawUnsafe(schemaSQL);
+    // Prisma's $executeRawUnsafe runs over the extended query (prepared statement)
+    // protocol, which rejects multiple commands in one call. Split the consolidated
+    // schema into individual statements and run them one at a time. This file contains
+    // only plain DDL (no dollar-quoted function bodies), so splitting on ; is safe.
+    const statements = schemaSQL
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n')
+      .split(';')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
-    console.log('✓ Database schema created successfully!\n');
+    for (const statement of statements) {
+      await prisma.$executeRawUnsafe(statement);
+    }
+
+    console.log(`✓ Database schema created successfully! (${statements.length} statements)\n`);
 
     // Mark all migrations as applied (so Prisma doesn't try to re-run them)
     console.log('Marking migrations as applied...');
