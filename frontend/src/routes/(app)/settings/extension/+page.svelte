@@ -22,6 +22,28 @@
   let extensionAuthenticated = false;
   let connecting = false;
 
+  // Shown when a connect attempt fails - usually a stale cached copy of this page
+  let connectFailed = false;
+  let refreshHint = 'Ctrl + Shift + R';
+
+  // Force a fully fresh reload: drop service workers + cache storage, then reload.
+  // This clears the stale page that hands the extension an outdated server address.
+  async function forceFreshReload() {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch {
+      // best effort - the keyboard shortcut in the UI is the reliable fallback
+    }
+    window.location.reload();
+  }
+
   // Check if we should auto-connect (coming from extension reconnect button)
   let shouldAutoConnect = false;
   $: if (browser && $page?.url?.searchParams?.has('autoconnect')) {
@@ -89,6 +111,9 @@
   }
 
   onMount(() => {
+    if (browser && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {
+      refreshHint = 'Cmd + Shift + R';
+    }
     checkInitialStatus();
   });
 
@@ -106,6 +131,7 @@
 
     // We're in autoconnect mode - do the actual connection
     connecting = true;
+    connectFailed = false;
 
     try {
       // Get current token and validate it
@@ -160,10 +186,12 @@
         replaceState('/settings/extension', {})
       } else {
         console.error('Connection failed:', response.error);
+        connectFailed = true;
         toast.error(response.error || 'Failed to connect extension');
       }
     } catch (err) {
       console.error('Connection error:', err);
+      connectFailed = true;
       toast.error((err as { message?: string })?.message || 'Failed to connect extension');
     } finally {
       connecting = false;
@@ -360,6 +388,22 @@
             {connecting ? 'Connecting...' : extensionDetected ? 'Reconnect Now' : 'Connect Extension'}
           </Button>
         </div>
+
+        {#if connectFailed}
+          <div class="rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 p-4">
+            <p class="font-semibold text-amber-900 dark:text-amber-300 mb-1">
+              Connection didn't go through
+            </p>
+            <p class="text-sm text-amber-900/90 dark:text-amber-200/80 mb-3">
+              This is usually a cached copy of this page. Do a full refresh, then click Reconnect.
+              In your browser press <span class="font-mono font-semibold">{refreshHint}</span>
+              (Firefox and Safari use the same keys), or use the button below.
+            </p>
+            <Button variant="outline" on:click={forceFreshReload}>
+              Refresh and try again
+            </Button>
+          </div>
+        {/if}
 
         <div class="text-sm text-muted-foreground">
           <p class="font-medium mb-2">What this does:</p>
